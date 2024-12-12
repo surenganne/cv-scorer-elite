@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Users, Award, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   return (
@@ -46,9 +47,11 @@ const Index = () => {
               <Award className="h-4 w-4 text-[#1C26A8]" />
             </CardHeader>
             <CardContent>
-              <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
-                Set Criteria
-              </Button>
+              <Link to="/configure-scoring">
+                <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
+                  Set Criteria
+                </Button>
+              </Link>
             </CardContent>
           </Card>
           <Card>
