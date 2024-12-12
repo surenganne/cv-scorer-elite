@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import ConfigureScoring from "./pages/ConfigureScoring";
 import UploadCVs from "./pages/UploadCVs";
+import CVAnalysis from "./pages/CVAnalysis";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/configure-scoring" element={<ConfigureScoring />} />
           <Route path="/upload-cvs" element={<UploadCVs />} />
+          <Route path="/cv-analysis" element={<CVAnalysis />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

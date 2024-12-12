@@ -52,7 +52,6 @@ const Index = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-
           <Card className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-lg font-medium">Upload CVs</CardTitle>
@@ -100,9 +99,11 @@ const Index = () => {
               <p className="text-sm text-gray-500 mb-4">
                 Compare and analyze candidates
               </p>
-              <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
-                Show List
-              </Button>
+              <Link to="/cv-analysis">
+                <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
+                  Show List
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
