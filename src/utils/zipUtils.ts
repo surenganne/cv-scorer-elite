@@ -9,7 +9,6 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
   try {
     const zipContent = await zip.loadAsync(zipFile);
     
-    // Filter out system files first
     const validEntries = Object.entries(zipContent.files).filter(([relativePath, zipEntry]) => {
       const fileName = relativePath.split('/').pop() || relativePath;
       return !zipEntry.dir && 
@@ -33,64 +32,35 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         lastModified: zipEntry.date.getTime(),
       });
 
-      // Create a new object that inherits from File but includes our custom properties
+      // Create a new FileWithPreview object with proper method bindings
       const extractedFile = Object.create(file, {
+        ...Object.getOwnPropertyDescriptors(file),
         preview: {
           value: URL.createObjectURL(content),
           writable: true,
           enumerable: true,
-          configurable: true
         },
         progress: {
           value: 0,
           writable: true,
           enumerable: true,
-          configurable: true
         },
         processed: {
           value: false,
           writable: true,
           enumerable: true,
-          configurable: true
         },
         score: {
           value: 0,
           writable: true,
           enumerable: true,
-          configurable: true
         },
         matchPercentage: {
           value: 0,
           writable: true,
           enumerable: true,
-          configurable: true
-        },
-        // Bind File methods to ensure correct 'this' context
-        slice: {
-          value: file.slice.bind(file),
-          writable: true,
-          enumerable: true,
-          configurable: true
-        },
-        stream: {
-          value: file.stream.bind(file),
-          writable: true,
-          enumerable: true,
-          configurable: true
-        },
-        text: {
-          value: file.text.bind(file),
-          writable: true,
-          enumerable: true,
-          configurable: true
-        },
-        arrayBuffer: {
-          value: file.arrayBuffer.bind(file),
-          writable: true,
-          enumerable: true,
-          configurable: true
         }
-      }) as FileWithPreview;
+      });
       
       console.log(`Extracted file: ${fileName}, size: ${extractedFile.size} bytes`);
       extractedFiles.push(extractedFile);
