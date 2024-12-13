@@ -22,7 +22,6 @@ import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { MatchesTable } from "./MatchesTable";
 import { useCVOperations } from "@/hooks/useCVOperations";
-import { JobDescriptionJSON } from "./JobDescriptionJSON";
 
 interface JobMatch {
   id: string;
@@ -74,7 +73,6 @@ export const JobMatchList = () => {
 
       if (error) throw error;
 
-      // Mock data with proper evidence structure
       const matches = cvs?.map((cv) => ({
         ...cv,
         score: Math.random() * 100,
@@ -142,7 +140,7 @@ export const JobMatchList = () => {
               <TableCell>
                 {format(new Date(job.created_at), "MMM dd, yyyy")}
               </TableCell>
-              <TableCell className="flex items-center">
+              <TableCell>
                 <Button
                   variant="outline"
                   size="sm"
@@ -156,7 +154,6 @@ export const JobMatchList = () => {
                   )}
                   Find Matched Jobseekers
                 </Button>
-                <JobDescriptionJSON jobData={job} />
               </TableCell>
             </TableRow>
           ))}
