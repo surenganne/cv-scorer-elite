@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FileWithPreview } from "@/types/file";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import JSZip from "jszip";
+import { extractFilesFromZip } from "@/utils/zipUtils";
 
 export const useFileProcessing = () => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -17,42 +17,11 @@ export const useFileProcessing = () => {
         )
       );
 
-      console.log('Starting processing for:', file.name);
+      console.log('Starting processing for:', file.name, 'Size:', file.size, 'bytes');
       
-      // Check if file is a ZIP
       if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
-        const zip = new JSZip();
-        const zipContent = await zip.loadAsync(file);
-        const extractedFiles: File[] = [];
-        let processedCount = 0;
-        const totalFiles = Object.keys(zipContent.files).length;
-
-        // Extract files from ZIP
-        for (const [filename, zipEntry] of Object.entries(zipContent.files)) {
-          if (!zipEntry.dir) {
-            const extension = filename.split('.').pop()?.toLowerCase();
-            if (extension && ['pdf', 'doc', 'docx', 'txt', 'rtf'].includes(extension)) {
-              try {
-                const content = await zipEntry.async('blob');
-                const extractedFile = new File([content], filename, { type: `application/${extension}` });
-                extractedFiles.push(extractedFile);
-                processedCount++;
-                
-                // Update progress
-                const progress = (processedCount / totalFiles) * 100;
-                setFiles((prevFiles) =>
-                  prevFiles.map((f) =>
-                    f === file ? { ...f, progress } : f
-                  )
-                );
-              } catch (error) {
-                console.error(`Failed to extract ${filename}:`, error);
-              }
-            }
-          }
-        }
-
-        console.log(`Extracted ${extractedFiles.length} valid files from ZIP`);
+        const extractedFiles = await extractFilesFromZip(file);
+        console.log(`Successfully extracted ${extractedFiles.length} files from ZIP`);
 
         // Process each extracted file
         for (const extractedFile of extractedFiles) {
@@ -71,7 +40,6 @@ export const useFileProcessing = () => {
           if (data) {
             setProcessedFiles(prev => [...prev, {
               ...extractedFile,
-              preview: URL.createObjectURL(extractedFile),
               processed: true,
               score: data.score,
               matchPercentage: data.matchPercentage,
@@ -90,7 +58,7 @@ export const useFileProcessing = () => {
           description: `Processed ${extractedFiles.length} files from ${file.name}`,
         });
       } else {
-        // Handle single file processing (existing code)
+        // Handle single file processing
         const formData = new FormData();
         formData.append('file', file);
 
@@ -98,10 +66,7 @@ export const useFileProcessing = () => {
           body: formData,
         });
 
-        if (error) {
-          console.error('Processing error:', error);
-          throw error;
-        }
+        if (error) throw error;
 
         setFiles((prevFiles) =>
           prevFiles.map((f) =>
@@ -136,7 +101,6 @@ export const useFileProcessing = () => {
   const uploadToDatabase = async () => {
     try {
       for (const file of processedFiles) {
-        // Create a clean object with only the necessary data
         const fileData = {
           name: file.name,
           type: file.type,
@@ -150,15 +114,9 @@ export const useFileProcessing = () => {
 
         const { error } = await supabase.functions.invoke('upload-cv', {
           body: JSON.stringify(fileData),
-          headers: {
-            'Content-Type': 'application/json',
-          },
         });
 
-        if (error) {
-          console.error('Upload error:', error);
-          throw error;
-        }
+        if (error) throw error;
       }
 
       toast({
