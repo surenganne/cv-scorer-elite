@@ -9,47 +9,67 @@ export const useFileProcessor = () => {
   const processFile = async (file: FileWithPreview, updateProgress: (progress: number) => void) => {
     try {
       updateProgress(0);
-      console.log('Starting processing for:', file.name, 'Size:', file.size, 'bytes');
+      console.log('Starting processing for:', file.file.name, 'Size:', file.file.size, 'bytes');
       
-      if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
-        const extractedFiles = await extractFilesFromZip(file);
+      if (file.file.type === 'application/zip' || file.file.type === 'application/x-zip-compressed') {
+        updateProgress(10); // Start progress - Extracting ZIP
+        const extractedFiles = await extractFilesFromZip(file.file);
         console.log(`Successfully extracted ${extractedFiles.length} files from ZIP`);
+        updateProgress(20); // ZIP extracted
 
         const processedFiles: FileWithPreview[] = [];
+        let processedCount = 0;
+        const totalFiles = extractedFiles.length;
+        
         for (const extractedFile of extractedFiles) {
           const formData = new FormData();
           formData.append('file', extractedFile);
 
-          const { data, error } = await supabase.functions.invoke('process-cv', {
-            body: formData,
-          });
-
-          if (error) {
-            console.error('Processing error:', error);
-            continue;
-          }
-
-          if (data) {
-            const processedFile = Object.create(extractedFile, {
-              processed: { value: true, writable: true, enumerable: true },
-              score: { value: data.score || 0, writable: true, enumerable: true },
-              matchPercentage: { value: data.matchPercentage || 0, writable: true, enumerable: true },
-              progress: { value: 100, writable: true, enumerable: true }
+          try {
+            // Calculate progress: 20% for extraction + up to 80% for processing
+            const currentProgress = 20 + Math.round((processedCount / totalFiles) * 80);
+            updateProgress(currentProgress);
+            
+            const { data, error } = await supabase.functions.invoke('process-cv', {
+              body: formData,
             });
-            processedFiles.push(processedFile);
+
+            if (error) {
+              console.error('Processing error:', error);
+              continue;
+            }
+
+            if (data) {
+              processedFiles.push({
+                file: extractedFile,
+                processed: true,
+                score: data.score || 0,
+                matchPercentage: data.matchPercentage || 0,
+                progress: 100,
+                webkitRelativePath: extractedFile.webkitRelativePath || ''
+              });
+            }
+            
+            processedCount++;
+            // Update progress after each file is processed
+            const newProgress = 20 + Math.round((processedCount / totalFiles) * 80);
+            updateProgress(newProgress);
+          } catch (error) {
+            console.error('Error processing file:', error);
+            continue;
           }
         }
 
-        updateProgress(100);
+        updateProgress(100); // Complete
         toast({
           title: "ZIP Processing Complete",
-          description: `Processed ${extractedFiles.length} files from ${file.name}`,
+          description: `Processed ${processedCount} out of ${totalFiles} files from ${file.file.name}`,
         });
 
         return processedFiles;
       } else {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', file.file);
 
         const { data, error } = await supabase.functions.invoke('process-cv', {
           body: formData,
@@ -57,17 +77,19 @@ export const useFileProcessor = () => {
 
         if (error) throw error;
 
-        const processedFile = Object.create(file, {
-          processed: { value: true, writable: true, enumerable: true },
-          score: { value: data?.score || 0, writable: true, enumerable: true },
-          matchPercentage: { value: data?.matchPercentage || 0, writable: true, enumerable: true },
-          progress: { value: 100, writable: true, enumerable: true }
-        });
+        const processedFile: FileWithPreview = {
+          file: file.file,
+          processed: true,
+          score: data?.score || 0,
+          matchPercentage: data?.matchPercentage || 0,
+          progress: 100,
+          preview: file.preview
+        };
 
         updateProgress(100);
         toast({
           title: "Processing Complete",
-          description: `${file.name} has been processed successfully.`,
+          description: `${file.file.name} has been processed successfully.`,
         });
 
         return [processedFile];
@@ -77,7 +99,7 @@ export const useFileProcessor = () => {
       updateProgress(undefined);
       toast({
         title: "Processing Failed",
-        description: `Failed to process ${file.name}. Please try again.`,
+        description: `Failed to process ${file.file.name}. Please try again.`,
         variant: "destructive",
       });
       throw error;

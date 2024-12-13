@@ -33,13 +33,14 @@ const FileItem = ({
     onRemove(file);
   };
 
-  // Create a safe copy of the file object with bound methods
+  // Create a safe copy of the file object with primitive values only
   const safeFile = {
-    name: String(file.name || ''),
-    size: Number(file.size || 0),
-    type: String(file.type || ''),
-    progress: typeof file.progress === 'number' ? file.progress : undefined,
-    preview: String(file.preview || ''),
+    name: file.file.name,
+    size: file.file.size,
+    type: file.file.type,
+    progress: file.progress,
+    preview: file.preview,
+    processed: file.processed,
   };
   
   return (
@@ -48,15 +49,20 @@ const FileItem = ({
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
           <p className="font-medium truncate">{safeFile.name}</p>
-          <p className="text-sm text-gray-500">
-            {formatFileSize(safeFile.size)}
-          </p>
-          {safeFile.progress !== undefined && safeFile.progress < 100 && (
-            <div className="w-full">
-              <Progress value={safeFile.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(safeFile.progress)}% processed</p>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">{formatFileSize(safeFile.size)}</span>
+            {safeFile.progress !== undefined && safeFile.progress < 100 && (
+              <>
+                <Progress value={safeFile.progress} className="flex-1" />
+                <span className="text-sm text-gray-500">{Math.round(safeFile.progress)}%</span>
+              </>
+            )}
+            {safeFile.processed && (
+              <span className="text-sm text-green-500 flex items-center gap-1">
+                <Check className="h-4 w-4" /> Processed
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex items-center gap-4 ml-4">

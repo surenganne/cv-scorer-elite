@@ -18,12 +18,11 @@ const UploadCVs = () => {
   } = useFileProcessing();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map((file) => 
-      Object.assign(file, {
-        preview: URL.createObjectURL(file),
-        progress: undefined
-      })
-    );
+    const newFiles = acceptedFiles.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      progress: undefined
+    }));
     
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);
   }, [setFiles]);

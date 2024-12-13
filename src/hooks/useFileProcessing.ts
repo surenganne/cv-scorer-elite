@@ -17,18 +17,32 @@ export const useFileProcessing = () => {
 
   const handleProcess = async (file: FileWithPreview) => {
     try {
-      const updateProgress = (progress: number | undefined) => {
+      const updateProgress = (progress: number) => {
         setFiles((prevFiles) =>
           prevFiles.map((f) =>
-            f === file ? { ...f, progress } : f
+            f.file.name === file.file.name ? { ...f, progress } : f
           )
         );
       };
 
       const newProcessedFiles = await processFile(file, updateProgress);
+      
+      // Update the original file as processed
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.file.name === file.file.name ? { ...f, processed: true, progress: 100 } : f
+        )
+      );
+      
       setProcessedFiles(prev => [...prev, ...newProcessedFiles]);
     } catch (error) {
       console.error('Processing failed:', error);
+      // Reset progress on error
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f.file.name === file.file.name ? { ...f, progress: 0 } : f
+        )
+      );
     }
   };
 
