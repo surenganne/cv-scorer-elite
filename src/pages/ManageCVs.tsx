@@ -42,17 +42,11 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      console.log("Original file path:", filePath);
-      
-      // Extract the actual file path from the database
-      // This should be just the filename that was stored during upload
-      const actualPath = filePath.replace(/^.*[\\\/]/, '');
-      
-      console.log("Attempting to get signed URL for:", actualPath);
+      console.log("Attempting to get signed URL for:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(actualPath, 60);
+        .createSignedUrl(filePath, 60);
 
       if (error) {
         console.error("Storage error:", error);
@@ -78,16 +72,11 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      console.log("Original file path:", filePath);
-      
-      // Extract the actual file path from the database
-      const actualPath = filePath.replace(/^.*[\\\/]/, '');
-      
-      console.log("Attempting to download:", actualPath);
+      console.log("Attempting to download:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(actualPath);
+        .download(filePath);
 
       if (error) {
         console.error("Storage error:", error);

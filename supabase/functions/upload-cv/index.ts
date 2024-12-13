@@ -12,8 +12,6 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Starting CV upload process...')
-    
     const bodyText = await req.text()
     console.log('Received body:', bodyText)
 
@@ -41,9 +39,34 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Generate a unique storage path for the file
+    const fileExt = fileData.name.split('.').pop()
+    const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`
+    const storagePath = `uploads/${uniqueFileName}`
+
+    console.log('Generated storage path:', storagePath)
+
+    // Create a buffer from the base64 data if it exists
+    if (fileData.base64Data) {
+      const base64Data = fileData.base64Data.split(',')[1] // Remove data URL prefix if present
+      const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0))
+      
+      const { error: uploadError } = await supabase.storage
+        .from('cvs')
+        .upload(storagePath, binaryData, {
+          contentType: fileData.type,
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError)
+        throw uploadError
+      }
+    }
+
     console.log('Inserting CV data into database:', {
       file_name: fileData.name,
-      file_path: fileData.preview || '',
+      file_path: storagePath,
       content_type: fileData.type,
       file_size: fileData.size,
     })
@@ -52,7 +75,7 @@ serve(async (req) => {
       .from('cv_uploads')
       .insert({
         file_name: fileData.name,
-        file_path: fileData.preview || '',
+        file_path: storagePath,
         content_type: fileData.type,
         file_size: fileData.size,
       })
