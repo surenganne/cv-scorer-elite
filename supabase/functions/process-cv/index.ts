@@ -28,7 +28,7 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Received file: ${file.name} Size: ${file.size} bytes`)
+    console.log(`Processing file: ${file.name} (${file.size} bytes)`)
 
     // Convert file to ArrayBuffer to check if it's a ZIP
     const arrayBuffer = await file.arrayBuffer()
@@ -36,50 +36,60 @@ serve(async (req) => {
     const isZip = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04
 
     if (isZip) {
-      console.log('Processing ZIP file...')
+      console.log('File identified as ZIP, starting extraction...')
       
-      const zip = new JSZip();
+      const zip = new JSZip()
+      
       try {
-        await zip.loadAsync(arrayBuffer);
+        await zip.loadAsync(arrayBuffer)
+        console.log('ZIP file loaded successfully')
       } catch (error) {
-        console.error('Error loading ZIP:', error);
-        throw new Error('Invalid ZIP file format');
+        console.error('Failed to load ZIP file:', error)
+        return new Response(
+          JSON.stringify({ error: 'Invalid ZIP file format' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400 
+          }
+        )
       }
+
+      // Get all files from the ZIP
+      const files = zip.files
+      console.log('Files found in ZIP:', Object.keys(files).length)
       
-      // Log all files in the ZIP using entries() method
-      console.log('ZIP contents:');
-      const entries = Object.entries(zip.files);
-      entries.forEach(([path, entry]) => {
-        console.log(`- ${path} (${entry.dir ? 'directory' : 'file'})`);
-      });
+      // Log all files in the ZIP
+      for (const [path, entry] of Object.entries(files)) {
+        console.log(`Found in ZIP: ${path} (${entry.dir ? 'directory' : 'file'})`)
+      }
+
+      const processedFiles = []
+      const validFiles = []
       
-      const processedFiles = [];
-      const validFiles = [];
-      
-      // First, collect all valid files
-      for (const [filename, entry] of entries) {
+      // Collect valid files
+      for (const [filename, entry] of Object.entries(files)) {
         if (!entry.dir) {
-          const extension = filename.split('.').pop()?.toLowerCase();
-          console.log(`Checking file: ${filename}, Extension: ${extension}`);
+          const extension = filename.split('.').pop()?.toLowerCase()
+          console.log(`Checking file: ${filename} (Extension: ${extension})`)
           
-          // More permissive extension check
           if (extension && ['doc', 'docx', 'pdf', 'txt', 'rtf'].includes(extension)) {
-            console.log(`Valid file found: ${filename}`);
-            validFiles.push({ filename, entry });
+            console.log(`✓ Valid file found: ${filename}`)
+            validFiles.push({ filename, entry })
           } else {
-            console.log(`Skipping file with extension: ${extension}`);
+            console.log(`✗ Invalid extension for file: ${filename}`)
           }
         }
       }
       
-      const totalFiles = validFiles.length;
-      console.log(`Found ${totalFiles} valid files to process in ZIP`);
+      const totalFiles = validFiles.length
+      console.log(`Total valid files found: ${totalFiles}`)
       
       if (totalFiles === 0) {
+        console.log('No valid files found in ZIP')
         return new Response(
           JSON.stringify({
             isZip: true,
-            error: 'No valid files found in ZIP',
+            error: 'No valid files found in ZIP. Supported formats: DOC, DOCX, PDF, TXT, RTF',
             processedFiles: [],
             totalFiles: 0,
             processedCount: 0
@@ -88,37 +98,40 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 200 
           }
-        );
+        )
       }
       
       // Process each valid file
-      let processedCount = 0;
+      let processedCount = 0
       for (const { filename, entry } of validFiles) {
         try {
-          console.log(`Processing ${filename} (${processedCount + 1}/${totalFiles})`);
+          console.log(`Processing file ${processedCount + 1}/${totalFiles}: ${filename}`)
           
-          // Get the file content as Uint8Array
-          const content = await entry.async('uint8array');
-          console.log(`File ${filename} content size: ${content.length} bytes`);
+          const content = await entry.async('uint8array')
+          if (!content || content.length === 0) {
+            console.error(`Empty file content for: ${filename}`)
+            continue
+          }
           
-          // Mock processing result with random scores
+          console.log(`File content size: ${content.length} bytes`)
+          
+          // Mock processing result
           processedFiles.push({
             fileName: filename,
             status: 'processed',
-            score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
-            matchPercentage: Math.floor(Math.random() * 20) + 60, // Random match between 60-80
+            score: Math.floor(Math.random() * 30) + 70,
+            matchPercentage: Math.floor(Math.random() * 20) + 60,
             size: content.length
-          });
+          })
           
-          processedCount++;
-          console.log(`Successfully processed ${filename}`);
+          processedCount++
+          console.log(`Successfully processed: ${filename}`)
         } catch (error) {
-          console.error(`Error processing file ${filename}:`, error);
+          console.error(`Failed to process ${filename}:`, error)
         }
       }
 
-      console.log(`ZIP processing completed. Processed ${processedCount}/${totalFiles} files`);
-      console.log('Processed files:', processedFiles);
+      console.log(`ZIP processing completed. Processed ${processedCount}/${totalFiles} files`)
       
       return new Response(
         JSON.stringify({
@@ -131,11 +144,11 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200 
         }
-      );
+      )
     }
 
     // Handle single file
-    console.log('Processing single file...');
+    console.log('Processing single file...')
     
     // Mock processing for single file
     const result = {
@@ -144,9 +157,9 @@ serve(async (req) => {
       score: Math.floor(Math.random() * 30) + 70,
       matchPercentage: Math.floor(Math.random() * 20) + 60,
       size: file.size
-    };
+    }
 
-    console.log('Single file processing completed');
+    console.log('Single file processing completed')
     
     return new Response(
       JSON.stringify({
@@ -159,9 +172,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
-    );
+    )
   } catch (error) {
-    console.error('Processing error:', error);
+    console.error('Processing error:', error)
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process file',
@@ -171,6 +184,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
-    );
+    )
   }
-});
+})
