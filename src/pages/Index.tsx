@@ -81,7 +81,7 @@ const Index = () => {
               </p>
               <Link to="/configure-scoring">
                 <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
-                  Set Criteria
+                  Set JD and Criteria
                 </Button>
               </Link>
             </CardContent>
