@@ -1,17 +1,21 @@
-import { useState } from "react";
-import { FileWithPreview } from "@/types/file";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { FileWithPreview } from "@/types/file";
 import { extractFilesFromZip } from "@/utils/zipUtils";
+import { useFileState } from "./useFileState";
 
 export const useFileProcessing = () => {
-  const [files, setFiles] = useState<FileWithPreview[]>([]);
-  const [processedFiles, setProcessedFiles] = useState<FileWithPreview[]>([]);
+  const {
+    files,
+    setFiles,
+    processedFiles,
+    setProcessedFiles,
+    removeFile,
+  } = useFileState();
   const { toast } = useToast();
 
   const processFile = async (file: FileWithPreview) => {
     try {
-      // Set initial progress
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
           f === file ? { ...f, progress: 0 } : f
@@ -24,11 +28,7 @@ export const useFileProcessing = () => {
         const extractedFiles = await extractFilesFromZip(file);
         console.log(`Successfully extracted ${extractedFiles.length} files from ZIP`);
 
-        // Process each extracted file
         for (const extractedFile of extractedFiles) {
-          console.log(`Processing extracted file: ${extractedFile.name}, size: ${extractedFile.size} bytes`);
-          
-          // Create FormData and append the file
           const formData = new FormData();
           formData.append('file', extractedFile);
 
@@ -42,8 +42,7 @@ export const useFileProcessing = () => {
           }
 
           if (data) {
-            const processedFile: FileWithPreview = Object.create(Object.getPrototypeOf(extractedFile), {
-              ...Object.getOwnPropertyDescriptors(extractedFile),
+            const processedFile = Object.create(extractedFile, {
               processed: {
                 value: true,
                 writable: true,
@@ -70,7 +69,6 @@ export const useFileProcessing = () => {
               }
             });
             
-            console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
             setProcessedFiles(prev => [...prev, processedFile]);
           }
         }
@@ -86,7 +84,6 @@ export const useFileProcessing = () => {
           description: `Processed ${extractedFiles.length} files from ${file.name}`,
         });
       } else {
-        // Handle single file processing
         const formData = new FormData();
         formData.append('file', file);
 
@@ -96,8 +93,7 @@ export const useFileProcessing = () => {
 
         if (error) throw error;
 
-        const processedFile: FileWithPreview = Object.create(Object.getPrototypeOf(file), {
-          ...Object.getOwnPropertyDescriptors(file),
+        const processedFile = Object.create(file, {
           processed: {
             value: true,
             writable: true,
@@ -130,7 +126,6 @@ export const useFileProcessing = () => {
           )
         );
         
-        console.log(`Successfully processed single file: ${processedFile.name}, size: ${processedFile.size} bytes`);
         setProcessedFiles(prev => [...prev, processedFile]);
 
         toast({
@@ -167,8 +162,6 @@ export const useFileProcessing = () => {
           matchPercentage: file.matchPercentage || 0,
         };
 
-        console.log('Uploading file data:', fileData);
-
         const { error } = await supabase.functions.invoke('upload-cv', {
           body: JSON.stringify(fileData),
         });
@@ -191,14 +184,6 @@ export const useFileProcessing = () => {
         variant: "destructive",
       });
       throw error;
-    }
-  };
-
-  const removeFile = (fileToRemove: FileWithPreview) => {
-    setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
-    setProcessedFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
-    if (fileToRemove.preview) {
-      URL.revokeObjectURL(fileToRemove.preview);
     }
   };
 

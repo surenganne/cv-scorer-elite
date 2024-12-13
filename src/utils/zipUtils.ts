@@ -33,9 +33,8 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         lastModified: zipEntry.date.getTime(),
       });
 
-      // Create FileWithPreview properties without modifying read-only File properties
-      const extractedFile = Object.create(Object.getPrototypeOf(file), {
-        ...Object.getOwnPropertyDescriptors(file),
+      // Create a new object that inherits from File but includes our custom properties
+      const extractedFile = Object.create(file, {
         preview: {
           value: URL.createObjectURL(content),
           writable: true,
@@ -62,6 +61,31 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         },
         matchPercentage: {
           value: 0,
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        // Bind File methods to ensure correct 'this' context
+        slice: {
+          value: file.slice.bind(file),
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        stream: {
+          value: file.stream.bind(file),
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        text: {
+          value: file.text.bind(file),
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        arrayBuffer: {
+          value: file.arrayBuffer.bind(file),
           writable: true,
           enumerable: true,
           configurable: true
