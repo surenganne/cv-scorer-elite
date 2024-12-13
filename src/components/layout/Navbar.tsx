@@ -17,7 +17,7 @@ const Navbar = () => {
               <img 
                 src="https://edb.gov.ae/campaign/images/logo-blue.svg" 
                 alt="EDB Logo" 
-                className="h-12 w-auto mr-2"
+                className="h-18 w-auto mr-2"
               />
             </Link>
             <div className="flex space-x-8 ml-8">
