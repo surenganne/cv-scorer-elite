@@ -7,27 +7,48 @@ import { formatFileSize } from "@/utils/fileUtils";
 interface FileItemProps {
   file: FileWithPreview;
   onRemove: (file: FileWithPreview) => void;
-  onUpload?: (file: FileWithPreview) => void;
+  onUpload?: (file: FileWithPreview) => Promise<void>;
   buttonText?: string;
   processed?: boolean;
 }
 
-const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
-  console.log('Rendering FileItem:', file.name, 'Size:', file.size, 'bytes', 'Progress:', file.progress);
+const FileItem = ({ 
+  file, 
+  onRemove, 
+  onUpload, 
+  buttonText = "Upload", 
+  processed = false 
+}: FileItemProps) => {
+  // Safely access file properties
+  const fileName = file?.name || 'Unknown file';
+  const fileSize = file?.size || 0;
+  const fileProgress = file?.progress;
+  
+  console.log('Rendering FileItem:', fileName, 'Size:', fileSize, 'bytes', 'Progress:', fileProgress);
+  
+  const handleUpload = async () => {
+    if (onUpload) {
+      await onUpload(file);
+    }
+  };
+
+  const handleRemove = () => {
+    onRemove(file);
+  };
   
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{file.name}</p>
+          <p className="font-medium truncate">{fileName}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(file.size)}
+            {formatFileSize(fileSize)}
           </p>
-          {file.progress !== undefined && file.progress < 100 && (
+          {fileProgress !== undefined && fileProgress < 100 && (
             <div className="w-full">
-              <Progress value={file.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(file.progress)}% processed</p>
+              <Progress value={fileProgress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(fileProgress)}% processed</p>
             </div>
           )}
         </div>
@@ -35,15 +56,15 @@ const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed =
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : file.progress === 100 ? (
+        ) : fileProgress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : file.progress !== undefined ? (
+        ) : fileProgress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onUpload(file)}
+            onClick={handleUpload}
           >
             {buttonText}
           </Button>
@@ -51,7 +72,7 @@ const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed =
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onRemove(file)}
+          onClick={handleRemove}
         >
           <X className="h-5 w-5" />
         </Button>
