@@ -21,10 +21,10 @@ serve(async (req) => {
     const formData = await req.formData()
     const file = formData.get('file')
 
-    if (!file) {
-      console.error('No file provided')
+    if (!file || !(file instanceof File)) {
+      console.error('No file provided or invalid file')
       return new Response(
-        JSON.stringify({ error: 'No file uploaded' }),
+        JSON.stringify({ error: 'No file uploaded or invalid file' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -88,8 +88,8 @@ serve(async (req) => {
     const processedResult = {
       fileName: file.name,
       status: 'processed',
-      score: 85,
-      matchPercentage: 75
+      score: Math.floor(Math.random() * 30) + 70,
+      matchPercentage: Math.floor(Math.random() * 20) + 60
     }
 
     console.log('Single file processing completed:', processedResult)

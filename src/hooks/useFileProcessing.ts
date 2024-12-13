@@ -30,8 +30,12 @@ export const useFileProcessing = () => {
       }, 300);
 
       console.log('Starting processing for:', file.name);
+      
       const { data, error } = await supabase.functions.invoke('process-cv', {
         body: formData,
+        headers: {
+          'Accept': 'application/json',
+        },
       });
 
       clearInterval(progressInterval);
@@ -93,6 +97,9 @@ export const useFileProcessing = () => {
 
         const { error } = await supabase.functions.invoke('upload-cv', {
           body: formData,
+          headers: {
+            'Accept': 'application/json',
+          },
         });
 
         if (error) throw error;
