@@ -42,8 +42,6 @@ export const useFileProcessor = () => {
               processedFiles.push({
                 file: extractedFile.file,
                 processed: true,
-                score: data.score || 0,
-                matchPercentage: data.matchPercentage || 0,
                 progress: 100,
                 preview: extractedFile.preview,
                 webkitRelativePath: extractedFile.file.webkitRelativePath
@@ -79,8 +77,6 @@ export const useFileProcessor = () => {
         const processedFile: FileWithPreview = {
           file: file.file,
           processed: true,
-          score: data?.score || 0,
-          matchPercentage: data?.matchPercentage || 0,
           progress: 100,
           preview: file.preview,
           webkitRelativePath: file.file.webkitRelativePath

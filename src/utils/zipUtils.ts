@@ -37,8 +37,6 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         preview: URL.createObjectURL(content),
         progress: 0,
         processed: false,
-        score: 0,
-        matchPercentage: 0,
         webkitRelativePath: relativePath
       };
       
