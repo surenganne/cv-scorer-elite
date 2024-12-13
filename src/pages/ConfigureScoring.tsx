@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, Save } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { ScoringWeights } from "@/components/scoring/ScoringWeights";
 
 const ConfigureScoring = () => {
   const { toast } = useToast();
@@ -20,8 +20,24 @@ const ConfigureScoring = () => {
   const [minimumExperience, setMinimumExperience] = useState("2");
   const [educationLevel, setEducationLevel] = useState("bachelors");
 
+  const handleWeightChange = (type: string, value: number) => {
+    switch (type) {
+      case "experience":
+        setExperienceWeight(value);
+        break;
+      case "skills":
+        setSkillsWeight(value);
+        break;
+      case "education":
+        setEducationWeight(value);
+        break;
+      case "certifications":
+        setCertificationsWeight(value);
+        break;
+    }
+  };
+
   const handleSave = () => {
-    // Validate total weight is 100%
     const totalWeight =
       experienceWeight + skillsWeight + educationWeight + certificationsWeight;
     
@@ -91,51 +107,13 @@ const ConfigureScoring = () => {
               <CardTitle>Scoring Weights</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <Label>Experience ({experienceWeight}%)</Label>
-                  <Slider
-                    value={[experienceWeight]}
-                    onValueChange={(value) => setExperienceWeight(value[0])}
-                    max={100}
-                    step={5}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label>Skills ({skillsWeight}%)</Label>
-                  <Slider
-                    value={[skillsWeight]}
-                    onValueChange={(value) => setSkillsWeight(value[0])}
-                    max={100}
-                    step={5}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label>Education ({educationWeight}%)</Label>
-                  <Slider
-                    value={[educationWeight]}
-                    onValueChange={(value) => setEducationWeight(value[0])}
-                    max={100}
-                    step={5}
-                    className="mt-2"
-                  />
-                </div>
-
-                <div>
-                  <Label>Certifications ({certificationsWeight}%)</Label>
-                  <Slider
-                    value={[certificationsWeight]}
-                    onValueChange={(value) => setCertificationsWeight(value[0])}
-                    max={100}
-                    step={5}
-                    className="mt-2"
-                  />
-                </div>
-              </div>
+              <ScoringWeights
+                experienceWeight={experienceWeight}
+                skillsWeight={skillsWeight}
+                educationWeight={educationWeight}
+                certificationsWeight={certificationsWeight}
+                onWeightChange={handleWeightChange}
+              />
             </CardContent>
           </Card>
 
