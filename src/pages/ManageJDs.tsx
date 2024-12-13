@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
@@ -60,6 +60,34 @@ const ManageJDs = () => {
     },
   });
 
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const newStatus = status === 'active' ? 'inactive' : 'active';
+      const { error } = await supabase
+        .from("job_descriptions")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+      if (error) throw error;
+      return newStatus;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobDescriptions"] });
+      toast({
+        title: "Success",
+        description: "Job status updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update job status",
+      });
+      console.error("Error updating job status:", error);
+    },
+  });
+
   const handleEdit = (id: string) => {
     navigate(`/configure-scoring/${id}`);
   };
@@ -68,6 +96,10 @@ const ManageJDs = () => {
     if (window.confirm("Are you sure you want to delete this job description?")) {
       deleteJobMutation.mutate(id);
     }
+  };
+
+  const handleToggleStatus = (id: string, currentStatus: string) => {
+    toggleStatusMutation.mutate({ id, status: currentStatus });
   };
 
   return (
@@ -104,8 +136,21 @@ const ManageJDs = () => {
                       {new Date(job.created_at!).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                        Active
+                      <Badge 
+                        variant="outline" 
+                        className={`cursor-pointer ${
+                          job.status === 'active' 
+                            ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100' 
+                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                        }`}
+                        onClick={() => handleToggleStatus(job.id, job.status)}
+                      >
+                        {job.status === 'active' ? (
+                          <Check className="h-4 w-4 mr-1 inline" />
+                        ) : (
+                          <X className="h-4 w-4 mr-1 inline" />
+                        )}
+                        {job.status === 'active' ? 'Active' : 'Inactive'}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">

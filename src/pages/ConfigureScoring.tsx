@@ -8,6 +8,8 @@ import { JobRequirements } from "@/components/scoring/JobRequirements";
 import { ScoringWeights } from "@/components/scoring/ScoringWeights";
 import Navbar from "@/components/layout/Navbar";
 import { ArrowLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const ConfigureScoring = () => {
   const { toast } = useToast();
@@ -25,6 +27,7 @@ const ConfigureScoring = () => {
   const [requiredSkills, setRequiredSkills] = useState("");
   const [minimumExperience, setMinimumExperience] = useState("");
   const [preferredQualifications, setPreferredQualifications] = useState("");
+  const [isActive, setIsActive] = useState(true);
 
   // Fetch existing job description if editing
   const { data: existingJob } = useQuery({
@@ -55,6 +58,7 @@ const ConfigureScoring = () => {
       setSkillsWeight(existingJob.skills_weight);
       setEducationWeight(existingJob.education_weight);
       setCertificationsWeight(existingJob.certifications_weight);
+      setIsActive(existingJob.status === 'active');
     }
   }, [existingJob]);
 
@@ -87,6 +91,7 @@ const ConfigureScoring = () => {
         skills_weight: skillsWeight,
         education_weight: educationWeight,
         certifications_weight: certificationsWeight,
+        status: isActive ? 'active' : 'inactive',
       };
 
       if (id) {
@@ -156,6 +161,19 @@ const ConfigureScoring = () => {
               <ArrowLeft className="h-4 w-4" />
               Back to Job Descriptions
             </Button>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="job-status"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+              />
+              <Label htmlFor="job-status">
+                Job Status: {isActive ? 'Active' : 'Inactive'}
+              </Label>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

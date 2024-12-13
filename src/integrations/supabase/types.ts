@@ -60,6 +60,7 @@ export type Database = {
           preferred_qualifications: string | null
           required_skills: string
           skills_weight: number
+          status: string
           title: string
           updated_at: string | null
         }
@@ -74,6 +75,7 @@ export type Database = {
           preferred_qualifications?: string | null
           required_skills: string
           skills_weight?: number
+          status?: string
           title: string
           updated_at?: string | null
         }
@@ -88,6 +90,7 @@ export type Database = {
           preferred_qualifications?: string | null
           required_skills?: string
           skills_weight?: number
+          status?: string
           title?: string
           updated_at?: string | null
         }
