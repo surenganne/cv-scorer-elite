@@ -157,46 +157,45 @@ export const JobMatchList = () => {
         </TableBody>
       </Table>
 
-  {Object.entries(matchedCVs).map(([jobId, matches]) => {
-    const job = activeJobs.find((j) => j.id === jobId);
-    if (!job || !matches?.length) return null;
-    
-    const weights = {
-      experience_weight: job.experience_weight,
-      skills_weight: job.skills_weight,
-      education_weight: job.education_weight,
-      certifications_weight: job.certifications_weight,
-    };
-    
-    return (
-      <div key={jobId} className="space-y-4">
-        {showFilters[jobId] && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Show:</span>
-            <Select
-              value={String(topMatches[jobId] || "5")}
-              onValueChange={(value) => {
-                setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
-                findMatches(jobId);
-              }}
-            >
-              <SelectTrigger className="w-[100px]">
-                <SelectValue placeholder="Top 5" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">Top 5</SelectItem>
-                <SelectItem value="10">Top 10</SelectItem>
-                <SelectItem value="15">Top 15</SelectItem>
-                <SelectItem value="20">Top 20</SelectItem>
-              </SelectContent>
-            </Select>
+      {Object.entries(matchedCVs).map(([jobId, matches]) => {
+        const job = activeJobs.find((j) => j.id === jobId);
+        if (!job || !matches?.length) return null;
+        
+        const weights = {
+          experience_weight: job.experience_weight,
+          skills_weight: job.skills_weight,
+          education_weight: job.education_weight,
+          certifications_weight: job.certifications_weight,
+        };
+        
+        return (
+          <div key={jobId} className="space-y-4">
+            {showFilters[jobId] && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select
+                  value={String(topMatches[jobId] || "5")}
+                  onValueChange={(value) => {
+                    setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
+                    findMatches(jobId);
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Top 5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="15">Top 15</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <MatchesTable matches={matches} jobTitle={job.title} weights={weights} />
           </div>
-        )}
-        <MatchesTable matches={matches} jobTitle={job.title} weights={weights} />
-      </div>
-    );
-  })}
-
+        );
+      })}
     </div>
   );
 };
