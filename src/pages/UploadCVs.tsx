@@ -18,9 +18,6 @@ const UploadCVs = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      if (file.candidateName) {
-        formData.append('candidateName', file.candidateName);
-      }
 
       const response = await supabase.functions.invoke('upload-cv', {
         body: formData,
@@ -53,8 +50,7 @@ const UploadCVs = () => {
     const newFiles = acceptedFiles.map((file) => 
       Object.assign(file, {
         preview: URL.createObjectURL(file),
-        progress: 0,
-        candidateName: '',
+        progress: 0
       })
     );
     
@@ -66,14 +62,6 @@ const UploadCVs = () => {
     if (fileToRemove.preview) {
       URL.revokeObjectURL(fileToRemove.preview);
     }
-  };
-
-  const handleCandidateNameChange = (file: FileWithPreview, name: string) => {
-    setFiles((prevFiles) =>
-      prevFiles.map((f) =>
-        f === file ? { ...f, candidateName: name } : f
-      )
-    );
   };
 
   const handleUpload = async (file: FileWithPreview) => {
@@ -92,7 +80,7 @@ const UploadCVs = () => {
               : f
           )
         );
-      }, 200);
+      }, 500);
 
       await uploadFile(file);
 
@@ -143,7 +131,6 @@ const UploadCVs = () => {
                     file={file}
                     onRemove={removeFile}
                     onUpload={handleUpload}
-                    onCandidateNameChange={handleCandidateNameChange}
                   />
                 ))}
               </div>
