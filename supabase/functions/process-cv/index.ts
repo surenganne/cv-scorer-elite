@@ -54,11 +54,11 @@ serve(async (req) => {
         )
       }
 
-      // Get all files from the ZIP
+      // Get all files from the ZIP (including those in folders)
       const files = zip.files
       console.log('Files found in ZIP:', Object.keys(files).length)
       
-      // Log all files in the ZIP
+      // Log all files and folders in the ZIP
       for (const [path, entry] of Object.entries(files)) {
         console.log(`Found in ZIP: ${path} (${entry.dir ? 'directory' : 'file'})`)
       }
@@ -66,9 +66,9 @@ serve(async (req) => {
       const processedFiles = []
       const validFiles = []
       
-      // Collect valid files
+      // Collect valid files (including those in folders)
       for (const [filename, entry] of Object.entries(files)) {
-        if (!entry.dir) {
+        if (!entry.dir) { // Skip directories, only process files
           const extension = filename.split('.').pop()?.toLowerCase()
           console.log(`Checking file: ${filename} (Extension: ${extension})`)
           
