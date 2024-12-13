@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { JobDescriptionJSON } from "@/components/cv-analysis/JobDescriptionJSON";
 
 const ManageJDs = () => {
   const { toast } = useToast();
@@ -168,6 +169,7 @@ const ManageJDs = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      <JobDescriptionJSON jobData={job} />
                     </TableCell>
                   </TableRow>
                 ))}
