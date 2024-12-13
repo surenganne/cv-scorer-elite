@@ -11,10 +11,16 @@ export const processAttachments = async (candidates: Candidate[]) => {
 
   const attachments = await Promise.all(
     candidates
-      .filter(candidate => candidate.file_path)
+      .filter(candidate => {
+        if (!candidate.file_path) {
+          console.warn('Skipping candidate without file_path:', candidate.name);
+          return false;
+        }
+        return true;
+      })
       .map(async (candidate) => {
         try {
-          console.log('Processing attachment for candidate:', candidate.name);
+          console.log('Processing attachment for candidate:', candidate.name, 'with file path:', candidate.file_path);
           
           const { data: signedUrlData, error: signedUrlError } = await supabase.storage
             .from('cvs')
@@ -33,18 +39,19 @@ export const processAttachments = async (candidates: Candidate[]) => {
             return null;
           }
 
-          const fileArrayBuffer = await fileResponse.arrayBuffer();
-          const uint8Array = new Uint8Array(fileArrayBuffer);
-          const base64String = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
+          const fileBuffer = await fileResponse.arrayBuffer();
+          const base64String = btoa(
+            new Uint8Array(fileBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
 
-          console.log('Successfully processed file:', candidate.file_name);
+          console.log('Successfully processed file:', candidate.file_name, 'Size:', fileBuffer.byteLength, 'bytes');
 
           return {
             filename: candidate.file_name,
             content: base64String,
           };
         } catch (error) {
-          console.error('Error processing attachment:', error);
+          console.error('Error processing attachment for', candidate.name, ':', error);
           return null;
         }
       })
@@ -52,7 +59,14 @@ export const processAttachments = async (candidates: Candidate[]) => {
 
   // Filter out any null results from failed attachment processing
   const validAttachments = attachments.filter(Boolean);
-  console.log(`Successfully processed ${validAttachments.length} attachments`);
+  console.log(`Successfully processed ${validAttachments.length} attachments out of ${candidates.length} candidates`);
+  
+  if (validAttachments.length < candidates.length) {
+    console.warn('Some attachments failed to process:', {
+      processed: validAttachments.length,
+      total: candidates.length
+    });
+  }
   
   return validAttachments;
 };
