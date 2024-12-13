@@ -1,10 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import { Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { CVTable } from "@/components/cv-analysis/CVTable";
 import { CVFilters } from "@/components/cv-analysis/CVFilters";
+import { CVHeader } from "@/components/cv-analysis/CVHeader";
+import { useCVOperations } from "@/hooks/useCVOperations";
 import Navbar from "@/components/layout/Navbar";
 import {
   Pagination,
@@ -14,15 +13,14 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
 
 const ITEMS_PER_PAGE = 10;
 
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { handleViewCV, handleDownloadCV } = useCVOperations();
 
   // Set up real-time subscription
   useEffect(() => {
@@ -60,85 +58,6 @@ const ManageCVs = () => {
     },
   });
 
-  const handleViewCV = async (filePath: string) => {
-    try {
-      if (!filePath) {
-        throw new Error("Invalid file path");
-      }
-
-      // Get just the filename without any path
-      const fileName = filePath.split('/').pop();
-      
-      if (!fileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to get signed URL for:", fileName);
-
-      const { data, error } = await supabase.storage
-        .from("cvs")
-        .createSignedUrl(fileName, 60);
-
-      if (error) {
-        console.error("Storage error:", error);
-        throw error;
-      }
-
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
-      }
-    } catch (error) {
-      console.error("Error viewing CV:", error);
-      toast({
-        title: "Error",
-        description: "Could not view the CV. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDownloadCV = async (filePath: string, fileName: string) => {
-    try {
-      if (!filePath) {
-        throw new Error("Invalid file path");
-      }
-
-      // Get just the filename without any path
-      const storedFileName = filePath.split('/').pop();
-      
-      if (!storedFileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to download:", storedFileName);
-
-      const { data, error } = await supabase.storage
-        .from("cvs")
-        .download(storedFileName);
-
-      if (error) {
-        console.error("Storage error:", error);
-        throw error;
-      }
-      
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName; // Use the original file name for download
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error("Error downloading CV:", error);
-      toast({
-        title: "Error",
-        description: "Could not download the CV. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
@@ -147,16 +66,7 @@ const ManageCVs = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Manage CVs</h1>
-          <Link to="/upload-cvs">
-            <Button className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Upload CVs
-            </Button>
-          </Link>
-        </div>
-
+        <CVHeader />
         <div className="space-y-6">
           <CVFilters />
           {isLoading ? (
