@@ -49,7 +49,6 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
               <TableRow className="bg-gray-50">
                 <TableHead className="font-semibold">Candidate</TableHead>
                 <TableHead className="font-semibold">Match Analysis</TableHead>
-                <TableHead className="font-semibold">Submitted</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -63,9 +62,6 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
                   </TableCell>
                   <TableCell className="max-w-2xl">
                     <MatchEvidence score={match.score} evidence={match.evidence} weights={weights} />
-                  </TableCell>
-                  <TableCell className="text-gray-500">
-                    {format(new Date(match.upload_date), "MMM dd, yyyy")}
                   </TableCell>
                 </TableRow>
               ))}
