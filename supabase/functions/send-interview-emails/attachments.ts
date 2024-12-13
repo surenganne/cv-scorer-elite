@@ -41,7 +41,7 @@ export const processAttachments = async (candidates: Candidate[]) => {
 
           const fileBuffer = await fileResponse.arrayBuffer();
           const uint8Array = new Uint8Array(fileBuffer);
-          const base64String = btoa(String.fromCharCode.apply(null, uint8Array));
+          const base64String = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
 
           console.log('Successfully processed file:', candidate.file_name, 'Size:', fileBuffer.byteLength, 'bytes');
 

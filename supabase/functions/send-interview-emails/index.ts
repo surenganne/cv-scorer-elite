@@ -11,6 +11,7 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Log incoming request details
   console.log('Received request:', {
     method: req.method,
     url: req.url,
@@ -30,11 +31,18 @@ serve(async (req) => {
       throw new Error('Missing RESEND_API_KEY');
     }
 
-    const requestData = await req.json();
-    console.log('Request payload:', JSON.stringify(requestData, null, 2));
+    // Parse and validate request body
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log('Request payload:', JSON.stringify(requestData, null, 2));
+    } catch (error) {
+      throw new Error(`Invalid JSON payload: ${error.message}`);
+    }
 
     const { to, selectedCandidates, jobTitle } = requestData;
 
+    // Validate required fields
     if (!to || !Array.isArray(to) || to.length === 0) {
       throw new Error('Invalid or missing recipient emails');
     }
@@ -43,12 +51,19 @@ serve(async (req) => {
       throw new Error('No candidates selected');
     }
 
+    if (!jobTitle) {
+      throw new Error('Job title is required');
+    }
+
+    // Process attachments
     console.log('Processing attachments...');
     const attachments = await processAttachments(selectedCandidates);
     console.log(`Processed ${attachments.length} attachments`);
 
+    // Generate email content
     const emailContent = generateEmailContent(selectedCandidates, jobTitle);
 
+    // Prepare email data
     const emailData = {
       from: "CV Scorer Elite <onboarding@resend.dev>",
       to,
@@ -57,6 +72,7 @@ serve(async (req) => {
       attachments
     };
 
+    // Send email
     console.log('Sending email to Resend API...');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
