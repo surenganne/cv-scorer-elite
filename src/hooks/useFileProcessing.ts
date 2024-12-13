@@ -11,6 +11,7 @@ export const useFileProcessing = () => {
 
   const processFile = async (file: FileWithPreview) => {
     try {
+      // Set initial progress
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
           f === file ? { ...f, progress: 0 } : f
@@ -40,21 +41,13 @@ export const useFileProcessing = () => {
 
           if (data) {
             const processedFile: FileWithPreview = {
-              name: extractedFile.name,
-              size: extractedFile.size,
-              type: extractedFile.type,
-              lastModified: extractedFile.lastModified,
-              preview: extractedFile.preview,
+              ...extractedFile,
               processed: true,
               score: data.score || 0,
               matchPercentage: data.matchPercentage || 0,
               progress: 100,
-              slice: extractedFile.slice,
-              stream: extractedFile.stream,
-              text: extractedFile.text,
-              arrayBuffer: extractedFile.arrayBuffer,
-              webkitRelativePath: extractedFile.webkitRelativePath || '',
             };
+            
             console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
             setProcessedFiles(prev => [...prev, processedFile]);
           }
@@ -81,28 +74,20 @@ export const useFileProcessing = () => {
 
         if (error) throw error;
 
+        const processedFile: FileWithPreview = {
+          ...file,
+          processed: true,
+          score: data?.score || 0,
+          matchPercentage: data?.matchPercentage || 0,
+          progress: 100,
+        };
+
         setFiles((prevFiles) =>
           prevFiles.map((f) =>
             f === file ? { ...f, progress: 100 } : f
           )
         );
         
-        const processedFile: FileWithPreview = {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          lastModified: file.lastModified,
-          preview: file.preview,
-          processed: true,
-          score: data?.score || 0,
-          matchPercentage: data?.matchPercentage || 0,
-          progress: 100,
-          slice: file.slice,
-          stream: file.stream,
-          text: file.text,
-          arrayBuffer: file.arrayBuffer,
-          webkitRelativePath: file.webkitRelativePath || '',
-        };
         console.log(`Successfully processed single file: ${processedFile.name}, size: ${processedFile.size} bytes`);
         setProcessedFiles(prev => [...prev, processedFile]);
 
