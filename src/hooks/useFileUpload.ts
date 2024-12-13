@@ -14,8 +14,6 @@ export const useFileUpload = () => {
           type: file.file.type,
           size: file.file.size,
           preview: file.preview || '',
-          score: file.score || 0,
-          matchPercentage: file.matchPercentage || 0,
         };
 
         console.log('Uploading file data:', fileData);
