@@ -33,13 +33,13 @@ const FileItem = ({
     onRemove(file);
   };
 
-  // Create a safe file object with only the properties we need
-  const fileInfo = {
-    name: file.name || '',
-    size: typeof file.size === 'number' ? file.size : 0,
-    progress: file.progress,
-    type: file.type || '',
-    preview: file.preview || ''
+  // Extract only the properties we need, avoiding method calls
+  const safeFile = {
+    name: String(file.name || ''),
+    size: Number(file.size || 0),
+    type: String(file.type || ''),
+    progress: typeof file.progress === 'number' ? file.progress : undefined,
+    preview: String(file.preview || '')
   };
   
   return (
@@ -47,14 +47,14 @@ const FileItem = ({
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{fileInfo.name}</p>
+          <p className="font-medium truncate">{safeFile.name}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(fileInfo.size)}
+            {formatFileSize(safeFile.size)}
           </p>
-          {fileInfo.progress !== undefined && fileInfo.progress < 100 && (
+          {safeFile.progress !== undefined && safeFile.progress < 100 && (
             <div className="w-full">
-              <Progress value={fileInfo.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(fileInfo.progress)}% processed</p>
+              <Progress value={safeFile.progress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(safeFile.progress)}% processed</p>
             </div>
           )}
         </div>
@@ -62,9 +62,9 @@ const FileItem = ({
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : fileInfo.progress === 100 ? (
+        ) : safeFile.progress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : fileInfo.progress !== undefined ? (
+        ) : safeFile.progress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
