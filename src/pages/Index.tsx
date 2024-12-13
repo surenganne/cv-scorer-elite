@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Users, Award, Mail, FileText, BarChart } from "lucide-react";
+import { Upload, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
@@ -45,13 +45,12 @@ const Index = () => {
                   instant insights into your candidate pool.
                 </p>
               </div>
-              <BarChart className="h-24 w-24 opacity-80" />
             </div>
           </CardContent>
         </Card>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-lg font-medium">Upload CVs</CardTitle>
@@ -85,73 +84,6 @@ const Index = () => {
                   Set Criteria
                 </Button>
               </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-lg font-medium">
-                View Candidates
-              </CardTitle>
-              <Users className="h-5 w-5 text-[#1C26A8]" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                Compare and analyze candidates
-              </p>
-              <Link to="/cv-analysis">
-                <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
-                  Show List
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-lg font-medium">Send Results</CardTitle>
-              <Mail className="h-5 w-5 text-[#1C26A8]" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                Email results to stakeholders
-              </p>
-              <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
-                Email Now
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Dashboard Sections */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-medium">Recent Uploads</CardTitle>
-              <FileText className="h-5 w-5 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">No recent uploads</p>
-                <Button variant="outline" className="mt-4">
-                  Upload CVs
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg font-medium">Top Candidates</CardTitle>
-              <Users className="h-5 w-5 text-gray-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <p className="text-gray-500 text-sm">No candidates analyzed yet</p>
-                <Button variant="outline" className="mt-4">
-                  Start Analysis
-                </Button>
-              </div>
             </CardContent>
           </Card>
         </div>
