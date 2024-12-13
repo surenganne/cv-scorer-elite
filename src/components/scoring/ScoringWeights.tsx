@@ -38,7 +38,8 @@ export const ScoringWeights = ({
 
     const newTotal = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
 
-    if (newTotal > 100) {
+    // Only show warning toast if the new value would increase the total above 100%
+    if (newTotal > 100 && newTotal > totalWeight) {
       toast({
         variant: "destructive",
         title: "Invalid weight",
