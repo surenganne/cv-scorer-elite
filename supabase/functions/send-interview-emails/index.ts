@@ -79,9 +79,9 @@ serve(async (req) => {
     // Generate email content
     const emailContent = generateEmailHTML(jobTitle, selectedCandidates);
 
-    // Prepare email data
+    // Prepare email data with verified domain
     const emailData = {
-      from: "CV Scorer Elite <onboarding@resend.dev>",
+      from: "CV Scorer Elite <onboarding@resend.dev>", // Using Resend's verified test domain
       to,
       subject: `Interview Candidates for ${jobTitle} Position`,
       html: emailContent,
@@ -108,6 +108,18 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Resend API error:', responseData);
+      
+      // Special handling for domain verification errors
+      if (responseData.statusCode === 403 && responseData.message?.includes('verify a domain')) {
+        return new Response(JSON.stringify({ 
+          error: 'Please verify your domain at resend.com/domains before sending emails to other recipients.',
+          details: responseData.message
+        }), {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+      
       return new Response(JSON.stringify({ 
         error: `Failed to send email: ${JSON.stringify(responseData)}` 
       }), {
