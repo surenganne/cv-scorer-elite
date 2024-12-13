@@ -39,7 +39,8 @@ const Index = () => {
           </AlertTitle>
           <AlertDescription className="text-blue-700 mt-1">
             This CV Scorer Elite application is a proof of concept that demonstrates AI-powered CV analysis 
-            and job matching capabilities. For demonstration purposes only.
+            and job matching capabilities. The Emirates Development Bank (EDB) logo is intentionally used 
+            to provide a realistic enterprise application experience. For demonstration purposes only.
           </AlertDescription>
         </Alert>
 
