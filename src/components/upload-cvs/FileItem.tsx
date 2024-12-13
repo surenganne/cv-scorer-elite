@@ -22,20 +22,6 @@ const FileItem = ({
   if (!file) {
     return null;
   }
-
-  // Create bound versions of the file methods, only if they exist
-  const boundFile = {
-    name: file.name,
-    size: file.size,
-    progress: file.progress,
-    type: file.type,
-    preview: file.preview,
-    // Only bind methods if they exist
-    ...(file.slice && { slice: file.slice.bind(file) }),
-    ...(file.stream && { stream: file.stream.bind(file) }),
-    ...(file.text && { text: file.text.bind(file) }),
-    ...(file.arrayBuffer && { arrayBuffer: file.arrayBuffer.bind(file) })
-  };
   
   const handleUpload = async () => {
     if (onUpload) {
@@ -52,14 +38,14 @@ const FileItem = ({
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{boundFile.name}</p>
+          <p className="font-medium truncate">{file.name}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(boundFile.size)}
+            {formatFileSize(file.size)}
           </p>
-          {boundFile.progress !== undefined && boundFile.progress < 100 && (
+          {file.progress !== undefined && file.progress < 100 && (
             <div className="w-full">
-              <Progress value={boundFile.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(boundFile.progress)}% processed</p>
+              <Progress value={file.progress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(file.progress)}% processed</p>
             </div>
           )}
         </div>
@@ -67,9 +53,9 @@ const FileItem = ({
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : boundFile.progress === 100 ? (
+        ) : file.progress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : boundFile.progress !== undefined ? (
+        ) : file.progress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
