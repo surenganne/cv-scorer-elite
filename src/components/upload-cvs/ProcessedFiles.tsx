@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FileWithPreview } from "@/types/file";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, Upload } from "lucide-react";
 import FileItem from "./FileItem";
 
 interface ProcessedFilesProps {
@@ -12,8 +12,9 @@ interface ProcessedFilesProps {
 }
 
 const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesProps) => {
-  const [showFiles, setShowFiles] = useState(false);
+  const [showFiles, setShowFiles] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<Set<string>>(new Set());
 
   if (files.length === 0) return null;
 
@@ -21,6 +22,8 @@ const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesP
     setIsUploading(true);
     try {
       await onUploadToDatabase();
+      // Mark all files as uploaded
+      setUploadedFiles(new Set(files.map(file => file.file.name)));
     } finally {
       setIsUploading(false);
     }
@@ -30,27 +33,42 @@ const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesP
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Processed Files ({files.length})</CardTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowFiles(!showFiles)}
+          <div className="flex items-center gap-4">
+            <CardTitle>Processed Files ({files.length})</CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowFiles(!showFiles)}
+              className="flex items-center gap-2"
+            >
+              {showFiles ? (
+                <>
+                  Hide Files <ChevronUp className="h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Show Files <ChevronDown className="h-4 w-4" />
+                </>
+              )}
+            </Button>
+          </div>
+          <Button 
+            onClick={handleUpload} 
+            disabled={isUploading || uploadedFiles.size === files.length}
             className="flex items-center gap-2"
           >
-            {showFiles ? (
-              <>
-                Hide Files <ChevronUp className="h-4 w-4" />
-              </>
-            ) : (
-              <>
-                Show Files <ChevronDown className="h-4 w-4" />
-              </>
-            )}
+            <Upload className="h-4 w-4" />
+            {isUploading 
+              ? "Uploading..." 
+              : uploadedFiles.size === files.length 
+                ? "Uploaded" 
+                : `Upload ${files.length} Files to Database`
+            }
           </Button>
         </div>
       </CardHeader>
-      <CardContent>
-        {showFiles && (
+      {showFiles && (
+        <CardContent>
           <div className="space-y-4">
             {files.map((file, index) => (
               <FileItem
@@ -58,19 +76,13 @@ const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesP
                 file={file}
                 onRemove={onRemove}
                 processed={true}
+                uploading={isUploading}
+                uploaded={uploadedFiles.has(file.file.name)}
               />
             ))}
           </div>
-        )}
-        <div className="flex justify-end mt-4">
-          <Button 
-            onClick={handleUpload} 
-            disabled={isUploading}
-          >
-            {isUploading ? "Uploading..." : "Upload All to Database"}
-          </Button>
-        </div>
-      </CardContent>
+        </CardContent>
+      )}
     </Card>
   );
 };

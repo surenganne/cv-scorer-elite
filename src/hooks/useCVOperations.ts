@@ -11,18 +11,12 @@ export const useCVOperations = () => {
         throw new Error("Invalid file path");
       }
 
-      // Get just the filename without any path
-      const fileName = filePath.split('/').pop();
-      
-      if (!fileName) {
-        throw new Error("Could not extract file name from path");
-      }
+      console.log("Attempting to get signed URL for:", filePath);
 
-      console.log("Attempting to get signed URL for:", fileName);
-
+      // Create signed URL with longer expiration for viewing
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(fileName, 60);
+        .createSignedUrl(filePath, 3600); // 1 hour expiration
 
       if (error) {
         console.error("Storage error:", error);
@@ -33,8 +27,15 @@ export const useCVOperations = () => {
         throw new Error("No signed URL returned");
       }
 
-      // Open in new tab
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      // For Office documents, we can use Microsoft's Office Online viewer
+      const extension = filePath.split('.').pop()?.toLowerCase();
+      if (extension === 'doc' || extension === 'docx') {
+        const encodedUrl = encodeURIComponent(data.signedUrl);
+        window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodedUrl}`, "_blank", "noopener,noreferrer");
+      } else {
+        // For PDFs and other files, open directly
+        window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+      }
     } catch (error) {
       console.error("Error viewing CV:", error);
       toast({
@@ -51,33 +52,32 @@ export const useCVOperations = () => {
         throw new Error("Invalid file path");
       }
 
-      // Get just the filename without any path
-      const storedFileName = filePath.split('/').pop();
-      
-      if (!storedFileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to download:", storedFileName);
+      console.log("Attempting to download:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(storedFileName);
+        .download(filePath);
 
       if (error) {
-        console.error("Storage error:", error);
+        console.error("Download error:", error);
         throw error;
       }
-      
+
       // Create a download link
-      const url = window.URL.createObjectURL(data);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = fileName; // Use the original file name for download
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
       window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "File downloaded successfully",
+      });
     } catch (error) {
       console.error("Error downloading CV:", error);
       toast({
@@ -88,8 +88,5 @@ export const useCVOperations = () => {
     }
   };
 
-  return {
-    handleViewCV,
-    handleDownloadCV,
-  };
+  return { handleViewCV, handleDownloadCV };
 };

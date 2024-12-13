@@ -1,5 +1,6 @@
 import { FileWithPreview } from "@/types/file";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import FileItem from "./FileItem";
 
 interface SelectedFilesProps {
@@ -11,10 +12,19 @@ interface SelectedFilesProps {
 const SelectedFiles = ({ files, onRemove, onProcess }: SelectedFilesProps) => {
   if (files.length === 0) return null;
 
+  const handleProcessAll = async () => {
+    for (const file of files) {
+      await onProcess(file);
+    }
+  };
+
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Selected Files</CardTitle>
+        <Button onClick={handleProcessAll}>
+          Process {files.length} Files
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
@@ -23,8 +33,6 @@ const SelectedFiles = ({ files, onRemove, onProcess }: SelectedFilesProps) => {
               key={index}
               file={file}
               onRemove={onRemove}
-              onUpload={onProcess}
-              buttonText="Process"
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ import { CVFilters } from "@/components/cv-analysis/CVFilters";
 import { CVHeader } from "@/components/cv-analysis/CVHeader";
 import { useCVOperations } from "@/hooks/useCVOperations";
 import Navbar from "@/components/layout/Navbar";
+import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
   PaginationContent,
@@ -20,6 +21,7 @@ const ITEMS_PER_PAGE = 10;
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const { handleViewCV, handleDownloadCV } = useCVOperations();
 
   // Set up real-time subscription
@@ -29,12 +31,52 @@ const ManageCVs = () => {
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'cv_uploads'
         },
-        () => {
-          // Invalidate and refetch CVs when changes occur
+        (payload) => {
+          // Show toast for new CV
+          toast({
+            title: "New CV Uploaded",
+            description: `${payload.new.file_name} has been uploaded.`,
+          });
+          // Invalidate and refetch CVs
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        (payload) => {
+          // Show toast for updated CV
+          toast({
+            title: "CV Updated",
+            description: `${payload.new.file_name} has been updated.`,
+          });
+          // Invalidate and refetch CVs
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        (payload) => {
+          // Show toast for deleted CV
+          toast({
+            title: "CV Deleted",
+            description: `A CV has been removed.`,
+            variant: "destructive",
+          });
+          // Invalidate and refetch CVs
           queryClient.invalidateQueries({ queryKey: ['cvs'] });
         }
       )
@@ -43,7 +85,7 @@ const ManageCVs = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient]);
+  }, [queryClient, toast]);
 
   const { data: cvs, isLoading } = useQuery({
     queryKey: ["cvs"],
@@ -56,11 +98,22 @@ const ManageCVs = () => {
       if (error) throw error;
       return data;
     },
+    // Disable automatic background refetching since we're using real-time updates
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 
   const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to first page when total pages changes
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [totalPages, currentPage]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
