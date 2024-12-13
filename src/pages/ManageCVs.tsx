@@ -42,24 +42,19 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename from the path, handling both full paths and direct filenames
-      const fileName = filePath.split('/').pop();
-      
-      if (!fileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to get signed URL for:", fileName);
+      // Get the complete storage path including the 'uploads/' directory
+      const storagePath = `uploads/${filePath.split('/').pop()}`;
+      console.log("Attempting to get signed URL for:", storagePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(fileName, 60);
+        .createSignedUrl(storagePath, 60);
 
       if (error) {
         console.error("Storage error:", error);
         throw error;
       }
-      
+
       if (data?.signedUrl) {
         window.open(data.signedUrl, "_blank");
       }
@@ -79,24 +74,19 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename from the path, handling both full paths and direct filenames
-      const storedFileName = filePath.split('/').pop();
-      
-      if (!storedFileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to download:", storedFileName);
+      // Get the complete storage path including the 'uploads/' directory
+      const storagePath = `uploads/${filePath.split('/').pop()}`;
+      console.log("Attempting to download:", storagePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(storedFileName);
+        .download(storagePath);
 
       if (error) {
         console.error("Storage error:", error);
         throw error;
       }
-      
+
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
