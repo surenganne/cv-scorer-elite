@@ -11,6 +11,12 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  console.log('Received request:', {
+    method: req.method,
+    url: req.url,
+    headers: Object.fromEntries(req.headers.entries())
+  });
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -24,8 +30,10 @@ serve(async (req) => {
       throw new Error('Missing RESEND_API_KEY');
     }
 
-    const { to, selectedCandidates, jobTitle } = await req.json();
-    console.log('Processing request:', { to, candidatesCount: selectedCandidates?.length, jobTitle });
+    const requestData = await req.json();
+    console.log('Request payload:', JSON.stringify(requestData, null, 2));
+
+    const { to, selectedCandidates, jobTitle } = requestData;
 
     if (!to || !Array.isArray(to) || to.length === 0) {
       throw new Error('Invalid or missing recipient emails');
@@ -35,6 +43,7 @@ serve(async (req) => {
       throw new Error('No candidates selected');
     }
 
+    console.log('Processing attachments...');
     const attachments = await processAttachments(selectedCandidates);
     console.log(`Processed ${attachments.length} attachments`);
 
@@ -48,7 +57,7 @@ serve(async (req) => {
       attachments
     };
 
-    console.log('Sending email request to Resend API');
+    console.log('Sending email to Resend API...');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -62,10 +71,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Resend API error:', responseData);
-      return new Response(JSON.stringify({ error: responseData }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
     }
 
     console.log('Email sent successfully:', responseData);
@@ -77,10 +83,13 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in send-interview-emails function:', error);
-    return new Response(JSON.stringify({ 
+    
+    const errorResponse = {
       error: error.message,
       details: 'Check function logs for more information'
-    }), {
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
