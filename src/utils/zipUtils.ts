@@ -27,14 +27,20 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
                       ['doc', 'docx'].includes(fileType) ? 'application/msword' :
                       'application/octet-stream';
 
+      // Create a proper File object with bound methods
       const file = new File([content], fileName, {
         type: mimeType,
         lastModified: zipEntry.date.getTime(),
       });
 
-      // Create a new FileWithPreview object with proper method bindings
-      const extractedFile = Object.create(file, {
-        ...Object.getOwnPropertyDescriptors(file),
+      // Create a FileWithPreview object that preserves File methods
+      const extractedFile = new File([file], file.name, {
+        type: file.type,
+        lastModified: file.lastModified,
+      }) as FileWithPreview;
+
+      // Add FileWithPreview specific properties
+      Object.defineProperties(extractedFile, {
         preview: {
           value: URL.createObjectURL(content),
           writable: true,
