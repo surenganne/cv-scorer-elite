@@ -24,7 +24,7 @@ export const processAttachments = async (candidates: Candidate[]) => {
           
           const { data: signedUrlData, error: signedUrlError } = await supabase.storage
             .from('cvs')
-            .createSignedUrl(candidate.file_path!, 3600); // Increased timeout to 1 hour
+            .createSignedUrl(candidate.file_path!, 3600); // 1 hour expiry
 
           if (signedUrlError) {
             console.error('Error getting signed URL:', signedUrlError);
@@ -49,6 +49,7 @@ export const processAttachments = async (candidates: Candidate[]) => {
             filename: candidate.file_name,
             content: base64String,
             type: 'application/octet-stream',
+            disposition: 'attachment'
           };
         } catch (error) {
           console.error('Error processing attachment for', candidate.name, ':', error);

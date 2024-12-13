@@ -20,17 +20,12 @@ serve(async (req) => {
   }
 
   try {
-    const { to, selectedCandidates, jobTitle } = await req.json();
-
-    console.log('Received request:', {
-      to,
-      candidatesCount: selectedCandidates?.length,
-      jobTitle
-    });
-
     if (!RESEND_API_KEY) {
       throw new Error('Missing RESEND_API_KEY');
     }
+
+    const { to, selectedCandidates, jobTitle } = await req.json();
+    console.log('Processing request:', { to, candidatesCount: selectedCandidates?.length, jobTitle });
 
     if (!to || !Array.isArray(to) || to.length === 0) {
       throw new Error('Invalid or missing recipient emails');
@@ -53,11 +48,7 @@ serve(async (req) => {
       attachments
     };
 
-    console.log('Sending email with attachments:', {
-      recipientsCount: to.length,
-      attachmentsCount: attachments.length
-    });
-
+    console.log('Sending email request to Resend API');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -71,7 +62,10 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Resend API error:', responseData);
-      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
+      return new Response(JSON.stringify({ error: responseData }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     console.log('Email sent successfully:', responseData);
@@ -82,17 +76,13 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Error in send-interview-emails:', error);
-    
-    return new Response(
-      JSON.stringify({
-        error: error.message,
-        details: 'Check the function logs for more details'
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    );
+    console.error('Error in send-interview-emails function:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      details: 'Check function logs for more information'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
   }
 });
