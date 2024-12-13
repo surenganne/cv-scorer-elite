@@ -12,6 +12,15 @@ interface FileItemProps {
 }
 
 const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (!bytes || isNaN(bytes)) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+  };
+
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
@@ -19,12 +28,12 @@ const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed =
         <div className="flex-1 space-y-2">
           <p className="font-medium truncate">{file.name}</p>
           <p className="text-sm text-gray-500">
-            {(file.size / 1024 / 1024).toFixed(2)} MB
+            {formatFileSize(file.size)}
           </p>
           {file.progress !== undefined && file.progress < 100 && (
             <div className="w-full">
               <Progress value={file.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{file.progress}% processed</p>
+              <p className="text-sm text-gray-500 mt-1">{Math.round(file.progress)}% processed</p>
             </div>
           )}
         </div>

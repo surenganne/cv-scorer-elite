@@ -16,16 +16,6 @@ export const useFileProcessing = () => {
         )
       );
 
-      const progressInterval = setInterval(() => {
-        setFiles((prevFiles) =>
-          prevFiles.map((f) =>
-            f === file && f.progress !== undefined && f.progress < 90
-              ? { ...f, progress: f.progress + 5 }
-              : f
-          )
-        );
-      }, 300);
-
       console.log('Starting processing for:', file.name);
       
       // Create FormData and append the file
@@ -36,8 +26,6 @@ export const useFileProcessing = () => {
         body: formData,
       });
 
-      clearInterval(progressInterval);
-
       if (error) {
         console.error('Processing error:', error);
         throw error;
@@ -45,22 +33,33 @@ export const useFileProcessing = () => {
 
       console.log('Processing completed:', data);
 
-      setFiles((prevFiles) =>
-        prevFiles.map((f) =>
-          f === file ? { ...f, progress: 100 } : f
-        )
-      );
+      if (data.isZip && Array.isArray(data.processedFiles)) {
+        // Update progress based on processed files
+        const totalFiles = data.totalFiles || data.processedFiles.length;
+        const processedCount = data.processedCount || data.processedFiles.length;
+        const progress = (processedCount / totalFiles) * 100;
 
-      if (data.isZip) {
+        setFiles((prevFiles) =>
+          prevFiles.map((f) =>
+            f === file ? { ...f, progress } : f
+          )
+        );
+
         const processedZipFiles = data.processedFiles.map((result: any) => ({
           ...file,
           name: result.fileName,
+          size: result.size,
           processed: true,
           score: result.score,
           matchPercentage: result.matchPercentage,
         }));
         setProcessedFiles(prev => [...prev, ...processedZipFiles]);
       } else {
+        setFiles((prevFiles) =>
+          prevFiles.map((f) =>
+            f === file ? { ...f, progress: 100 } : f
+          )
+        );
         setProcessedFiles(prev => [...prev, { ...file, processed: true }]);
       }
 
