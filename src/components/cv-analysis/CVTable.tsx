@@ -39,6 +39,18 @@ export const CVTable = ({ data = [], onView, onDownload }: CVTableProps) => {
     return `${size.toFixed(1)} ${units[unitIndex]}`;
   };
 
+  const formatContentType = (contentType: string) => {
+    switch (contentType) {
+      case 'application/pdf':
+        return 'PDF';
+      case 'application/msword':
+      case 'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+        return 'DOC/DOCX';
+      default:
+        return contentType;
+    }
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -56,7 +68,7 @@ export const CVTable = ({ data = [], onView, onDownload }: CVTableProps) => {
             <TableRow key={cv.id}>
               <TableCell className="font-medium">{cv.file_name}</TableCell>
               <TableCell>{formatFileSize(cv.file_size)}</TableCell>
-              <TableCell>{cv.content_type}</TableCell>
+              <TableCell>{formatContentType(cv.content_type)}</TableCell>
               <TableCell>
                 {cv.upload_date ? format(new Date(cv.upload_date), 'MMM dd, yyyy') : 'N/A'}
               </TableCell>
