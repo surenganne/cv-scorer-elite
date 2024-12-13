@@ -55,7 +55,6 @@ serve(async (req) => {
         file_path: fileData.preview || '',
         content_type: fileData.type,
         file_size: fileData.size,
-        status: 'Pending',
       })
       .select()
 
