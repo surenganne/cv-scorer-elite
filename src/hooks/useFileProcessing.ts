@@ -53,6 +53,7 @@ export const useFileProcessing = () => {
               stream: extractedFile.stream,
               text: extractedFile.text,
               arrayBuffer: extractedFile.arrayBuffer,
+              webkitRelativePath: extractedFile.webkitRelativePath || '',
             };
             console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
             setProcessedFiles(prev => [...prev, processedFile]);
@@ -100,6 +101,7 @@ export const useFileProcessing = () => {
           stream: file.stream,
           text: file.text,
           arrayBuffer: file.arrayBuffer,
+          webkitRelativePath: file.webkitRelativePath || '',
         };
         console.log(`Successfully processed single file: ${processedFile.name}, size: ${processedFile.size} bytes`);
         setProcessedFiles(prev => [...prev, processedFile]);

@@ -8,4 +8,5 @@ export interface FileWithPreview extends File {
   stream: File['stream'];
   text: File['text'];
   arrayBuffer: File['arrayBuffer'];
+  webkitRelativePath: string;
 }
