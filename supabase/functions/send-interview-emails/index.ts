@@ -7,8 +7,8 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 interface EmailRequest {
@@ -16,6 +16,9 @@ interface EmailRequest {
   selectedCandidates: Candidate[];
   jobTitle: string;
 }
+
+const MAX_ATTACHMENTS = 5;
+const MAX_RECIPIENTS = 5;
 
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
@@ -30,13 +33,26 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing RESEND_API_KEY");
     }
 
-    console.log("Request data:", { to, selectedCandidates, jobTitle });
+    // Validate request
+    if (!to?.length || to.length > MAX_RECIPIENTS) {
+      throw new Error(`Invalid number of recipients (max ${MAX_RECIPIENTS})`);
+    }
 
-    const validAttachments = await processAttachments(selectedCandidates);
+    if (!selectedCandidates?.length || selectedCandidates.length > MAX_ATTACHMENTS) {
+      throw new Error(`Invalid number of candidates (max ${MAX_ATTACHMENTS})`);
+    }
+
+    console.log("Processing request:", { 
+      recipients: to.length,
+      candidates: selectedCandidates.length,
+      jobTitle 
+    });
+
+    const attachments = await processAttachments(selectedCandidates);
     const html = generateEmailHTML(jobTitle, selectedCandidates);
 
-    console.log("Sending email with HTML and attachments:", {
-      attachmentsCount: validAttachments.length,
+    console.log("Sending email with attachments:", {
+      attachmentsCount: attachments.length,
       candidatesCount: selectedCandidates.length
     });
 
@@ -51,21 +67,27 @@ const handler = async (req: Request): Promise<Response> => {
         to,
         subject: `Interview Candidates for ${jobTitle}`,
         html,
-        attachments: validAttachments,
+        attachments,
       }),
     });
 
     const responseData = await res.json();
-    console.log("Resend API response:", responseData);
-
+    
     if (!res.ok) {
-      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
+      console.error("Resend API error:", {
+        status: res.status,
+        response: responseData
+      });
+      throw new Error(responseData.message || `Failed to send email: ${res.status}`);
     }
+
+    console.log("Email sent successfully:", responseData);
 
     return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
+
   } catch (error: any) {
     console.error("Error in send-interview-emails function:", error);
     return new Response(
