@@ -2,6 +2,7 @@ import { FileWithPreview } from "@/types/file";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { FileText, X, Check, Loader2 } from "lucide-react";
+import { formatFileSize } from "@/utils/fileUtils";
 
 interface FileItemProps {
   file: FileWithPreview;
@@ -12,15 +13,6 @@ interface FileItemProps {
 }
 
 const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
-  // Helper function to format file size
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0 || isNaN(bytes)) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-  };
-
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
