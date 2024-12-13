@@ -43,57 +43,48 @@ serve(async (req) => {
       
       const processedFiles = [];
       let totalFiles = 0;
-      let processedCount = 0;
       
-      // First, count total valid files
-      for (const filename of Object.keys(zip.files)) {
+      // First, count valid files and store them
+      const validFiles = [];
+      for (const filename in zip.files) {
         const zipEntry = zip.files[filename];
         if (!zipEntry.dir) {
           const extension = filename.split('.').pop()?.toLowerCase();
           if (['doc', 'docx', 'pdf'].includes(extension || '')) {
+            validFiles.push({ filename, zipEntry });
             totalFiles++;
           }
         }
       }
       
-      console.log(`Found ${totalFiles} valid files to process`);
+      console.log(`Found ${totalFiles} valid files to process in ZIP`);
       
-      // Process each file in the ZIP
-      for (const filename of Object.keys(zip.files)) {
-        const zipEntry = zip.files[filename];
-        
-        if (!zipEntry.dir) {
-          const extension = filename.split('.').pop()?.toLowerCase();
+      // Process each valid file
+      let processedCount = 0;
+      for (const { filename, zipEntry } of validFiles) {
+        try {
+          console.log(`Processing ${filename} (${processedCount + 1}/${totalFiles})`);
           
-          if (['doc', 'docx', 'pdf'].includes(extension || '')) {
-            console.log('Processing file from ZIP:', filename);
-            
-            try {
-              // Get the file content
-              const content = await zipEntry.async('uint8array');
-              
-              // Mock processing result with random scores
-              // In a real implementation, you would process the actual file content
-              processedFiles.push({
-                fileName: filename,
-                status: 'processed',
-                score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
-                matchPercentage: Math.floor(Math.random() * 20) + 60, // Random match between 60-80
-                size: content.length
-              });
-              
-              processedCount++;
-              console.log(`Progress: ${processedCount}/${totalFiles} files (${Math.round((processedCount/totalFiles) * 100)}%)`);
-            } catch (error) {
-              console.error(`Error processing file ${filename}:`, error);
-            }
-          } else {
-            console.log(`Skipping non-document file: ${filename}`);
-          }
+          // Get the file content
+          const content = await zipEntry.async('uint8array');
+          
+          // Mock processing result with random scores
+          processedFiles.push({
+            fileName: filename,
+            status: 'processed',
+            score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+            matchPercentage: Math.floor(Math.random() * 20) + 60, // Random match between 60-80
+            size: content.length
+          });
+          
+          processedCount++;
+          console.log(`Processed ${filename} successfully`);
+        } catch (error) {
+          console.error(`Error processing file ${filename}:`, error);
         }
       }
 
-      console.log('ZIP processing completed:', processedFiles.length, 'files processed');
+      console.log(`ZIP processing completed. Processed ${processedCount}/${totalFiles} files`);
       
       return new Response(
         JSON.stringify({
