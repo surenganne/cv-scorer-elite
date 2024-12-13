@@ -24,7 +24,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Received request to send interview emails");
     const { to, selectedCandidates, jobTitle } = await req.json() as EmailRequest;
+    console.log("Request data:", { to, selectedCandidates, jobTitle });
 
     const candidatesList = selectedCandidates
       .map(
@@ -42,6 +44,8 @@ const handler = async (req: Request): Promise<Response> => {
       <p>Please review their resumes and schedule interviews accordingly.</p>
     `;
 
+    console.log("Sending email with HTML:", html);
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -58,15 +62,19 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!res.ok) {
       const error = await res.text();
+      console.error("Error from Resend API:", error);
       throw new Error(error);
     }
 
     const data = await res.json();
+    console.log("Email sent successfully:", data);
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
+    console.error("Error in send-interview-emails function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
