@@ -12,6 +12,12 @@ interface EmailCandidatesProps {
     file_name: string;
     file_path?: string;
     score: number;
+    evidence: {
+      skills: string[];
+      experience: string;
+      education: string;
+      certifications: string[];
+    };
   }>;
   jobTitle: string;
   onEmailsSent: () => void;
@@ -60,7 +66,14 @@ export const EmailCandidates = ({
           score: match.score,
           file_name: match.file_name,
           file_path: match.file_path,
+          evidence: match.evidence, // Include the evidence object
         }));
+
+      console.log('Sending email with data:', {
+        to: emails,
+        selectedCandidates: selectedCandidatesData,
+        jobTitle,
+      });
 
       const { data, error } = await supabase.functions.invoke(
         "send-interview-emails",
