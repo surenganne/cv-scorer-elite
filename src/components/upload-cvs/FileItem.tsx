@@ -23,17 +23,18 @@ const FileItem = ({
     return null;
   }
 
-  // Create bound versions of the file methods
+  // Create bound versions of the file methods, only if they exist
   const boundFile = {
     name: file.name,
     size: file.size,
     progress: file.progress,
     type: file.type,
-    slice: file.slice.bind(file),
-    stream: file.stream?.bind(file),
-    text: file.text?.bind(file),
-    arrayBuffer: file.arrayBuffer?.bind(file),
     preview: file.preview,
+    // Only bind methods if they exist
+    ...(file.slice && { slice: file.slice.bind(file) }),
+    ...(file.stream && { stream: file.stream.bind(file) }),
+    ...(file.text && { text: file.text.bind(file) }),
+    ...(file.arrayBuffer && { arrayBuffer: file.arrayBuffer.bind(file) })
   };
   
   const handleUpload = async () => {
