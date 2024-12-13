@@ -35,11 +35,11 @@ const FileItem = ({
 
   // Create a safe file object with only the properties we need
   const fileInfo = {
-    name: file.name,
-    size: file.size,
+    name: file.name || '',
+    size: typeof file.size === 'number' ? file.size : 0,
     progress: file.progress,
-    type: file.type,
-    preview: file.preview
+    type: file.type || '',
+    preview: file.preview || ''
   };
   
   return (
