@@ -67,16 +67,16 @@ serve(async (req) => {
       body: JSON.stringify(emailData)
     });
 
+    const responseData = await response.json();
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Resend API error:', errorText);
-      throw new Error(`Resend API error: ${errorText}`);
+      console.error('Resend API error:', responseData);
+      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
     }
 
-    const result = await response.json();
-    console.log('Email sent successfully:', result);
+    console.log('Email sent successfully:', responseData);
 
-    return new Response(JSON.stringify(result), {
+    return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
