@@ -24,85 +24,66 @@ const ManageCVs = () => {
   const { toast } = useToast();
   const { handleViewCV, handleDownloadCV } = useCVOperations();
 
-  // Set up real-time subscription with proper cleanup
+  // Set up real-time subscription
   useEffect(() => {
-    let isSubscribed = true;
-    
-    const setupRealtimeSubscription = async () => {
-      try {
-        const channel = supabase
-          .channel('cv-changes')
-          .on(
-            'postgres_changes',
-            {
-              event: 'INSERT',
-              schema: 'public',
-              table: 'cv_uploads'
-            },
-            (payload) => {
-              if (!isSubscribed) return;
-              toast({
-                title: "New CV Uploaded",
-                description: `${payload.new.file_name} has been uploaded.`,
-              });
-              queryClient.invalidateQueries({ queryKey: ['cvs'] });
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'cv_uploads'
-            },
-            (payload) => {
-              if (!isSubscribed) return;
-              toast({
-                title: "CV Updated",
-                description: `${payload.new.file_name} has been updated.`,
-              });
-              queryClient.invalidateQueries({ queryKey: ['cvs'] });
-            }
-          )
-          .on(
-            'postgres_changes',
-            {
-              event: 'DELETE',
-              schema: 'public',
-              table: 'cv_uploads'
-            },
-            (payload) => {
-              if (!isSubscribed) return;
-              toast({
-                title: "CV Deleted",
-                description: `A CV has been removed.`,
-                variant: "destructive",
-              });
-              queryClient.invalidateQueries({ queryKey: ['cvs'] });
-            }
-          );
-
-        await channel.subscribe();
-        
-        return channel;
-      } catch (error) {
-        console.error('Error setting up realtime subscription:', error);
-        return null;
-      }
-    };
-
-    const channel = setupRealtimeSubscription();
+    const channel = supabase
+      .channel('cv-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        (payload) => {
+          // Show toast for new CV
+          toast({
+            title: "New CV Uploaded",
+            description: `${payload.new.file_name} has been uploaded.`,
+          });
+          // Invalidate and refetch CVs
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        (payload) => {
+          // Show toast for updated CV
+          toast({
+            title: "CV Updated",
+            description: `${payload.new.file_name} has been updated.`,
+          });
+          // Invalidate and refetch CVs
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        (payload) => {
+          // Show toast for deleted CV
+          toast({
+            title: "CV Deleted",
+            description: `A CV has been removed.`,
+            variant: "destructive",
+          });
+          // Invalidate and refetch CVs
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .subscribe();
 
     return () => {
-      isSubscribed = false;
-      if (channel) {
-        // Using Promise.resolve to handle both Promise and non-Promise channel
-        Promise.resolve(channel).then(ch => {
-          if (ch) {
-            supabase.removeChannel(ch);
-          }
-        });
-      }
+      supabase.removeChannel(channel);
     };
   }, [queryClient, toast]);
 
@@ -117,6 +98,7 @@ const ManageCVs = () => {
       if (error) throw error;
       return data;
     },
+    // Disable automatic background refetching since we're using real-time updates
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

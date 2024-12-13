@@ -66,7 +66,7 @@ export const EmailCandidates = ({
           score: match.score,
           file_name: match.file_name,
           file_path: match.file_path,
-          evidence: match.evidence,
+          evidence: match.evidence, // Include the evidence object
         }));
 
       console.log('Sending email with data:', {
@@ -86,31 +86,7 @@ export const EmailCandidates = ({
         }
       );
 
-      if (error) {
-        // Parse the error message if it's a string
-        let errorDetails;
-        try {
-          if (typeof error.message === 'string' && error.message.includes('{')) {
-            errorDetails = JSON.parse(error.message);
-          }
-        } catch (e) {
-          console.error('Error parsing error message:', e);
-        }
-
-        // Check for domain verification error
-        if (errorDetails?.error === 'Domain verification required' || 
-            error.message?.includes('verify a domain') || 
-            error.message?.includes('Domain verification required')) {
-          toast({
-            title: "Domain Verification Required",
-            description: "Please verify your domain at resend.com/domains before sending emails to other recipients.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -123,7 +99,7 @@ export const EmailCandidates = ({
       console.error("Error sending emails:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to send emails. Please try again.",
+        description: "Failed to send emails. Please try again.",
         variant: "destructive",
       });
     } finally {
