@@ -42,13 +42,33 @@ export const useFileProcessing = () => {
           }
 
           if (data) {
-            const processedFile: FileWithPreview = {
-              ...extractedFile,
-              processed: true,
-              score: data.score || 0,
-              matchPercentage: data.matchPercentage || 0,
-              progress: 100,
-            };
+            const processedFile: FileWithPreview = Object.create(Object.getPrototypeOf(extractedFile), {
+              ...Object.getOwnPropertyDescriptors(extractedFile),
+              processed: {
+                value: true,
+                writable: true,
+                enumerable: true,
+                configurable: true
+              },
+              score: {
+                value: data.score || 0,
+                writable: true,
+                enumerable: true,
+                configurable: true
+              },
+              matchPercentage: {
+                value: data.matchPercentage || 0,
+                writable: true,
+                enumerable: true,
+                configurable: true
+              },
+              progress: {
+                value: 100,
+                writable: true,
+                enumerable: true,
+                configurable: true
+              }
+            });
             
             console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
             setProcessedFiles(prev => [...prev, processedFile]);
@@ -76,13 +96,33 @@ export const useFileProcessing = () => {
 
         if (error) throw error;
 
-        const processedFile: FileWithPreview = {
-          ...file,
-          processed: true,
-          score: data?.score || 0,
-          matchPercentage: data?.matchPercentage || 0,
-          progress: 100,
-        };
+        const processedFile: FileWithPreview = Object.create(Object.getPrototypeOf(file), {
+          ...Object.getOwnPropertyDescriptors(file),
+          processed: {
+            value: true,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          },
+          score: {
+            value: data?.score || 0,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          },
+          matchPercentage: {
+            value: data?.matchPercentage || 0,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          },
+          progress: {
+            value: 100,
+            writable: true,
+            enumerable: true,
+            configurable: true
+          }
+        });
 
         setFiles((prevFiles) =>
           prevFiles.map((f) =>

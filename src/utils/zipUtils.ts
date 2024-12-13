@@ -33,19 +33,39 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         lastModified: zipEntry.date.getTime(),
       });
 
-      // Create a proper FileWithPreview object
-      const extractedFile = Object.assign(file, {
-        preview: URL.createObjectURL(content),
-        progress: 0,
-        processed: false,
-        score: 0,
-        matchPercentage: 0,
-        webkitRelativePath: relativePath,
-        // Ensure these methods are bound to the file
-        slice: file.slice.bind(file),
-        stream: file.stream.bind(file),
-        text: file.text.bind(file),
-        arrayBuffer: file.arrayBuffer.bind(file),
+      // Create FileWithPreview properties without modifying read-only File properties
+      const extractedFile = Object.create(Object.getPrototypeOf(file), {
+        ...Object.getOwnPropertyDescriptors(file),
+        preview: {
+          value: URL.createObjectURL(content),
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        progress: {
+          value: 0,
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        processed: {
+          value: false,
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        score: {
+          value: 0,
+          writable: true,
+          enumerable: true,
+          configurable: true
+        },
+        matchPercentage: {
+          value: 0,
+          writable: true,
+          enumerable: true,
+          configurable: true
+        }
       }) as FileWithPreview;
       
       console.log(`Extracted file: ${fileName}, size: ${extractedFile.size} bytes`);
