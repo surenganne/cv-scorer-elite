@@ -77,7 +77,7 @@ const Index = () => {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-gray-500 mb-4">
-                Set job criteria and scoring weights
+                Set Job Description and scoring weights
               </p>
               <Link to="/configure-scoring">
                 <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86]">
