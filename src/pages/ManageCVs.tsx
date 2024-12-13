@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { Upload } from "lucide-react";
@@ -14,7 +14,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 10;
@@ -22,6 +22,30 @@ const ITEMS_PER_PAGE = 10;
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('cv-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'cv_uploads'
+        },
+        () => {
+          // Invalidate and refetch CVs when changes occur
+          queryClient.invalidateQueries({ queryKey: ['cvs'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: cvs, isLoading } = useQuery({
     queryKey: ["cvs"],
@@ -41,8 +65,6 @@ const ManageCVs = () => {
       if (!filePath) {
         throw new Error("Invalid file path");
       }
-
-      console.log("Attempting to get signed URL for file path:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
@@ -71,8 +93,6 @@ const ManageCVs = () => {
       if (!filePath) {
         throw new Error("Invalid file path");
       }
-
-      console.log("Attempting to download file path:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
