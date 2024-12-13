@@ -28,31 +28,16 @@ interface MatchesTableProps {
     education_weight: number;
     certifications_weight: number;
   };
+  onViewResume?: (filePath: string) => Promise<void>;
 }
 
-export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) => {
+export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: MatchesTableProps) => {
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
   const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
 
   const handleViewResume = async (filePath: string) => {
-    try {
-      if (!filePath) {
-        throw new Error("Invalid file path");
-      }
-
-      const { data, error } = await supabase.storage
-        .from("cvs")
-        .createSignedUrl(filePath, 3600);
-
-      if (error) throw error;
-
-      if (!data?.signedUrl) {
-        throw new Error("No signed URL returned");
-      }
-
-      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
-    } catch (error) {
-      console.error("Error viewing resume:", error);
+    if (onViewResume) {
+      await onViewResume(filePath);
     }
   };
 
