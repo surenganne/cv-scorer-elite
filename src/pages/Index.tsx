@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Award, Users, FileText, ArrowRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { FileText, Award, Users, Upload } from "lucide-react";
 import Navbar from "@/components/layout/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -46,7 +44,7 @@ const Index = () => {
         </Card>
 
         {/* Statistics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-sm font-medium">Total CVs</CardTitle>
@@ -96,47 +94,6 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">
                 Average match score
               </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-lg font-medium">Upload CVs</CardTitle>
-              <Upload className="h-5 w-5 text-[#1C26A8]" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                Batch upload CVs in PDF or Word format
-              </p>
-              <Link to="/upload-cvs">
-                <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86] group">
-                  Start Upload
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow duration-300">
-            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-              <CardTitle className="text-lg font-medium">
-                Job Description & Criteria
-              </CardTitle>
-              <Award className="h-5 w-5 text-[#1C26A8]" />
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-500 mb-4">
-                Set Job Description and scoring weights
-              </p>
-              <Link to="/configure-scoring">
-                <Button className="w-full bg-[#1C26A8] hover:bg-[#161d86] group">
-                  Set JD and Criteria
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Button>
-              </Link>
             </CardContent>
           </Card>
         </div>
