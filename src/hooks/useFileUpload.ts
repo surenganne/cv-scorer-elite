@@ -8,20 +8,26 @@ export const useFileUpload = () => {
   const uploadToDatabase = async (processedFiles: FileWithPreview[]) => {
     try {
       for (const file of processedFiles) {
+        // Create a safe copy of the file data with only the needed properties
         const fileData = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          preview: file.preview,
+          name: file.file.name,
+          type: file.file.type,
+          size: file.file.size,
+          preview: file.preview || '',
           score: file.score || 0,
           matchPercentage: file.matchPercentage || 0,
         };
+
+        console.log('Uploading file data:', fileData);
 
         const { error } = await supabase.functions.invoke('upload-cv', {
           body: JSON.stringify(fileData),
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Upload error:', error);
+          throw error;
+        }
       }
 
       toast({

@@ -14,28 +14,24 @@ serve(async (req) => {
   try {
     console.log('Starting CV upload process...')
     
-    // Get the request body as text first
     const bodyText = await req.text()
-    console.log('Received body text:', bodyText)
+    console.log('Received body:', bodyText)
 
-    // Try to parse the JSON
     let fileData
     try {
       fileData = JSON.parse(bodyText)
-    } catch (parseError) {
-      console.error('JSON parsing error:', parseError)
+    } catch (error) {
+      console.error('Failed to parse request body:', error)
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON data', details: parseError.message }),
+        JSON.stringify({ error: 'Invalid request body' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
 
-    console.log('Parsed file data:', fileData)
-
     if (!fileData || !fileData.name) {
-      console.error('Invalid file data structure')
+      console.error('Invalid file data:', fileData)
       return new Response(
-        JSON.stringify({ error: 'Invalid file data structure' }),
+        JSON.stringify({ error: 'Missing required file data' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -45,7 +41,15 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Insert the CV data into the database
+    console.log('Inserting CV data into database:', {
+      file_name: fileData.name,
+      file_path: fileData.preview || '',
+      content_type: fileData.type,
+      file_size: fileData.size,
+      score: fileData.score,
+      match_percentage: fileData.matchPercentage
+    })
+
     const { data, error: dbError } = await supabase
       .from('cv_uploads')
       .insert({
