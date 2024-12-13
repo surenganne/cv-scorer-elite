@@ -8,17 +8,20 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+interface Candidate {
+  name: string;
+  score: number;
+  file_name: string;
+}
+
 interface EmailRequest {
   to: string[];
-  selectedCandidates: Array<{
-    name: string;
-    score: number;
-    file_name: string;
-  }>;
+  selectedCandidates: Candidate[];
   jobTitle: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -26,6 +29,11 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     console.log("Received request to send interview emails");
     const { to, selectedCandidates, jobTitle } = await req.json() as EmailRequest;
+    
+    if (!RESEND_API_KEY) {
+      throw new Error("Missing RESEND_API_KEY");
+    }
+
     console.log("Request data:", { to, selectedCandidates, jobTitle });
 
     const candidatesList = selectedCandidates
@@ -60,24 +68,26 @@ const handler = async (req: Request): Promise<Response> => {
       }),
     });
 
+    const responseData = await res.json();
+    console.log("Resend API response:", responseData);
+
     if (!res.ok) {
-      const error = await res.text();
-      console.error("Error from Resend API:", error);
-      throw new Error(error);
+      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
     }
 
-    const data = await res.json();
-    console.log("Email sent successfully:", data);
-
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    return new Response(JSON.stringify(responseData), {
       status: 200,
-    });
-  } catch (error) {
-    console.error("Error in send-interview-emails function:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error: any) {
+    console.error("Error in send-interview-emails function:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error.message,
+        details: error.cause || "Check the function logs for more details"
+      }), {
       status: 500,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 };
