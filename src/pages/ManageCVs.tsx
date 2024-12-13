@@ -44,20 +44,21 @@ const ManageCVs = () => {
 
       console.log("Original file path:", filePath);
       
-      // Get just the filename without any URL or blob prefix
-      const fileName = filePath.split('/').pop();
+      // Extract the actual file path from the database
+      // This should be just the filename that was stored during upload
+      const actualPath = filePath.replace(/^.*[\\\/]/, '');
       
-      if (!fileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to get signed URL for:", fileName);
+      console.log("Attempting to get signed URL for:", actualPath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(fileName, 60);
+        .createSignedUrl(actualPath, 60);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Storage error:", error);
+        throw error;
+      }
+      
       if (data?.signedUrl) {
         window.open(data.signedUrl, "_blank");
       }
@@ -79,25 +80,24 @@ const ManageCVs = () => {
 
       console.log("Original file path:", filePath);
       
-      // Get just the filename without any URL or blob prefix
-      const storedFileName = filePath.split('/').pop();
+      // Extract the actual file path from the database
+      const actualPath = filePath.replace(/^.*[\\\/]/, '');
       
-      if (!storedFileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
-      console.log("Attempting to download:", storedFileName);
+      console.log("Attempting to download:", actualPath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(storedFileName);
+        .download(actualPath);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Storage error:", error);
+        throw error;
+      }
       
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName; // Use the original file name for download
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
