@@ -13,7 +13,8 @@ export const useFileUpload = () => {
           name: file.file.name,
           type: file.file.type,
           size: file.file.size,
-          preview: file.preview || '',
+          // Store only the file name without any blob URL or path prefixes
+          path: file.file.name,
         };
 
         console.log('Uploading file data:', fileData);

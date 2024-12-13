@@ -42,7 +42,7 @@ serve(async (req) => {
     // Generate a unique storage path for the file
     const fileExt = fileData.name.split('.').pop()
     const uniqueFileName = `${crypto.randomUUID()}.${fileExt}`
-    const storagePath = `uploads/${uniqueFileName}`
+    const storagePath = uniqueFileName // Store just the filename without any additional path
 
     console.log('Generated storage path:', storagePath)
 
@@ -75,7 +75,7 @@ serve(async (req) => {
       .from('cv_uploads')
       .insert({
         file_name: fileData.name,
-        file_path: storagePath,
+        file_path: storagePath, // Store the clean path in the database
         content_type: fileData.type,
         file_size: fileData.size,
       })
