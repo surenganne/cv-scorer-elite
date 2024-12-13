@@ -42,12 +42,20 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Clean the file path by removing any blob: prefix and getting just the UUID part
-      const cleanPath = filePath.replace(/^blob:.*\//, '');
+      console.log("Original file path:", filePath);
       
+      // Get just the filename without any URL or blob prefix
+      const fileName = filePath.split('/').pop();
+      
+      if (!fileName) {
+        throw new Error("Could not extract file name from path");
+      }
+
+      console.log("Attempting to get signed URL for:", fileName);
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(cleanPath, 60);
+        .createSignedUrl(fileName, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -69,19 +77,27 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Clean the file path by removing any blob: prefix and getting just the UUID part
-      const cleanPath = filePath.replace(/^blob:.*\//, '');
+      console.log("Original file path:", filePath);
+      
+      // Get just the filename without any URL or blob prefix
+      const storedFileName = filePath.split('/').pop();
+      
+      if (!storedFileName) {
+        throw new Error("Could not extract file name from path");
+      }
+
+      console.log("Attempting to download:", storedFileName);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(cleanPath);
+        .download(storedFileName);
 
       if (error) throw error;
       
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName;
+      link.download = fileName; // Use the original file name for download
       document.body.appendChild(link);
       link.click();
       link.remove();
