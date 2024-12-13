@@ -19,95 +19,111 @@ serve(async (req) => {
   try {
     console.log('Starting CV processing...')
     
-    // Get the raw body instead of using formData
-    const body = await req.blob();
-    console.log('Request body size:', body.size);
-
-    if (!body || body.size === 0) {
-      console.error('No file provided or empty request')
+    // Get the file data from the request
+    const file = await req.blob();
+    console.log('Received file size:', file.size, 'bytes')
+    
+    if (!file || file.size === 0) {
+      console.error('No file provided')
       return new Response(
-        JSON.stringify({ error: 'No file uploaded or invalid file' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        JSON.stringify({ error: 'No file provided' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400 
+        }
       )
     }
 
     // Convert blob to array buffer for processing
-    const arrayBuffer = await body.arrayBuffer();
+    const arrayBuffer = await file.arrayBuffer();
     const fileData = new Uint8Array(arrayBuffer);
 
-    // Check if it's a ZIP file by looking at magic numbers
+    // Check if it's a ZIP file by magic numbers
     const isZip = fileData[0] === 0x50 && fileData[1] === 0x4B && fileData[2] === 0x03 && fileData[3] === 0x04;
 
     if (isZip) {
-      console.log('ZIP file detected, extracting contents...')
-      
+      console.log('Processing ZIP file...')
       try {
         const unzippedFiles = await unzip(fileData);
         const processedFiles = [];
 
         for (const [filename, content] of Object.entries(unzippedFiles)) {
-          // Skip directories and non-supported file types
-          if (filename.endsWith('/') || 
-              !filename.match(/\.(pdf|doc|docx)$/i)) {
+          // Skip directories and non-supported files
+          if (filename.endsWith('/') || !filename.match(/\.(pdf|doc|docx)$/i)) {
             continue;
           }
 
-          console.log('Processing extracted file:', filename);
-
-          // Mock processing for each file
-          const processedResult = {
+          console.log('Processing file from ZIP:', filename)
+          
+          // Mock processing result
+          const result = {
             fileName: filename,
             status: 'processed',
             score: Math.floor(Math.random() * 30) + 70,
             matchPercentage: Math.floor(Math.random() * 20) + 60
-          }
-
-          processedFiles.push(processedResult);
+          };
+          
+          processedFiles.push(result);
         }
 
-        console.log('ZIP processing completed, processed files:', processedFiles.length);
-
+        console.log('ZIP processing completed:', processedFiles.length, 'files processed')
+        
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             isZip: true,
-            processedFiles,
+            processedFiles
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
         )
-      } catch (zipError) {
-        console.error('Error processing ZIP file:', zipError);
+      } catch (error) {
+        console.error('ZIP processing error:', error)
         return new Response(
-          JSON.stringify({ error: 'Failed to process ZIP file', details: zipError.message }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+          JSON.stringify({ error: 'Failed to process ZIP file' }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 500 
+          }
         )
       }
     }
 
     // Handle single file
-    console.log('Processing single file');
+    console.log('Processing single file...')
     
-    // Mock processing result for single file
-    const processedResult = {
+    // Mock processing for single file
+    const result = {
       fileName: 'document',
       status: 'processed',
       score: Math.floor(Math.random() * 30) + 70,
       matchPercentage: Math.floor(Math.random() * 20) + 60
-    }
+    };
 
-    console.log('Single file processing completed:', processedResult);
-
+    console.log('Single file processing completed')
+    
     return new Response(
-      JSON.stringify({ 
+      JSON.stringify({
         isZip: false,
-        processedFiles: [processedResult]
+        processedFiles: [result]
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200 
+      }
     )
   } catch (error) {
-    console.error('Processing error:', error);
+    console.error('Processing error:', error)
     return new Response(
-      JSON.stringify({ error: 'Failed to process CV', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ 
+        error: 'Failed to process file',
+        details: error.message 
+      }),
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 500 
+      }
     )
   }
 })
