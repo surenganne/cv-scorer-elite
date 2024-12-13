@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Briefcase, FileText, Code, Clock, Award } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+import { Briefcase, FileText, Code, Clock, Award, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface JobRequirementsProps {
   jobTitle: string;
@@ -28,6 +32,53 @@ export const JobRequirements = ({
   preferredQualifications,
   setPreferredQualifications,
 }: JobRequirementsProps) => {
+  const { toast } = useToast();
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateRequirements = async () => {
+    if (!jobDescription) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please enter a job description first.",
+      });
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-requirements', {
+        body: { jobDescription },
+      });
+
+      if (error) throw error;
+
+      if (data.requiredSkills) {
+        setRequiredSkills(data.requiredSkills);
+      }
+      if (data.minimumExperience) {
+        setMinimumExperience(data.minimumExperience.toString());
+      }
+      if (data.preferredQualifications) {
+        setPreferredQualifications(data.preferredQualifications);
+      }
+
+      toast({
+        title: "Success",
+        description: "Requirements generated successfully!",
+      });
+    } catch (error) {
+      console.error('Error generating requirements:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to generate requirements. Please try again.",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 p-8 rounded-2xl shadow-lg border border-gray-100 space-y-8 transition-all hover:shadow-xl hover:border-gray-200">
       <div className="space-y-6">
@@ -55,13 +106,25 @@ export const JobRequirements = ({
               <FileText className="w-4 h-4 text-gray-500" />
               Job Description*
             </Label>
-            <Textarea
-              id="jobDescription"
-              placeholder="Enter detailed job description..."
-              value={jobDescription}
-              onChange={(e) => setJobDescription(e.target.value)}
-              className="min-h-[120px] transition-all border-gray-200 focus:border-primary focus:ring-primary resize-none"
-            />
+            <div className="space-y-2">
+              <Textarea
+                id="jobDescription"
+                placeholder="Enter detailed job description..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                className="min-h-[120px] transition-all border-gray-200 focus:border-primary focus:ring-primary resize-none"
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={generateRequirements}
+                disabled={isGenerating || !jobDescription}
+                className="w-full sm:w-auto"
+              >
+                <Wand2 className="w-4 h-4 mr-2" />
+                {isGenerating ? "Generating..." : "Generate Requirements"}
+              </Button>
+            </div>
           </div>
           
           <div className="space-y-2">
