@@ -58,14 +58,8 @@ export const MatchEvidence = ({ score, evidence, weights, isExpanded, onToggle }
   return (
     <Accordion 
       type="single" 
-      value={isExpanded ? "evidence" : ""} 
-      onValueChange={(value) => {
-        if (value === "evidence") {
-          onToggle();
-        } else {
-          onToggle();
-        }
-      }}
+      value={isExpanded ? "evidence" : ""}
+      onValueChange={() => onToggle()}
     >
       <AccordionItem value="evidence" className="border-none">
         <AccordionTrigger className="hover:no-underline py-0 px-0">
