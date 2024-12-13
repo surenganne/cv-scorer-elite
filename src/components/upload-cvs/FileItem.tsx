@@ -18,14 +18,12 @@ const FileItem = ({ file, onRemove, onUpload, onCandidateNameChange }: FileItemP
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
           <p className="font-medium truncate">{file.name}</p>
-          <div className="flex items-center gap-2">
-            <Input
-              placeholder="Candidate name (optional)"
-              value={file.candidateName}
-              onChange={(e) => onCandidateNameChange(file, e.target.value)}
-              className="max-w-md"
-            />
-          </div>
+          <Input
+            placeholder="Enter candidate name"
+            value={file.candidateName}
+            onChange={(e) => onCandidateNameChange(file, e.target.value)}
+            className="max-w-md"
+          />
           <p className="text-sm text-gray-500">
             {(file.size / 1024 / 1024).toFixed(2)} MB
           </p>
