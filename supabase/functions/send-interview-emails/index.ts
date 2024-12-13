@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -12,6 +13,7 @@ interface Candidate {
   name: string;
   score: number;
   file_name: string;
+  file_path?: string;
 }
 
 interface EmailRequest {
@@ -36,6 +38,50 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Request data:", { to, selectedCandidates, jobTitle });
 
+    // Create Supabase client
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get signed URLs and download files for each candidate
+    const attachments = await Promise.all(
+      selectedCandidates
+        .filter(candidate => candidate.file_path)
+        .map(async (candidate) => {
+          try {
+            // Get signed URL
+            const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+              .from('cvs')
+              .createSignedUrl(candidate.file_path!, 60); // 60 seconds expiry
+
+            if (signedUrlError) {
+              console.error('Error getting signed URL:', signedUrlError);
+              return null;
+            }
+
+            // Download file
+            const fileResponse = await fetch(signedUrlData.signedUrl);
+            if (!fileResponse.ok) {
+              console.error('Error downloading file:', fileResponse.statusText);
+              return null;
+            }
+
+            const fileBuffer = await fileResponse.arrayBuffer();
+            return {
+              filename: candidate.file_name,
+              content: new Uint8Array(fileBuffer),
+            };
+          } catch (error) {
+            console.error('Error processing attachment:', error);
+            return null;
+          }
+        })
+    );
+
+    const validAttachments = attachments.filter(Boolean);
+    console.log(`Successfully processed ${validAttachments.length} attachments`);
+
     const candidatesList = selectedCandidates
       .map(
         (candidate) =>
@@ -49,10 +95,10 @@ const handler = async (req: Request): Promise<Response> => {
       <ul>
         ${candidatesList}
       </ul>
-      <p>Please review their resumes and schedule interviews accordingly.</p>
+      <p>Please review their resumes (attached) and schedule interviews accordingly.</p>
     `;
 
-    console.log("Sending email with HTML:", html);
+    console.log("Sending email with HTML and attachments");
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -65,6 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
         to,
         subject: `Interview Candidates for ${jobTitle}`,
         html,
+        attachments: validAttachments,
       }),
     });
 
