@@ -98,7 +98,6 @@ export const JobMatchList = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Job Title</TableHead>
-            <TableHead>Required Skills</TableHead>
             <TableHead>Min. Experience</TableHead>
             <TableHead>Created</TableHead>
             <TableHead>Actions</TableHead>
@@ -108,7 +107,6 @@ export const JobMatchList = () => {
           {activeJobs.map((job) => (
             <TableRow key={job.id}>
               <TableCell className="font-medium">{job.title}</TableCell>
-              <TableCell>{job.required_skills}</TableCell>
               <TableCell>{job.minimum_experience} years</TableCell>
               <TableCell>
                 {format(new Date(job.created_at), "MMM dd, yyyy")}
