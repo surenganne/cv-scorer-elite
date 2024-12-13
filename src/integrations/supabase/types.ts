@@ -9,7 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cv_uploads: {
+        Row: {
+          candidate_name: string | null
+          content_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          match_percentage: number | null
+          score: number | null
+          status: string | null
+          upload_date: string | null
+        }
+        Insert: {
+          candidate_name?: string | null
+          content_type: string
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          match_percentage?: number | null
+          score?: number | null
+          status?: string | null
+          upload_date?: string | null
+        }
+        Update: {
+          candidate_name?: string | null
+          content_type?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          match_percentage?: number | null
+          score?: number | null
+          status?: string | null
+          upload_date?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
