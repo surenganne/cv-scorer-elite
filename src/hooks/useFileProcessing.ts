@@ -28,11 +28,12 @@ export const useFileProcessing = () => {
 
       console.log('Starting processing for:', file.name);
       
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append('file', file);
+
       const { data, error } = await supabase.functions.invoke('process-cv', {
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+        body: formData,
       });
 
       clearInterval(progressInterval);

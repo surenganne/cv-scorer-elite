@@ -1,30 +1,25 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { 
-      headers: corsHeaders,
-      status: 200 
-    })
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
     console.log('Starting CV processing...')
     
-    // Get the file data from the request
-    const fileData = await req.blob()
-    console.log('Received file size:', fileData.size, 'bytes')
+    // Get the file from FormData
+    const formData = await req.formData()
+    const file = formData.get('file')
     
-    if (!fileData || fileData.size === 0) {
-      console.error('No file provided')
+    if (!file || !(file instanceof File)) {
+      console.error('No file provided or invalid file')
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
         { 
@@ -34,8 +29,10 @@ serve(async (req) => {
       )
     }
 
-    // Check if it's a ZIP file by magic numbers
-    const arrayBuffer = await fileData.arrayBuffer()
+    console.log('Received file:', file.name, 'Size:', file.size, 'bytes')
+
+    // Convert file to ArrayBuffer to check if it's a ZIP
+    const arrayBuffer = await file.arrayBuffer()
     const bytes = new Uint8Array(arrayBuffer)
     const isZip = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04
 
@@ -77,7 +74,7 @@ serve(async (req) => {
     
     // Mock processing for single file
     const result = {
-      fileName: 'document',
+      fileName: file.name,
       status: 'processed',
       score: Math.floor(Math.random() * 30) + 70,
       matchPercentage: Math.floor(Math.random() * 20) + 60
