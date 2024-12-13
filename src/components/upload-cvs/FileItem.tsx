@@ -14,7 +14,7 @@ interface FileItemProps {
 const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
   // Helper function to format file size
   const formatFileSize = (bytes: number): string => {
-    if (!bytes || isNaN(bytes)) return '0 B';
+    if (bytes === 0 || isNaN(bytes)) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));

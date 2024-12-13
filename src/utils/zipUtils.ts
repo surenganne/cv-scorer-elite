@@ -24,7 +24,7 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
             lastModified: zipEntry.date.getTime(),
           }) as FileWithPreview;
           
-          // Add preview URL and ensure size is set correctly
+          // Add preview URL
           extractedFile.preview = URL.createObjectURL(content);
           console.log(`Extracted file: ${fileName}, size: ${content.size} bytes`);
           
@@ -33,8 +33,10 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
       }
     }
     
-    console.log(`Total valid files extracted: ${extractedFiles.length}`);
-    return extractedFiles;
+    // Filter out macOS system files
+    const filteredFiles = extractedFiles.filter(file => !file.name.startsWith('._') && !file.name.includes('.DS_Store'));
+    console.log(`Total valid files extracted: ${filteredFiles.length}`);
+    return filteredFiles;
   } catch (error) {
     console.error('Error extracting ZIP:', error);
     throw error;
