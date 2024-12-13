@@ -50,15 +50,19 @@ const handler = async (req: Request): Promise<Response> => {
         .filter(candidate => candidate.file_path)
         .map(async (candidate) => {
           try {
+            console.log('Processing attachment for candidate:', candidate.name);
+            
             // Get signed URL
             const { data: signedUrlData, error: signedUrlError } = await supabase.storage
               .from('cvs')
-              .createSignedUrl(candidate.file_path!, 60); // 60 seconds expiry
+              .createSignedUrl(candidate.file_path!, 60);
 
             if (signedUrlError) {
               console.error('Error getting signed URL:', signedUrlError);
               return null;
             }
+
+            console.log('Got signed URL:', signedUrlData.signedUrl);
 
             // Download file
             const fileResponse = await fetch(signedUrlData.signedUrl);
@@ -67,10 +71,16 @@ const handler = async (req: Request): Promise<Response> => {
               return null;
             }
 
-            const fileBuffer = await fileResponse.arrayBuffer();
+            // Convert file to base64
+            const fileArrayBuffer = await fileResponse.arrayBuffer();
+            const uint8Array = new Uint8Array(fileArrayBuffer);
+            const base64String = btoa(String.fromCharCode.apply(null, uint8Array));
+
+            console.log('Successfully processed file:', candidate.file_name);
+
             return {
               filename: candidate.file_name,
-              content: Buffer.from(fileBuffer).toString('base64'),
+              content: base64String,
             };
           } catch (error) {
             console.error('Error processing attachment:', error);
