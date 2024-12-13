@@ -71,7 +71,7 @@ const Index = () => {
           <Card className="hover:shadow-lg transition-shadow duration-300">
             <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
               <CardTitle className="text-lg font-medium">
-                Configure Scoring
+                Job Description & Criteria
               </CardTitle>
               <Award className="h-5 w-5 text-[#1C26A8]" />
             </CardHeader>
