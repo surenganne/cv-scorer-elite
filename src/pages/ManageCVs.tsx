@@ -36,17 +36,25 @@ const ManageCVs = () => {
     },
   });
 
+  const cleanFilePath = (filePath: string) => {
+    // Remove any blob URL prefix if present
+    const cleanPath = filePath.replace(/^blob:.*?\//, '');
+    // Remove any remaining URL components
+    return cleanPath.split('/').pop() || cleanPath;
+  };
+
   const handleViewCV = async (filePath: string) => {
     try {
       if (!filePath) {
         throw new Error("Invalid file path");
       }
 
-      console.log("Attempting to get signed URL for file path:", filePath);
+      const cleanedPath = cleanFilePath(filePath);
+      console.log("Attempting to get signed URL for cleaned path:", cleanedPath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(cleanedPath, 60);
 
       if (error) {
         console.error("Storage error:", error);
@@ -72,11 +80,12 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      console.log("Attempting to download file path:", filePath);
+      const cleanedPath = cleanFilePath(filePath);
+      console.log("Attempting to download cleaned path:", cleanedPath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(filePath);
+        .download(cleanedPath);
 
       if (error) {
         console.error("Storage error:", error);
