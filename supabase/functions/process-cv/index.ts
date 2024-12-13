@@ -28,7 +28,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Received file:', file.name, 'Size:', file.size, 'bytes')
+    console.log(`Received file: ${file.name} Size: ${file.size} bytes`)
 
     // Convert file to ArrayBuffer to check if it's a ZIP
     const arrayBuffer = await file.arrayBuffer()
@@ -39,46 +39,66 @@ serve(async (req) => {
       console.log('Processing ZIP file...')
       
       const zip = new JSZip();
-      await zip.loadAsync(arrayBuffer);
-      
-      // Log all files in the ZIP
-      console.log('ZIP contents:');
-      for (const filename in zip.files) {
-        console.log(`- ${filename} (${zip.files[filename].dir ? 'directory' : 'file'})`);
+      try {
+        await zip.loadAsync(arrayBuffer);
+      } catch (error) {
+        console.error('Error loading ZIP:', error);
+        throw new Error('Invalid ZIP file format');
       }
       
-      const processedFiles = [];
-      let totalFiles = 0;
+      // Log all files in the ZIP using entries() method
+      console.log('ZIP contents:');
+      const entries = Object.entries(zip.files);
+      entries.forEach(([path, entry]) => {
+        console.log(`- ${path} (${entry.dir ? 'directory' : 'file'})`);
+      });
       
-      // First, count valid files and store them
+      const processedFiles = [];
       const validFiles = [];
-      for (const filename in zip.files) {
-        const zipEntry = zip.files[filename];
-        if (!zipEntry.dir) {
+      
+      // First, collect all valid files
+      for (const [filename, entry] of entries) {
+        if (!entry.dir) {
           const extension = filename.split('.').pop()?.toLowerCase();
           console.log(`Checking file: ${filename}, Extension: ${extension}`);
-          if (['doc', 'docx', 'pdf'].includes(extension || '')) {
+          
+          // More permissive extension check
+          if (extension && ['doc', 'docx', 'pdf', 'txt', 'rtf'].includes(extension)) {
             console.log(`Valid file found: ${filename}`);
-            validFiles.push({ filename, zipEntry });
-            totalFiles++;
+            validFiles.push({ filename, entry });
           } else {
-            console.log(`Skipping file with invalid extension: ${filename}`);
+            console.log(`Skipping file with extension: ${extension}`);
           }
-        } else {
-          console.log(`Skipping directory: ${filename}`);
         }
       }
       
+      const totalFiles = validFiles.length;
       console.log(`Found ${totalFiles} valid files to process in ZIP`);
+      
+      if (totalFiles === 0) {
+        return new Response(
+          JSON.stringify({
+            isZip: true,
+            error: 'No valid files found in ZIP',
+            processedFiles: [],
+            totalFiles: 0,
+            processedCount: 0
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200 
+          }
+        );
+      }
       
       // Process each valid file
       let processedCount = 0;
-      for (const { filename, zipEntry } of validFiles) {
+      for (const { filename, entry } of validFiles) {
         try {
           console.log(`Processing ${filename} (${processedCount + 1}/${totalFiles})`);
           
-          // Get the file content
-          const content = await zipEntry.async('uint8array');
+          // Get the file content as Uint8Array
+          const content = await entry.async('uint8array');
           console.log(`File ${filename} content size: ${content.length} bytes`);
           
           // Mock processing result with random scores
@@ -91,7 +111,7 @@ serve(async (req) => {
           });
           
           processedCount++;
-          console.log(`Processed ${filename} successfully`);
+          console.log(`Successfully processed ${filename}`);
         } catch (error) {
           console.error(`Error processing file ${filename}:`, error);
         }
