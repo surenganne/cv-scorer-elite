@@ -6,8 +6,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { CVTable } from "@/components/cv-analysis/CVTable";
 import { CVFilters } from "@/components/cv-analysis/CVFilters";
 import Navbar from "@/components/layout/Navbar";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useState } from "react";
+
+const ITEMS_PER_PAGE = 10;
 
 const ManageCVs = () => {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { data: cvs, isLoading } = useQuery({
     queryKey: ["cvs"],
     queryFn: async () => {
@@ -20,6 +33,47 @@ const ManageCVs = () => {
       return data;
     },
   });
+
+  const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const handleViewCV = async (filePath: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("cvs")
+        .createSignedUrl(filePath, 60); // URL valid for 60 seconds
+
+      if (error) throw error;
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, "_blank");
+      }
+    } catch (error) {
+      console.error("Error viewing CV:", error);
+    }
+  };
+
+  const handleDownloadCV = async (filePath: string, fileName: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("cvs")
+        .download(filePath);
+
+      if (error) throw error;
+      
+      // Create a download link
+      const url = window.URL.createObjectURL(data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading CV:", error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -40,7 +94,41 @@ const ManageCVs = () => {
           {isLoading ? (
             <div className="text-center py-4">Loading CVs...</div>
           ) : (
-            <CVTable data={cvs} />
+            <>
+              <CVTable 
+                data={paginatedCVs} 
+                onView={handleViewCV}
+                onDownload={handleDownloadCV}
+              />
+              {totalPages > 1 && (
+                <Pagination className="mt-4">
+                  <PaginationContent>
+                    <PaginationItem>
+                      <PaginationPrevious 
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                      />
+                    </PaginationItem>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => setCurrentPage(page)}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    ))}
+                    <PaginationItem>
+                      <PaginationNext
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                      />
+                    </PaginationItem>
+                  </PaginationContent>
+                </Pagination>
+              )}
+            </>
           )}
         </div>
       </div>

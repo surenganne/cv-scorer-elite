@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -22,9 +21,11 @@ type CV = {
 
 interface CVTableProps {
   data?: CV[];
+  onView: (filePath: string) => void;
+  onDownload: (filePath: string, fileName: string) => void;
 }
 
-export const CVTable = ({ data = [] }: CVTableProps) => {
+export const CVTable = ({ data = [], onView, onDownload }: CVTableProps) => {
   const formatFileSize = (bytes: number) => {
     const units = ['B', 'KB', 'MB', 'GB'];
     let size = bytes;
@@ -61,11 +62,19 @@ export const CVTable = ({ data = [] }: CVTableProps) => {
               </TableCell>
               <TableCell>
                 <div className="flex space-x-2">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onView(cv.file_path)}
+                  >
                     <FileText className="h-4 w-4 mr-1" />
                     View
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => onDownload(cv.file_path, cv.file_name)}
+                  >
                     <Download className="h-4 w-4 mr-1" />
                     Download
                   </Button>
