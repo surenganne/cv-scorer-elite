@@ -15,11 +15,13 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const ITEMS_PER_PAGE = 10;
 
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const { toast } = useToast();
 
   const { data: cvs, isLoading } = useQuery({
     queryKey: ["cvs"],
@@ -34,15 +36,17 @@ const ManageCVs = () => {
     },
   });
 
-  const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
   const handleViewCV = async (filePath: string) => {
     try {
+      // Remove any blob URLs or prefixes from the file path
+      const cleanPath = filePath.split('/').pop();
+      if (!cleanPath) {
+        throw new Error("Invalid file path");
+      }
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(cleanPath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -50,14 +54,25 @@ const ManageCVs = () => {
       }
     } catch (error) {
       console.error("Error viewing CV:", error);
+      toast({
+        title: "Error",
+        description: "Could not view the CV. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDownloadCV = async (filePath: string, fileName: string) => {
     try {
+      // Remove any blob URLs or prefixes from the file path
+      const cleanPath = filePath.split('/').pop();
+      if (!cleanPath) {
+        throw new Error("Invalid file path");
+      }
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(filePath);
+        .download(cleanPath);
 
       if (error) throw error;
       
@@ -71,8 +86,17 @@ const ManageCVs = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading CV:", error);
+      toast({
+        title: "Error",
+        description: "Could not download the CV. Please try again.",
+        variant: "destructive",
+      });
     }
   };
+
+  const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">

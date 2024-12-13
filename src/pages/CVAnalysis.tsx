@@ -2,13 +2,22 @@ import { CVTable } from "@/components/cv-analysis/CVTable";
 import { CVFilters } from "@/components/cv-analysis/CVFilters";
 import Navbar from "@/components/layout/Navbar";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
 
 const CVAnalysis = () => {
+  const { toast } = useToast();
+
   const handleViewCV = async (filePath: string) => {
     try {
+      // Remove any blob URLs or prefixes from the file path
+      const cleanPath = filePath.split('/').pop();
+      if (!cleanPath) {
+        throw new Error("Invalid file path");
+      }
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(cleanPath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -16,14 +25,25 @@ const CVAnalysis = () => {
       }
     } catch (error) {
       console.error("Error viewing CV:", error);
+      toast({
+        title: "Error",
+        description: "Could not view the CV. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleDownloadCV = async (filePath: string, fileName: string) => {
     try {
+      // Remove any blob URLs or prefixes from the file path
+      const cleanPath = filePath.split('/').pop();
+      if (!cleanPath) {
+        throw new Error("Invalid file path");
+      }
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(filePath);
+        .download(cleanPath);
 
       if (error) throw error;
       
@@ -37,6 +57,11 @@ const CVAnalysis = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error downloading CV:", error);
+      toast({
+        title: "Error",
+        description: "Could not download the CV. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
