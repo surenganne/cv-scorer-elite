@@ -29,9 +29,12 @@ export const useCVOperations = () => {
         throw error;
       }
 
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, "_blank");
+      if (!data?.signedUrl) {
+        throw new Error("No signed URL returned");
       }
+
+      // Open in new tab
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
     } catch (error) {
       console.error("Error viewing CV:", error);
       toast({
@@ -66,6 +69,7 @@ export const useCVOperations = () => {
         throw error;
       }
       
+      // Create a download link
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
