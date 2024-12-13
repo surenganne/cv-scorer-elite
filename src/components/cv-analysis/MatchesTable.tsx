@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { MatchEvidence } from "./MatchEvidence";
 import {
   Table,
   TableBody,
@@ -7,7 +7,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MatchEvidence } from "./MatchEvidence";
 
 interface Match {
   id: string;
@@ -35,9 +34,9 @@ interface MatchesTableProps {
 
 export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) => {
   return (
-    <div className="mt-8 space-y-6 animate-fade-in">
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-gray-100">
-        <h3 className="text-xl font-semibold text-gray-900 mb-2 flex items-center gap-2">
+    <div className="mt-4 space-y-4 animate-fade-in">
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
+        <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
           Top {matches.length} Matches
           <span className="text-sm font-normal text-gray-500">
             for {jobTitle}
@@ -47,8 +46,8 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="font-semibold">Candidate</TableHead>
-                <TableHead className="font-semibold">Match Analysis</TableHead>
+                <TableHead className="font-semibold py-2">Candidate</TableHead>
+                <TableHead className="font-semibold py-2">Match Analysis</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -57,10 +56,10 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
                   key={match.id}
                   className="hover:bg-gray-50/50 transition-colors"
                 >
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium py-2">
                     {match.file_name}
                   </TableCell>
-                  <TableCell className="max-w-2xl">
+                  <TableCell className="max-w-2xl py-2">
                     <MatchEvidence score={match.score} evidence={match.evidence} weights={weights} />
                   </TableCell>
                 </TableRow>
