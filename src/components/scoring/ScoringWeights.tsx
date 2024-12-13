@@ -29,6 +29,7 @@ export const ScoringWeights = ({
   }, [experienceWeight, skillsWeight, educationWeight, certificationsWeight]);
 
   const handleWeightChange = (type: string, value: number) => {
+    // Calculate what the new total would be if we apply this change
     const weights = {
       experience: type === "experience" ? value : experienceWeight,
       skills: type === "skills" ? value : skillsWeight,
@@ -38,17 +39,16 @@ export const ScoringWeights = ({
 
     const newTotal = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
 
-    // Only show warning toast if the new value would increase the total above 100%
-    if (newTotal > 100 && newTotal > totalWeight) {
+    // Only allow the change if it wouldn't make the total exceed 100%
+    if (newTotal <= 100) {
+      onWeightChange(type, value);
+    } else {
       toast({
         variant: "destructive",
         title: "Invalid weight",
         description: "Total weights cannot exceed 100%",
       });
-      return;
     }
-
-    onWeightChange(type, value);
   };
 
   return (
