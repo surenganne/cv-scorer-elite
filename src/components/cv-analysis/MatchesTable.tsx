@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { MatchEvidence } from "./MatchEvidence";
 import {
   Table,
@@ -33,6 +34,8 @@ interface MatchesTableProps {
 }
 
 export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) => {
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+
   return (
     <div className="mt-4 space-y-4 animate-fade-in">
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
@@ -60,7 +63,13 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
                     {match.file_name}
                   </TableCell>
                   <TableCell className="max-w-2xl py-2">
-                    <MatchEvidence score={match.score} evidence={match.evidence} weights={weights} />
+                    <MatchEvidence 
+                      score={match.score} 
+                      evidence={match.evidence} 
+                      weights={weights}
+                      isExpanded={expandedMatch === match.id}
+                      onToggle={() => setExpandedMatch(expandedMatch === match.id ? null : match.id)}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

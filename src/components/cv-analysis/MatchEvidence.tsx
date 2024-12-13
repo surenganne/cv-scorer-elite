@@ -22,9 +22,11 @@ interface MatchEvidenceProps {
     education_weight: number;
     certifications_weight: number;
   };
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) => {
+export const MatchEvidence = ({ score, evidence, weights, isExpanded, onToggle }: MatchEvidenceProps) => {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-emerald-600 bg-emerald-50";
     if (score >= 60) return "text-amber-600 bg-amber-50";
@@ -54,7 +56,17 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
   ] : [];
 
   return (
-    <Accordion type="single" collapsible className="w-full">
+    <Accordion 
+      type="single" 
+      value={isExpanded ? "evidence" : ""} 
+      onValueChange={(value) => {
+        if (value === "evidence") {
+          onToggle();
+        } else {
+          onToggle();
+        }
+      }}
+    >
       <AccordionItem value="evidence" className="border-none">
         <AccordionTrigger className="hover:no-underline py-0 px-0">
           <div className={cn(
