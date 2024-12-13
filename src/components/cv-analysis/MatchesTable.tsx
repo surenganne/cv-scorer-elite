@@ -73,16 +73,6 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
     );
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedCandidates(matches.map(match => match.id));
-    } else {
-      setSelectedCandidates([]);
-    }
-  };
-
-  const isAllSelected = matches.length > 0 && selectedCandidates.length === matches.length;
-
   return (
     <div className="mt-4 space-y-4 animate-fade-in">
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
@@ -104,13 +94,7 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="w-[50px]">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={handleSelectAll}
-                    aria-label="Select all candidates"
-                  />
-                </TableHead>
+                <TableHead className="w-[50px]"></TableHead>
                 <TableHead className="font-semibold py-2 text-left">Candidate</TableHead>
                 <TableHead className="font-semibold py-2">Match Analysis</TableHead>
               </TableRow>

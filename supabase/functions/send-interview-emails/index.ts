@@ -30,31 +30,12 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing RESEND_API_KEY");
     }
 
-    console.log("Processing request for candidates:", selectedCandidates.map(c => ({ name: c.name, file_path: c.file_path })));
+    console.log("Request data:", { to, selectedCandidates, jobTitle });
 
     const validAttachments = await processAttachments(selectedCandidates);
-    
-    // Check if all attachments were processed successfully
-    if (validAttachments.length !== selectedCandidates.length) {
-      console.error('Not all attachments were processed successfully:', {
-        processed: validAttachments.length,
-        total: selectedCandidates.length,
-        failed: selectedCandidates.length - validAttachments.length
-      });
-      
-      return new Response(JSON.stringify({ 
-        error: 'Failed to process all attachments',
-        details: `Only ${validAttachments.length} out of ${selectedCandidates.length} attachments were processed successfully. Please try again.`
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     const html = generateEmailHTML(jobTitle, selectedCandidates);
 
-    console.log("Sending email with attachments:", {
-      recipientsCount: to.length,
+    console.log("Sending email with HTML and attachments:", {
       attachmentsCount: validAttachments.length,
       candidatesCount: selectedCandidates.length
     });
@@ -81,11 +62,7 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
     }
 
-    return new Response(JSON.stringify({
-      success: true,
-      message: `Email sent successfully with all ${validAttachments.length} attachments`,
-      data: responseData
-    }), {
+    return new Response(JSON.stringify(responseData), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

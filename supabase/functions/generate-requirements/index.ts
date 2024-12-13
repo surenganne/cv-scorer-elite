@@ -20,18 +20,17 @@ serve(async (req) => {
     const prompt = `Based on the following job description, provide:
     1. A comma-separated list of required technical and soft skills
     2. The minimum years of experience recommended
-    3. A bullet-pointed list of preferred qualifications (education, certifications, or additional skills that would be nice to have)
+    3. A bullet-pointed list of preferred qualifications
     
     Job Description: ${jobDescription}
     
-    Format your response EXACTLY like this example, maintaining the exact structure and labels:
-    REQUIRED_SKILLS: Python, JavaScript, SQL, communication skills, problem-solving
-    MINIMUM_EXPERIENCE: 3
+    Format your response exactly like this, keeping the exact labels:
+    REQUIRED_SKILLS: skill1, skill2, skill3
+    MINIMUM_EXPERIENCE: X
     PREFERRED_QUALIFICATIONS:
-    • Master's degree in Computer Science or related field
-    • AWS certification
-    • Experience with cloud computing platforms
-    • Knowledge of machine learning frameworks`;
+    • qualification1
+    • qualification2
+    • qualification3`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
 
@@ -42,64 +41,41 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',  // Fixed model name
+        model: 'gpt-4o-mini',
         messages: [
           { 
             role: 'system', 
-            content: 'You are a professional HR assistant that helps create detailed job requirements. Always format your response exactly as requested, maintaining the structure with REQUIRED_SKILLS, MINIMUM_EXPERIENCE, and PREFERRED_QUALIFICATIONS with bullet points.' 
+            content: 'You are a professional HR assistant that helps create detailed job requirements based on job descriptions.' 
           },
           { role: 'user', content: prompt }
         ],
-        temperature: 0.7,
       }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('OpenAI API error:', errorData);
-      throw new Error(`OpenAI API error: ${errorData.error?.message || 'Unknown error'}`);
-    }
-
     const data = await response.json();
-    console.log('OpenAI response:', data);
-
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('Invalid response from OpenAI');
-    }
+    console.log('Received response from OpenAI:', data);
 
     const content = data.choices[0].message.content;
-    console.log('Raw content from OpenAI:', content);
+    
+    // Parse the response
+    const requiredSkillsMatch = content.match(/REQUIRED_SKILLS: (.*)/);
+    const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE: (\d+)/);
+    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:• .*\n?)*)/);
 
-    // Parse the response with improved regex patterns
-    const requiredSkillsMatch = content.match(/REQUIRED_SKILLS:\s*(.*?)(?=\n|$)/);
-    const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE:\s*(\d+)/);
-    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:•[^\n]*\n?)*)/);
+    const preferredQualifications = preferredQualificationsMatch 
+      ? preferredQualificationsMatch[1]
+          .split('\n')
+          .filter(line => line.trim().startsWith('•'))
+          .map(line => line.trim().substring(2).trim())
+          .join('\n')
+      : '';
 
-    if (!requiredSkillsMatch || !minimumExperienceMatch) {
-      console.error('Failed to parse required fields:', { content, requiredSkillsMatch, minimumExperienceMatch });
-      throw new Error('Failed to parse required fields from OpenAI response');
-    }
-
-    // Process preferred qualifications with better handling
-    let preferredQualifications = '';
-    if (preferredQualificationsMatch && preferredQualificationsMatch[1]) {
-      preferredQualifications = preferredQualificationsMatch[1]
-        .split('\n')
-        .filter(line => line.trim().startsWith('•'))
-        .map(line => line.trim().substring(1).trim())
-        .join('\n');
-    }
-
-    console.log('Parsed results:', {
-      requiredSkills: requiredSkillsMatch[1],
-      minimumExperience: minimumExperienceMatch[1],
-      preferredQualifications
-    });
+    console.log('Parsed preferred qualifications:', preferredQualifications);
 
     const requirements = {
-      requiredSkills: requiredSkillsMatch[1].trim(),
-      minimumExperience: parseInt(minimumExperienceMatch[1]),
-      preferredQualifications: preferredQualifications.trim(),
+      requiredSkills: requiredSkillsMatch ? requiredSkillsMatch[1].trim() : '',
+      minimumExperience: minimumExperienceMatch ? parseInt(minimumExperienceMatch[1]) : 0,
+      preferredQualifications: preferredQualifications,
     };
 
     return new Response(JSON.stringify(requirements), {
