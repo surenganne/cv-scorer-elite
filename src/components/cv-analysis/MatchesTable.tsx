@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MatchEvidence } from "./MatchEvidence";
+import { CandidateSelection } from "./CandidateSelection";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
@@ -71,7 +72,8 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
             for {jobTitle}
           </span>
         </h3>
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+        <CandidateSelection matches={matches} jobTitle={jobTitle} />
+        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white mt-4">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
