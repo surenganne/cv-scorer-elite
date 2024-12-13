@@ -57,7 +57,7 @@ serve(async (req) => {
         file_path: fileData.preview || '',
         content_type: fileData.type,
         file_size: fileData.size,
-        status: 'Uploaded',
+        status: 'Pending', // Changed from 'Uploaded' to 'Pending' to match the constraint
         score: fileData.score || 0,
         match_percentage: fileData.matchPercentage || 0,
       })
