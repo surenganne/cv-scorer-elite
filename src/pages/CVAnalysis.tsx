@@ -2,7 +2,7 @@ import { CVTable } from "@/components/cv-analysis/CVTable";
 import { CVFilters } from "@/components/cv-analysis/CVFilters";
 import Navbar from "@/components/layout/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const CVAnalysis = () => {
   const { toast } = useToast();
@@ -13,9 +13,12 @@ const CVAnalysis = () => {
         throw new Error("Invalid file path");
       }
 
+      // Clean the file path by removing any blob: prefix and getting just the UUID part
+      const cleanPath = filePath.replace(/^blob:.*\//, '');
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(cleanPath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -37,9 +40,12 @@ const CVAnalysis = () => {
         throw new Error("Invalid file path");
       }
 
+      // Clean the file path by removing any blob: prefix and getting just the UUID part
+      const cleanPath = filePath.replace(/^blob:.*\//, '');
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(filePath);
+        .download(cleanPath);
 
       if (error) throw error;
       

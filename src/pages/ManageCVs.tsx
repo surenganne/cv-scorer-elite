@@ -15,7 +15,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -42,9 +42,12 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
+      // Clean the file path by removing any blob: prefix and getting just the UUID part
+      const cleanPath = filePath.replace(/^blob:.*\//, '');
+      
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60);
+        .createSignedUrl(cleanPath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -66,9 +69,12 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
+      // Clean the file path by removing any blob: prefix and getting just the UUID part
+      const cleanPath = filePath.replace(/^blob:.*\//, '');
+
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(filePath);
+        .download(cleanPath);
 
       if (error) throw error;
       
