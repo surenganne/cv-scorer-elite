@@ -43,7 +43,7 @@ const Index = () => {
               <p>
                 This CV Scorer Elite application is a proof of concept developed for Emirates Development Bank.
                 The system demonstrates AI-powered CV analysis and job matching capabilities.
-                For demonstration purposes only.
+                For demonstration purposes only. The EDB logo is used here solely for demonstration and is property of Emirates Development Bank.
               </p>
             </div>
           </div>
