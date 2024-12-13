@@ -69,7 +69,7 @@ export const JobMatchList = () => {
 
       if (error) throw error;
 
-      // For now, we'll implement a simple matching algorithm with mock evidence
+      // Mock data with proper evidence structure
       const matches = cvs?.map((cv) => ({
         ...cv,
         score: Math.random() * 100,
