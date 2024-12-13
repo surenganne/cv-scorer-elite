@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
 import Index from "./pages/Index";
 import ConfigureScoring from "./pages/ConfigureScoring";
 import UploadCVs from "./pages/UploadCVs";
@@ -30,6 +31,7 @@ function App() {
           <Route path="/manage-jds" element={<ManageJDs />} />
         </Routes>
       </Router>
+      <Toaster />
     </QueryClientProvider>
   );
 }
