@@ -42,13 +42,8 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename without the 'uploads/' prefix if it exists
-      const fileName = filePath.split('/').pop();
-      
-      if (!fileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
+      // Extract just the filename from the path
+      const fileName = filePath.replace(/^.*[\\\/]/, '');
       console.log("Attempting to get signed URL for:", fileName);
 
       const { data, error } = await supabase.storage
@@ -79,13 +74,8 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename without the 'uploads/' prefix if it exists
-      const storedFileName = filePath.split('/').pop();
-      
-      if (!storedFileName) {
-        throw new Error("Could not extract file name from path");
-      }
-
+      // Extract just the filename from the path
+      const storedFileName = filePath.replace(/^.*[\\\/]/, '');
       console.log("Attempting to download:", storedFileName);
 
       const { data, error } = await supabase.storage
