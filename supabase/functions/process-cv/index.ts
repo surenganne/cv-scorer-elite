@@ -55,7 +55,6 @@ serve(async (req) => {
           const processedResult = {
             fileName: filename,
             status: 'processed',
-            candidateName: `Candidate from ${filename}`, // This would come from actual CV processing
             score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
             matchPercentage: Math.floor(Math.random() * 20) + 60 // Random match between 60-80
           }
@@ -85,16 +84,12 @@ serve(async (req) => {
     // Handle single file
     console.log('Processing single file:', file.name)
     
-    // Simulate processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Mock processed result for single file
+    // Mock processing result for single file
     const processedResult = {
       fileName: file.name,
       status: 'processed',
-      candidateName: 'John Doe', // This would come from actual CV processing
-      score: 85, // This would be calculated based on actual CV content
-      matchPercentage: 75 // This would be calculated based on job requirements
+      score: 85,
+      matchPercentage: 75
     }
 
     console.log('Single file processing completed:', processedResult)
