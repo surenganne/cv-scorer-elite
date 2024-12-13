@@ -32,20 +32,29 @@ const FileItem = ({
   const handleRemove = () => {
     onRemove(file);
   };
+
+  // Create a safe file object with only the properties we need
+  const fileInfo = {
+    name: file.name,
+    size: file.size,
+    progress: file.progress,
+    type: file.type,
+    preview: file.preview
+  };
   
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{file.name}</p>
+          <p className="font-medium truncate">{fileInfo.name}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(file.size)}
+            {formatFileSize(fileInfo.size)}
           </p>
-          {file.progress !== undefined && file.progress < 100 && (
+          {fileInfo.progress !== undefined && fileInfo.progress < 100 && (
             <div className="w-full">
-              <Progress value={file.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(file.progress)}% processed</p>
+              <Progress value={fileInfo.progress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(fileInfo.progress)}% processed</p>
             </div>
           )}
         </div>
@@ -53,9 +62,9 @@ const FileItem = ({
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : file.progress === 100 ? (
+        ) : fileInfo.progress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : file.progress !== undefined ? (
+        ) : fileInfo.progress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
