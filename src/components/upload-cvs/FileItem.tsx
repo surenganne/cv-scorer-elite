@@ -33,13 +33,13 @@ const FileItem = ({
     onRemove(file);
   };
 
-  // Extract only the properties we need, avoiding method calls
+  // Create a safe object with primitive values only
   const safeFile = {
-    name: String(file.name || ''),
-    size: Number(file.size || 0),
-    type: String(file.type || ''),
+    name: file?.name?.toString() || '',
+    size: parseInt(file?.size?.toString() || '0', 10),
+    type: file?.type?.toString() || '',
     progress: typeof file.progress === 'number' ? file.progress : undefined,
-    preview: String(file.preview || '')
+    preview: file?.preview?.toString() || ''
   };
   
   return (
