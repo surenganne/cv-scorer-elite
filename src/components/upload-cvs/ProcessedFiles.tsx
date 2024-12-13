@@ -13,8 +13,18 @@ interface ProcessedFilesProps {
 
 const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesProps) => {
   const [showFiles, setShowFiles] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   if (files.length === 0) return null;
+
+  const handleUpload = async () => {
+    setIsUploading(true);
+    try {
+      await onUploadToDatabase();
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <Card>
@@ -53,8 +63,11 @@ const ProcessedFiles = ({ files, onRemove, onUploadToDatabase }: ProcessedFilesP
           </div>
         )}
         <div className="flex justify-end mt-4">
-          <Button onClick={onUploadToDatabase}>
-            Upload All to Database
+          <Button 
+            onClick={handleUpload} 
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Upload All to Database"}
           </Button>
         </div>
       </CardContent>
