@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 
 const ManageJDs = () => {
   const { toast } = useToast();
@@ -88,9 +89,9 @@ const ManageJDs = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
-                  <TableHead>Required Skills</TableHead>
                   <TableHead>Min. Experience</TableHead>
                   <TableHead>Created At</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -98,10 +99,14 @@ const ManageJDs = () => {
                 {jobDescriptions?.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell className="font-medium">{job.title}</TableCell>
-                    <TableCell>{job.required_skills}</TableCell>
                     <TableCell>{job.minimum_experience} years</TableCell>
                     <TableCell>
                       {new Date(job.created_at!).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                        Active
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
                       <Button
