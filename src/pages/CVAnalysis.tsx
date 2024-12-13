@@ -9,15 +9,13 @@ const CVAnalysis = () => {
 
   const handleViewCV = async (filePath: string) => {
     try {
-      // Remove any blob URLs or prefixes from the file path
-      const cleanPath = filePath.split('/').pop();
-      if (!cleanPath) {
+      if (!filePath) {
         throw new Error("Invalid file path");
       }
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(cleanPath, 60);
+        .createSignedUrl(filePath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -35,15 +33,13 @@ const CVAnalysis = () => {
 
   const handleDownloadCV = async (filePath: string, fileName: string) => {
     try {
-      // Remove any blob URLs or prefixes from the file path
-      const cleanPath = filePath.split('/').pop();
-      if (!cleanPath) {
+      if (!filePath) {
         throw new Error("Invalid file path");
       }
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(cleanPath);
+        .download(filePath);
 
       if (error) throw error;
       
