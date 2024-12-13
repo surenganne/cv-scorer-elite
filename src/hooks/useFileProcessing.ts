@@ -91,9 +91,9 @@ export const useFileProcessing = () => {
     try {
       for (const file of processedFiles) {
         const { error } = await supabase.functions.invoke('upload-cv', {
-          body: file,
+          body: JSON.stringify(file),
           headers: {
-            'Content-Type': file.type,
+            'Content-Type': 'application/json',
           },
         });
 

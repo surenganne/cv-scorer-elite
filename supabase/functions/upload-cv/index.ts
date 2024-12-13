@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import { unzip } from "https://deno.land/x/zip@v1.2.5/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,13 +12,16 @@ serve(async (req) => {
   }
 
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File
-    const candidateName = formData.get('candidateName')
+    console.log('Starting CV upload process...')
+    
+    // Get the file data from the request
+    const fileData = await req.json()
+    console.log('Received file data:', fileData)
 
-    if (!file) {
+    if (!fileData) {
+      console.error('No file data provided')
       return new Response(
-        JSON.stringify({ error: 'No file uploaded' }),
+        JSON.stringify({ error: 'No file data provided' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -29,111 +31,30 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Handle ZIP files
-    if (file.type === 'application/zip' || file.type === 'application/x-zip-compressed') {
-      const arrayBuffer = await file.arrayBuffer();
-      const zipData = new Uint8Array(arrayBuffer);
-      const unzippedFiles = await unzip(zipData);
-      
-      const uploadedFiles = [];
-      
-      for (const [filename, content] of Object.entries(unzippedFiles)) {
-        // Skip directories and non-supported file types
-        if (filename.endsWith('/') || 
-            !filename.match(/\.(pdf|doc|docx)$/i)) {
-          continue;
-        }
-
-        const fileExt = filename.split('.').pop();
-        const filePath = `${crypto.randomUUID()}.${fileExt}`;
-        const contentType = fileExt === 'pdf' 
-          ? 'application/pdf'
-          : fileExt === 'doc'
-          ? 'application/msword'
-          : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-
-        const { error: uploadError } = await supabase.storage
-          .from('cvs')
-          .upload(filePath, content, {
-            contentType,
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error(`Error uploading ${filename}:`, uploadError);
-          continue;
-        }
-
-        const { error: dbError } = await supabase
-          .from('cv_uploads')
-          .insert({
-            file_name: filename,
-            file_path: filePath,
-            content_type: contentType,
-            file_size: content.length,
-            candidate_name: candidateName || null,
-          });
-
-        if (dbError) {
-          console.error(`Error saving metadata for ${filename}:`, dbError);
-          continue;
-        }
-
-        uploadedFiles.push({ filename, filePath });
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          message: 'ZIP contents uploaded successfully', 
-          files: uploadedFiles 
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    // Handle single file upload
-    const fileExt = file.name.split('.').pop()
-    const filePath = `${crypto.randomUUID()}.${fileExt}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('cvs')
-      .upload(filePath, file, {
-        contentType: file.type,
-        upsert: false
-      })
-
-    if (uploadError) {
-      console.error('Upload error:', uploadError)
-      return new Response(
-        JSON.stringify({ error: 'Failed to upload file', details: uploadError }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      )
-    }
-
+    // Insert the CV data into the database
     const { error: dbError } = await supabase
       .from('cv_uploads')
       .insert({
-        file_name: file.name,
-        file_path: filePath,
-        content_type: file.type,
-        file_size: file.size,
-        candidate_name: candidateName || null,
+        file_name: fileData.name,
+        file_path: fileData.preview || '',
+        content_type: fileData.type,
+        file_size: fileData.size,
+        status: 'Uploaded',
+        score: fileData.score,
+        match_percentage: fileData.matchPercentage,
       })
 
     if (dbError) {
       console.error('Database error:', dbError)
       return new Response(
-        JSON.stringify({ error: 'Failed to save file metadata', details: dbError }),
+        JSON.stringify({ error: 'Failed to save CV data', details: dbError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
+    console.log('CV upload completed successfully')
     return new Response(
-      JSON.stringify({ 
-        message: 'CV uploaded successfully', 
-        filePath,
-        fileName: file.name 
-      }),
+      JSON.stringify({ message: 'CV uploaded successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {
