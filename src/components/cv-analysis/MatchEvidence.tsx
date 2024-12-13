@@ -5,7 +5,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Progress } from "@/components/ui/progress";
-import { Trophy, Award, GraduationCap, Briefcase, Code, ChevronDown } from "lucide-react";
+import { Trophy, Award, GraduationCap, Briefcase, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MatchEvidenceProps {
@@ -49,7 +49,7 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="evidence" className="border-none">
         <AccordionTrigger className="hover:no-underline p-0">
-          <div className="flex items-center gap-3 group">
+          <div className="flex items-center gap-3">
             <div className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium transition-colors",
               getScoreColor(score)
@@ -57,7 +57,6 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
               <Trophy className="h-4 w-4" />
               {Math.round(score)}% Match
             </div>
-            <ChevronDown className="h-4 w-4 text-gray-400 transition-transform duration-200 group-data-[state=open]:rotate-180" />
           </div>
         </AccordionTrigger>
         <AccordionContent>
