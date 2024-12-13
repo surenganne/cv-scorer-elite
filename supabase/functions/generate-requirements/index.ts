@@ -62,16 +62,20 @@ serve(async (req) => {
     const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE: (\d+)/);
     const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:• .*\n?)*)/);
 
+    const preferredQualifications = preferredQualificationsMatch 
+      ? preferredQualificationsMatch[1]
+          .split('\n')
+          .filter(line => line.trim().startsWith('•'))
+          .map(line => line.trim().substring(2).trim())
+          .join('\n')
+      : '';
+
+    console.log('Parsed preferred qualifications:', preferredQualifications);
+
     const requirements = {
       requiredSkills: requiredSkillsMatch ? requiredSkillsMatch[1].trim() : '',
       minimumExperience: minimumExperienceMatch ? parseInt(minimumExperienceMatch[1]) : 0,
-      preferredQualifications: preferredQualificationsMatch 
-        ? preferredQualificationsMatch[1]
-            .split('\n')
-            .filter(line => line.trim().startsWith('•'))
-            .map(line => line.trim().substring(2).trim())
-            .join('\n')
-        : '',
+      preferredQualifications: preferredQualifications,
     };
 
     return new Response(JSON.stringify(requirements), {
