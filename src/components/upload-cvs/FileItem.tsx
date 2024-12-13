@@ -19,12 +19,22 @@ const FileItem = ({
   buttonText = "Upload", 
   processed = false 
 }: FileItemProps) => {
-  // Safely access file properties
-  const fileName = file?.name || 'Unknown file';
-  const fileSize = file?.size || 0;
-  const fileProgress = file?.progress;
-  
-  console.log('Rendering FileItem:', fileName, 'Size:', fileSize, 'bytes', 'Progress:', fileProgress);
+  if (!file) {
+    return null;
+  }
+
+  // Create bound versions of the file methods
+  const boundFile = {
+    name: file.name,
+    size: file.size,
+    progress: file.progress,
+    type: file.type,
+    slice: file.slice.bind(file),
+    stream: file.stream?.bind(file),
+    text: file.text?.bind(file),
+    arrayBuffer: file.arrayBuffer?.bind(file),
+    preview: file.preview,
+  };
   
   const handleUpload = async () => {
     if (onUpload) {
@@ -41,14 +51,14 @@ const FileItem = ({
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{fileName}</p>
+          <p className="font-medium truncate">{boundFile.name}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(fileSize)}
+            {formatFileSize(boundFile.size)}
           </p>
-          {fileProgress !== undefined && fileProgress < 100 && (
+          {boundFile.progress !== undefined && boundFile.progress < 100 && (
             <div className="w-full">
-              <Progress value={fileProgress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(fileProgress)}% processed</p>
+              <Progress value={boundFile.progress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(boundFile.progress)}% processed</p>
             </div>
           )}
         </div>
@@ -56,9 +66,9 @@ const FileItem = ({
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : fileProgress === 100 ? (
+        ) : boundFile.progress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : fileProgress !== undefined ? (
+        ) : boundFile.progress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
