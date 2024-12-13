@@ -70,7 +70,7 @@ const handler = async (req: Request): Promise<Response> => {
             const fileBuffer = await fileResponse.arrayBuffer();
             return {
               filename: candidate.file_name,
-              content: new Uint8Array(fileBuffer),
+              content: Buffer.from(fileBuffer).toString('base64'),
             };
           } catch (error) {
             console.error('Error processing attachment:', error);
@@ -131,7 +131,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         error: error.message,
-        details: error.cause || "Check the function logs for more details"
+        details: "Check the function logs for more details"
       }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
