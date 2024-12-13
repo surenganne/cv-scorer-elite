@@ -9,6 +9,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
@@ -32,6 +39,7 @@ export const JobMatchList = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
+  const [topMatches, setTopMatches] = useState<Record<string, number>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -64,13 +72,15 @@ export const JobMatchList = () => {
       const matches = cvs?.map((cv) => ({
         ...cv,
         score: Math.random() * 100, // Placeholder for actual matching logic
-      })).sort((a, b) => b.score - a.score);
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topMatches[jobId] || 5); // Use selected top matches count, default to 5
 
       setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
       
       toast({
         title: "Matches Found",
-        description: `Found ${matches?.length || 0} potential matches for this position.`,
+        description: `Found top ${matches?.length || 0} potential matches for this position.`,
       });
     } catch (error) {
       console.error("Error finding matches:", error);
@@ -100,6 +110,7 @@ export const JobMatchList = () => {
             <TableHead>Job Title</TableHead>
             <TableHead>Min. Experience</TableHead>
             <TableHead>Created</TableHead>
+            <TableHead>Top Matches</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -110,6 +121,24 @@ export const JobMatchList = () => {
               <TableCell>{job.minimum_experience} years</TableCell>
               <TableCell>
                 {format(new Date(job.created_at), "MMM dd, yyyy")}
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={String(topMatches[job.id] || "5")}
+                  onValueChange={(value) => 
+                    setTopMatches(prev => ({ ...prev, [job.id]: Number(value) }))
+                  }
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Top 5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="15">Top 15</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                  </SelectContent>
+                </Select>
               </TableCell>
               <TableCell>
                 <Button
@@ -138,7 +167,7 @@ export const JobMatchList = () => {
         return (
           <div key={jobId} className="mt-8 space-y-4">
             <h3 className="text-lg font-semibold">
-              Matches for: {job.title}
+              Top {matches.length} Matches for: {job.title}
             </h3>
             <Table>
               <TableHeader>
