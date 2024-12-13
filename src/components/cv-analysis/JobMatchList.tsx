@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { MatchesTable } from "./MatchesTable";
+import { useCVOperations } from "@/hooks/useCVOperations"; // Add this import
 
 interface JobMatch {
   id: string;
@@ -38,6 +39,7 @@ interface JobMatch {
 
 export const JobMatchList = () => {
   const { toast } = useToast();
+  const { handleViewCV } = useCVOperations(); // Add this hook
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
   const [topMatches, setTopMatches] = useState<Record<string, number>>({});
@@ -130,7 +132,7 @@ export const JobMatchList = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {activeJobs.map((job) => (
+          {activeJobs?.map((job) => (
             <TableRow key={job.id}>
               <TableCell className="font-medium">{job.title}</TableCell>
               <TableCell>{job.minimum_experience} years</TableCell>
@@ -158,7 +160,7 @@ export const JobMatchList = () => {
       </Table>
 
       {Object.entries(matchedCVs).map(([jobId, matches]) => {
-        const job = activeJobs.find((j) => j.id === jobId);
+        const job = activeJobs?.find((j) => j.id === jobId);
         if (!job || !matches?.length) return null;
         
         const weights = {
@@ -192,7 +194,12 @@ export const JobMatchList = () => {
                 </Select>
               </div>
             )}
-            <MatchesTable matches={matches} jobTitle={job.title} weights={weights} />
+            <MatchesTable 
+              matches={matches} 
+              jobTitle={job.title} 
+              weights={weights}
+              onViewResume={handleViewCV} // Add this prop
+            />
           </div>
         );
       })}
