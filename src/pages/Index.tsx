@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, Award, Users, FileText, ChartBar } from "lucide-react";
+import { Upload, Award, Users, FileText, ChartBar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import Navbar from "@/components/layout/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -30,24 +31,17 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Disclaimer */}
-        <div className="mb-8 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="flex items-center gap-4">
-            <img 
-              src="https://edb.gov.ae/campaign/images/logo-blue.svg" 
-              alt="EDB Logo" 
-              className="h-12 w-auto"
-            />
-            <div className="text-sm text-gray-600">
-              <p className="font-medium text-gray-900 mb-1">Proof of Concept Notice</p>
-              <p>
-                This CV Scorer Elite application is a proof of concept developed for Emirates Development Bank.
-                The system demonstrates AI-powered CV analysis and job matching capabilities.
-                For demonstration purposes only. The EDB logo is used here solely for demonstration and is property of Emirates Development Bank.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Enhanced Notice Section */}
+        <Alert variant="default" className="mb-8 border-blue-200 bg-blue-50">
+          <AlertCircle className="h-5 w-5 text-blue-600" />
+          <AlertTitle className="text-blue-800 font-semibold text-lg">
+            Proof of Concept
+          </AlertTitle>
+          <AlertDescription className="text-blue-700 mt-1">
+            This CV Scorer Elite application is a proof of concept that demonstrates AI-powered CV analysis 
+            and job matching capabilities. For demonstration purposes only.
+          </AlertDescription>
+        </Alert>
 
         {/* Statistics Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
