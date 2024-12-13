@@ -45,36 +45,41 @@ serve(async (req) => {
       let totalFiles = 0;
       let processedCount = 0;
       
-      // Count total valid files first
-      for (const [filename, zipEntry] of Object.entries(zip.files)) {
+      // First, count total valid files
+      for (const filename of Object.keys(zip.files)) {
+        const zipEntry = zip.files[filename];
         if (!zipEntry.dir) {
           const extension = filename.split('.').pop()?.toLowerCase();
-          if (extension === 'doc' || extension === 'docx' || extension === 'pdf') {
+          if (['doc', 'docx', 'pdf'].includes(extension || '')) {
             totalFiles++;
           }
         }
       }
       
+      console.log(`Found ${totalFiles} valid files to process`);
+      
       // Process each file in the ZIP
-      for (const [filename, zipEntry] of Object.entries(zip.files)) {
+      for (const filename of Object.keys(zip.files)) {
+        const zipEntry = zip.files[filename];
+        
         if (!zipEntry.dir) {
           const extension = filename.split('.').pop()?.toLowerCase();
           
-          if (extension === 'doc' || extension === 'docx' || extension === 'pdf') {
+          if (['doc', 'docx', 'pdf'].includes(extension || '')) {
             console.log('Processing file from ZIP:', filename);
             
             try {
-              // Get the file content as ArrayBuffer
-              const content = await zipEntry.async('arraybuffer');
+              // Get the file content
+              const content = await zipEntry.async('uint8array');
               
               // Mock processing result with random scores
               // In a real implementation, you would process the actual file content
               processedFiles.push({
                 fileName: filename,
                 status: 'processed',
-                score: Math.floor(Math.random() * 30) + 70,
-                matchPercentage: Math.floor(Math.random() * 20) + 60,
-                size: content.byteLength // Include the actual file size
+                score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+                matchPercentage: Math.floor(Math.random() * 20) + 60, // Random match between 60-80
+                size: content.length
               });
               
               processedCount++;
@@ -82,6 +87,8 @@ serve(async (req) => {
             } catch (error) {
               console.error(`Error processing file ${filename}:`, error);
             }
+          } else {
+            console.log(`Skipping non-document file: ${filename}`);
           }
         }
       }
@@ -119,7 +126,9 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         isZip: false,
-        processedFiles: [result]
+        processedFiles: [result],
+        totalFiles: 1,
+        processedCount: 1
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
