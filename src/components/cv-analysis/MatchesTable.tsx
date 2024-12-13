@@ -25,9 +25,15 @@ interface Match {
 interface MatchesTableProps {
   matches: Match[];
   jobTitle: string;
+  weights?: {
+    experience_weight: number;
+    skills_weight: number;
+    education_weight: number;
+    certifications_weight: number;
+  };
 }
 
-export const MatchesTable = ({ matches, jobTitle }: MatchesTableProps) => {
+export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) => {
   return (
     <div className="mt-8 space-y-4">
       <h3 className="text-lg font-semibold">
@@ -46,7 +52,7 @@ export const MatchesTable = ({ matches, jobTitle }: MatchesTableProps) => {
             <TableRow key={match.id}>
               <TableCell>{match.file_name}</TableCell>
               <TableCell className="max-w-xl">
-                <MatchEvidence score={match.score} evidence={match.evidence} />
+                <MatchEvidence score={match.score} evidence={match.evidence} weights={weights} />
               </TableCell>
               <TableCell>
                 {format(new Date(match.upload_date), "MMM dd, yyyy")}
