@@ -7,7 +7,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { FileWithPreview } from "@/types/file";
 import FileUploadZone from "@/components/upload-cvs/FileUploadZone";
-import FileItem from "@/components/upload-cvs/FileItem";
+import SelectedFiles from "@/components/upload-cvs/SelectedFiles";
+import ProcessedFiles from "@/components/upload-cvs/ProcessedFiles";
 import Navbar from "@/components/layout/Navbar";
 
 const UploadCVs = () => {
@@ -39,18 +40,18 @@ const UploadCVs = () => {
       }, 300);
 
       console.log('Starting processing for:', file.name);
-      const response = await supabase.functions.invoke('process-cv', {
+      const { data, error } = await supabase.functions.invoke('process-cv', {
         body: formData,
       });
 
       clearInterval(progressInterval);
 
-      if (response.error) {
-        console.error('Processing error:', response.error);
-        throw new Error(response.error.message);
+      if (error) {
+        console.error('Processing error:', error);
+        throw error;
       }
 
-      console.log('Processing completed:', response.data);
+      console.log('Processing completed:', data);
 
       // Set final progress and show success message
       setFiles((prevFiles) =>
@@ -59,15 +60,28 @@ const UploadCVs = () => {
         )
       );
 
-      // Add to processed files
-      setProcessedFiles(prev => [...prev, { ...file, processed: true }]);
+      // Handle both single file and ZIP file responses
+      if (data.isZip) {
+        // For ZIP files, add all processed files
+        const processedZipFiles = data.processedFiles.map((result: any) => ({
+          ...file,
+          name: result.fileName,
+          processed: true,
+          score: result.score,
+          matchPercentage: result.matchPercentage,
+        }));
+        setProcessedFiles(prev => [...prev, ...processedZipFiles]);
+      } else {
+        // For single files
+        setProcessedFiles(prev => [...prev, { ...file, processed: true }]);
+      }
 
       toast({
         title: "Processing Complete",
         description: `${file.name} has been processed successfully.`,
       });
 
-      return response.data;
+      return data;
     } catch (error) {
       console.error('Processing error:', error);
       // Reset progress on error
@@ -92,11 +106,11 @@ const UploadCVs = () => {
         const formData = new FormData();
         formData.append('file', file);
 
-        const response = await supabase.functions.invoke('upload-cv', {
+        const { error } = await supabase.functions.invoke('upload-cv', {
           body: formData,
         });
 
-        if (response.error) throw new Error(response.error.message);
+        if (error) throw error;
       }
 
       toast({
@@ -168,49 +182,19 @@ const UploadCVs = () => {
         </Card>
 
         {files.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Selected Files</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {files.map((file, index) => (
-                  <FileItem
-                    key={index}
-                    file={file}
-                    onRemove={removeFile}
-                    onUpload={handleProcess}
-                    buttonText="Process"
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <SelectedFiles
+            files={files}
+            onRemove={removeFile}
+            onProcess={handleProcess}
+          />
         )}
 
         {processedFiles.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Processed Files</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {processedFiles.map((file, index) => (
-                  <FileItem
-                    key={index}
-                    file={file}
-                    onRemove={removeFile}
-                    processed={true}
-                  />
-                ))}
-                <div className="flex justify-end mt-4">
-                  <Button onClick={uploadToDatabase}>
-                    Upload All to Database
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <ProcessedFiles
+            files={processedFiles}
+            onRemove={removeFile}
+            onUploadToDatabase={uploadToDatabase}
+          />
         )}
       </div>
     </div>
