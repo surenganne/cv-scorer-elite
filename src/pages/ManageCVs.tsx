@@ -42,7 +42,7 @@ const ManageCVs = () => {
     try {
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(filePath, 60); // URL valid for 60 seconds
+        .createSignedUrl(filePath, 60);
 
       if (error) throw error;
       if (data?.signedUrl) {
@@ -61,7 +61,6 @@ const ManageCVs = () => {
 
       if (error) throw error;
       
-      // Create a download link
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
@@ -106,7 +105,7 @@ const ManageCVs = () => {
                     <PaginationItem>
                       <PaginationPrevious 
                         onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
+                        className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                       />
                     </PaginationItem>
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
@@ -122,7 +121,7 @@ const ManageCVs = () => {
                     <PaginationItem>
                       <PaginationNext
                         onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
+                        className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
                       />
                     </PaginationItem>
                   </PaginationContent>
