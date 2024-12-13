@@ -87,8 +87,10 @@ serve(async (req) => {
       if (emailError) {
         console.error('Resend API error:', emailError);
         
-        // Handle domain verification error specifically
-        if (emailError.statusCode === 403 && emailError.message?.includes('verify a domain')) {
+        // Check if the error is related to domain verification
+        if (emailError.message?.includes('verify a domain') || 
+            emailError.message?.includes('verify your domain') ||
+            emailError.statusCode === 403) {
           return new Response(
             JSON.stringify({
               error: 'Domain verification required',
@@ -130,7 +132,7 @@ serve(async (req) => {
         }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in send-interview-emails:', error);
     return new Response(
       JSON.stringify({

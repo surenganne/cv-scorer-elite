@@ -87,8 +87,20 @@ export const EmailCandidates = ({
       );
 
       if (error) {
+        // Parse the error message if it's a string
+        let errorDetails;
+        try {
+          if (typeof error.message === 'string' && error.message.includes('{')) {
+            errorDetails = JSON.parse(error.message);
+          }
+        } catch (e) {
+          console.error('Error parsing error message:', e);
+        }
+
         // Check for domain verification error
-        if (error.message?.includes('verify a domain') || error.message?.includes('Domain verification required')) {
+        if (errorDetails?.error === 'Domain verification required' || 
+            error.message?.includes('verify a domain') || 
+            error.message?.includes('Domain verification required')) {
           toast({
             title: "Domain Verification Required",
             description: "Please verify your domain at resend.com/domains before sending emails to other recipients.",
@@ -96,6 +108,7 @@ export const EmailCandidates = ({
           });
           return;
         }
+
         throw error;
       }
 
