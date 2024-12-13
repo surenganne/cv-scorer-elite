@@ -12,7 +12,7 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
     // Process all files in ZIP (including those in folders)
     for (const [relativePath, zipEntry] of Object.entries(zipContent.files)) {
       if (!zipEntry.dir) {
-        console.log(`Processing ZIP entry: ${relativePath}, size: ${zipEntry.uncompressedSize}`);
+        console.log(`Processing ZIP entry: ${relativePath}`);
         
         if (isValidFileType(relativePath)) {
           const content = await zipEntry.async('blob');
