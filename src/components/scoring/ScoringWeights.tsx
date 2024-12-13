@@ -23,6 +23,7 @@ export const ScoringWeights = ({
   const { toast } = useToast();
   const [totalWeight, setTotalWeight] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [activeSlider, setActiveSlider] = useState<string | null>(null);
 
   useEffect(() => {
     const total = experienceWeight + skillsWeight + educationWeight + certificationsWeight;
@@ -38,8 +39,6 @@ export const ScoringWeights = ({
     };
 
     const newTotal = Object.values(weights).reduce((sum, weight) => sum + weight, 0);
-
-    // Allow adjustment if total is less than or equal to 100, or if we're reducing a value
     const currentWeight = weights[type as keyof typeof weights];
     const oldWeight = 
       type === "experience" ? experienceWeight :
@@ -47,14 +46,12 @@ export const ScoringWeights = ({
       type === "education" ? educationWeight :
       certificationsWeight;
 
-    if (newTotal <= 100 || currentWeight < oldWeight) {
+    // Allow adjustment if:
+    // 1. Total is less than or equal to 100
+    // 2. We're reducing a value
+    // 3. We're actively dragging the slider
+    if (newTotal <= 100 || currentWeight < oldWeight || isDragging) {
       onWeightChange(type, value);
-    } else if (!isDragging) {
-      toast({
-        variant: "destructive",
-        title: "Weight adjustment limit reached",
-        description: "Total weights cannot exceed 100%. Try reducing other weights first.",
-      });
     }
   };
 
@@ -65,13 +62,33 @@ export const ScoringWeights = ({
     return "text-green-500";
   };
 
+  const handleSliderStart = (type: string) => {
+    setIsDragging(true);
+    setActiveSlider(type);
+  };
+
+  const handleSliderEnd = () => {
+    setIsDragging(false);
+    setActiveSlider(null);
+
+    if (totalWeight > 100) {
+      toast({
+        variant: "destructive",
+        title: "Weight adjustment limit reached",
+        description: "Total weights cannot exceed 100%. Try reducing other weights first.",
+      });
+    }
+  };
+
   const renderSlider = (
     label: string,
     type: string,
     value: number,
     icon: React.ReactNode
   ) => (
-    <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
+    <div className={`bg-white rounded-lg p-6 shadow-sm border ${
+      activeSlider === type ? 'border-primary' : 'border-gray-200'
+    } hover:shadow-md transition-all duration-200`}>
       <div className="flex justify-between items-center mb-4">
         <Label className="text-base font-medium flex items-center gap-2">
           {icon}
@@ -85,8 +102,8 @@ export const ScoringWeights = ({
       <Slider
         value={[value]}
         onValueChange={(newValue) => handleWeightChange(type, newValue[0])}
-        onValueCommit={() => setIsDragging(false)}
-        onPointerDown={() => setIsDragging(true)}
+        onPointerDown={() => handleSliderStart(type)}
+        onPointerUp={handleSliderEnd}
         max={100}
         step={5}
         className="mt-2"
