@@ -42,13 +42,20 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename from the path
-      const fileName = filePath.replace(/^.*[\\\/]/, '');
-      console.log("Attempting to get signed URL for:", fileName);
+      console.log("Original file path:", filePath);
+      
+      // Get the UUID from the file path which is the actual filename in storage
+      const uuid = filePath.match(/([a-f0-9-]{36})/i)?.[1];
+      
+      if (!uuid) {
+        throw new Error("Could not extract UUID from file path");
+      }
+
+      console.log("Attempting to get signed URL for UUID:", uuid);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(fileName, 60);
+        .createSignedUrl(uuid, 60);
 
       if (error) {
         console.error("Storage error:", error);
@@ -74,13 +81,20 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      // Extract just the filename from the path
-      const storedFileName = filePath.replace(/^.*[\\\/]/, '');
-      console.log("Attempting to download:", storedFileName);
+      console.log("Original file path:", filePath);
+      
+      // Get the UUID from the file path which is the actual filename in storage
+      const uuid = filePath.match(/([a-f0-9-]{36})/i)?.[1];
+      
+      if (!uuid) {
+        throw new Error("Could not extract UUID from file path");
+      }
+
+      console.log("Attempting to download UUID:", uuid);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(storedFileName);
+        .download(uuid);
 
       if (error) {
         console.error("Storage error:", error);
@@ -90,7 +104,7 @@ const ManageCVs = () => {
       const url = window.URL.createObjectURL(data);
       const link = document.createElement("a");
       link.href = url;
-      link.download = fileName; // Use the original filename for download
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
