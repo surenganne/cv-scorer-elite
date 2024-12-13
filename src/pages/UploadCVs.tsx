@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FileWithPreview } from "@/types/file";
 import FileUploadZone from "@/components/upload-cvs/FileUploadZone";
 import FileItem from "@/components/upload-cvs/FileItem";
+import Navbar from "@/components/layout/Navbar";
 
 const UploadCVs = () => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
@@ -107,8 +108,9 @@ const UploadCVs = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <Navbar />
+      <div className="max-w-4xl mx-auto p-8 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold text-gray-900">Upload CVs</h1>
           <Link to="/">

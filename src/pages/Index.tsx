@@ -2,34 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import Navbar from "@/components/layout/Navbar";
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <img
-                src="https://edb.gov.ae/campaign/images/logo-blue.svg"
-                alt="EDB Logo"
-                className="h-8 w-auto"
-              />
-              <div>
-                <h1 className="text-2xl font-semibold text-[#1C26A8]">
-                  CV Scorer Elite
-                </h1>
-                <p className="text-sm text-gray-500">
-                  AI-Powered Candidate Evaluation
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
+      <Navbar />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Card */}
         <Card className="mb-8 bg-gradient-to-r from-[#1C26A8] to-[#2832B4] text-white">
