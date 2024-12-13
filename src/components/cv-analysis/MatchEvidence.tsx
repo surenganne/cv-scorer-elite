@@ -76,17 +76,17 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
                   <div className="space-y-2">
                     {pieData.map((entry, index) => (
                       <div key={entry.name} className="flex items-center justify-between text-sm">
-                        <div className="flex items-center gap-1.5">
-                          {index === 0 && <Code className="h-3.5 w-3.5 text-blue-500" />}
-                          {index === 1 && <Briefcase className="h-3.5 w-3.5 text-purple-500" />}
-                          {index === 2 && <GraduationCap className="h-3.5 w-3.5 text-green-500" />}
-                          {index === 3 && <Award className="h-3.5 w-3.5 text-amber-500" />}
-                          <span className="font-medium">{entry.name}</span>
+                        <div className="flex flex-col">
+                          <div className="flex items-center gap-1.5">
+                            {index === 0 && <Code className="h-3.5 w-3.5 text-blue-500" />}
+                            {index === 1 && <Briefcase className="h-3.5 w-3.5 text-purple-500" />}
+                            {index === 2 && <GraduationCap className="h-3.5 w-3.5 text-green-500" />}
+                            {index === 3 && <Award className="h-3.5 w-3.5 text-amber-500" />}
+                            <span className="font-medium">{entry.name}</span>
+                          </div>
+                          <span className="text-xs text-gray-400 ml-5">Weight: {entry.weight}%</span>
                         </div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-gray-600">{entry.value}%</span>
-                          <span className="text-xs text-gray-400">Weight: {entry.weight}%</span>
-                        </div>
+                        <span className="text-gray-600">{entry.value}%</span>
                       </div>
                     ))}
                   </div>
