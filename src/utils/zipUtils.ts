@@ -9,15 +9,22 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
   try {
     const zipContent = await zip.loadAsync(zipFile);
     
-    // Process all files in ZIP (including those in folders)
     for (const [relativePath, zipEntry] of Object.entries(zipContent.files)) {
       if (!zipEntry.dir && isValidFileType(relativePath)) {
         const fileName = relativePath.split('/').pop() || relativePath;
         const content = await zipEntry.async('blob');
         
+        // Create a File object with the correct MIME type based on the file extension
+        const fileType = fileName.split('.').pop() || '';
+        const mimeType = fileType === 'pdf' ? 'application/pdf' :
+                        fileType === 'doc' || fileType === 'docx' ? 'application/msword' :
+                        fileType === 'txt' ? 'text/plain' :
+                        fileType === 'rtf' ? 'application/rtf' :
+                        'application/octet-stream';
+
         // Create a new File object with all properties set during construction
         const extractedFile = new File([content], fileName, {
-          type: `application/${fileName.split('.').pop()}`,
+          type: mimeType,
           lastModified: zipEntry.date.getTime(),
         }) as FileWithPreview;
         
