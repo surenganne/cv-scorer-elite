@@ -30,12 +30,17 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Missing RESEND_API_KEY");
     }
 
-    console.log("Request data:", { to, selectedCandidates, jobTitle });
+    console.log("Processing request for candidates:", selectedCandidates.map(c => ({ name: c.name, file_path: c.file_path })));
 
     const validAttachments = await processAttachments(selectedCandidates);
+    if (validAttachments.length !== selectedCandidates.length) {
+      console.warn(`Warning: Only ${validAttachments.length} out of ${selectedCandidates.length} attachments were processed successfully`);
+    }
+
     const html = generateEmailHTML(jobTitle, selectedCandidates);
 
-    console.log("Sending email with HTML and attachments:", {
+    console.log("Sending email with attachments:", {
+      recipientsCount: to.length,
       attachmentsCount: validAttachments.length,
       candidatesCount: selectedCandidates.length
     });
@@ -62,7 +67,11 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
     }
 
-    return new Response(JSON.stringify(responseData), {
+    return new Response(JSON.stringify({
+      success: true,
+      message: `Email sent successfully with ${validAttachments.length} attachments`,
+      data: responseData
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
