@@ -16,16 +16,47 @@ const UploadCVs = () => {
 
   const uploadFile = async (file: FileWithPreview) => {
     try {
+      // Start with initial progress
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f === file ? { ...f, progress: 0 } : f
+        )
+      );
+
       const formData = new FormData();
       formData.append('file', file);
 
+      // Create a progress interval that updates more frequently for better feedback
+      const progressInterval = setInterval(() => {
+        setFiles((prevFiles) =>
+          prevFiles.map((f) =>
+            f === file && f.progress !== undefined && f.progress < 90
+              ? { ...f, progress: f.progress + 5 }
+              : f
+          )
+        );
+      }, 300);
+
+      console.log('Starting upload for:', file.name);
       const response = await supabase.functions.invoke('upload-cv', {
         body: formData,
       });
 
+      clearInterval(progressInterval);
+
       if (response.error) {
+        console.error('Upload error:', response.error);
         throw new Error(response.error.message);
       }
+
+      console.log('Upload completed:', response.data);
+
+      // Set final progress and show success message
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f === file ? { ...f, progress: 100 } : f
+        )
+      );
 
       toast({
         title: "Upload Complete",
@@ -37,6 +68,13 @@ const UploadCVs = () => {
       return response.data;
     } catch (error) {
       console.error('Upload error:', error);
+      // Reset progress on error
+      setFiles((prevFiles) =>
+        prevFiles.map((f) =>
+          f === file ? { ...f, progress: undefined } : f
+        )
+      );
+      
       toast({
         title: "Upload Failed",
         description: `Failed to upload ${file.name}. Please try again.`,
@@ -50,7 +88,7 @@ const UploadCVs = () => {
     const newFiles = acceptedFiles.map((file) => 
       Object.assign(file, {
         preview: URL.createObjectURL(file),
-        progress: 0
+        progress: undefined
       })
     );
     
@@ -66,30 +104,7 @@ const UploadCVs = () => {
 
   const handleUpload = async (file: FileWithPreview) => {
     try {
-      setFiles((prevFiles) =>
-        prevFiles.map((f) =>
-          f === file ? { ...f, progress: 0 } : f
-        )
-      );
-
-      const progressInterval = setInterval(() => {
-        setFiles((prevFiles) =>
-          prevFiles.map((f) =>
-            f === file && f.progress !== undefined && f.progress < 90
-              ? { ...f, progress: f.progress + 10 }
-              : f
-          )
-        );
-      }, 500);
-
       await uploadFile(file);
-
-      clearInterval(progressInterval);
-      setFiles((prevFiles) =>
-        prevFiles.map((f) =>
-          f === file ? { ...f, progress: 100 } : f
-        )
-      );
     } catch (error) {
       console.error('Upload failed:', error);
     }
