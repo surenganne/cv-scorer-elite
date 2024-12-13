@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
+import { MatchesTable } from "./MatchesTable";
 
 interface JobMatch {
   id: string;
@@ -67,14 +68,27 @@ export const JobMatchList = () => {
 
       if (error) throw error;
 
-      // For now, we'll implement a simple matching algorithm
-      // This can be enhanced with more sophisticated matching logic
+      // For now, we'll implement a simple matching algorithm with mock evidence
       const matches = cvs?.map((cv) => ({
         ...cv,
-        score: Math.random() * 100, // Placeholder for actual matching logic
+        score: Math.random() * 100,
+        evidence: {
+          skills: [
+            "JavaScript",
+            "React",
+            "TypeScript",
+            "Node.js",
+          ],
+          experience: "5 years of relevant experience in software development",
+          education: "Bachelor's degree in Computer Science",
+          certifications: [
+            "AWS Certified Developer",
+            "Professional Scrum Master I",
+          ],
+        },
       }))
       .sort((a, b) => b.score - a.score)
-      .slice(0, topMatches[jobId] || 5); // Use selected top matches count, default to 5
+      .slice(0, topMatches[jobId] || 5);
 
       setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
       
@@ -163,46 +177,7 @@ export const JobMatchList = () => {
       {Object.entries(matchedCVs).map(([jobId, matches]) => {
         const job = activeJobs.find((j) => j.id === jobId);
         if (!job || !matches?.length) return null;
-
-        return (
-          <div key={jobId} className="mt-8 space-y-4">
-            <h3 className="text-lg font-semibold">
-              Top {matches.length} Matches for: {job.title}
-            </h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>File Name</TableHead>
-                  <TableHead>Match Score</TableHead>
-                  <TableHead>Upload Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {matches.map((match: any) => (
-                  <TableRow key={match.id}>
-                    <TableCell>{match.file_name}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center">
-                        <div className="w-full bg-gray-200 rounded-full h-2.5">
-                          <div
-                            className="bg-primary h-2.5 rounded-full"
-                            style={{ width: `${match.score}%` }}
-                          ></div>
-                        </div>
-                        <span className="ml-2 text-sm text-gray-600">
-                          {Math.round(match.score)}%
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(match.upload_date), "MMM dd, yyyy")}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        );
+        return <MatchesTable key={jobId} matches={matches} jobTitle={job.title} />;
       })}
     </div>
   );
