@@ -13,7 +13,10 @@ const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200
+    });
   }
 
   try {
@@ -21,7 +24,10 @@ serve(async (req) => {
       throw new Error('Method not allowed');
     }
 
-    const { to, selectedCandidates, jobTitle } = await req.json();
+    const requestData = await req.json();
+    console.log('Received request data:', JSON.stringify(requestData, null, 2));
+
+    const { to, selectedCandidates, jobTitle } = requestData;
 
     if (!to || !Array.isArray(to) || to.length === 0) {
       throw new Error('Invalid recipients');
@@ -35,16 +41,28 @@ serve(async (req) => {
       throw new Error('Job title is required');
     }
 
-    // Generate email content
-    const emailContent = generateEmailHTML(jobTitle, selectedCandidates);
+    // Generate email content with a timeout
+    const emailContent = await Promise.race([
+      generateEmailHTML(jobTitle, selectedCandidates),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email generation timed out')), 25000)
+      )
+    ]);
 
-    // Send email using Resend
-    const { data: emailResponse, error: emailError } = await resend.emails.send({
+    // Send email using Resend with a timeout
+    const emailPromise = resend.emails.send({
       from: 'CV Scorer Elite <onboarding@resend.dev>',
       to,
       subject: `Interview Candidates for ${jobTitle} Position`,
       html: emailContent,
     });
+
+    const { data: emailResponse, error: emailError } = await Promise.race([
+      emailPromise,
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email sending timed out')), 25000)
+      )
+    ]);
 
     if (emailError) {
       console.error('Resend API error:', emailError);
@@ -59,13 +77,18 @@ serve(async (req) => {
           }),
           {
             status: 403,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: { 
+              ...corsHeaders, 
+              'Content-Type': 'application/json' 
+            },
           }
         );
       }
 
       throw emailError;
     }
+
+    console.log('Email sent successfully:', emailResponse);
 
     return new Response(
       JSON.stringify({
@@ -74,7 +97,10 @@ serve(async (req) => {
         data: emailResponse,
       }),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        },
       }
     );
   } catch (error) {
@@ -87,7 +113,10 @@ serve(async (req) => {
       }),
       {
         status: error.statusCode || 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json'
+        },
       }
     );
   }
