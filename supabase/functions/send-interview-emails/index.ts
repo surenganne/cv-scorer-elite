@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { processAttachments } from "./attachments.ts";
-import { generateEmailContent } from "./emailTemplate.ts";
+import { generateEmailHTML } from "./emailTemplate.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -14,7 +14,6 @@ serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
-      status: 204,
       headers: corsHeaders
     });
   }
@@ -34,22 +33,42 @@ serve(async (req) => {
       console.log('Parsed request data:', requestData);
     } catch (error) {
       console.error('Failed to parse request body:', error);
-      throw new Error(`Invalid request format: ${error.message}`);
+      return new Response(JSON.stringify({ 
+        error: `Invalid request format: ${error.message}` 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     const { to, selectedCandidates, jobTitle } = requestData;
 
     // Validate required fields
     if (!to || !Array.isArray(to) || to.length === 0) {
-      throw new Error('Invalid or missing recipient emails');
+      return new Response(JSON.stringify({ 
+        error: 'Invalid or missing recipient emails' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (!selectedCandidates || !Array.isArray(selectedCandidates) || selectedCandidates.length === 0) {
-      throw new Error('No candidates selected');
+      return new Response(JSON.stringify({ 
+        error: 'No candidates selected' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     if (!jobTitle) {
-      throw new Error('Job title is required');
+      return new Response(JSON.stringify({ 
+        error: 'Job title is required' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     // Process attachments
@@ -58,7 +77,7 @@ serve(async (req) => {
     console.log(`Processed ${attachments.length} attachments`);
 
     // Generate email content
-    const emailContent = generateEmailContent(selectedCandidates, jobTitle);
+    const emailContent = generateEmailHTML(jobTitle, selectedCandidates);
 
     // Prepare email data
     const emailData = {
@@ -89,7 +108,12 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Resend API error:', responseData);
-      throw new Error(`Failed to send email: ${JSON.stringify(responseData)}`);
+      return new Response(JSON.stringify({ 
+        error: `Failed to send email: ${JSON.stringify(responseData)}` 
+      }), {
+        status: response.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
     }
 
     console.log('Email sent successfully:', responseData);
