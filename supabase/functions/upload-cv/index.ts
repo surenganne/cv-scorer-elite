@@ -14,14 +14,28 @@ serve(async (req) => {
   try {
     console.log('Starting CV upload process...')
     
-    // Get the file data from the request
-    const fileData = await req.json()
-    console.log('Received file data:', fileData)
+    // Get the request body as text first
+    const bodyText = await req.text()
+    console.log('Received body text:', bodyText)
 
-    if (!fileData) {
-      console.error('No file data provided')
+    // Try to parse the JSON
+    let fileData
+    try {
+      fileData = JSON.parse(bodyText)
+    } catch (parseError) {
+      console.error('JSON parsing error:', parseError)
       return new Response(
-        JSON.stringify({ error: 'No file data provided' }),
+        JSON.stringify({ error: 'Invalid JSON data', details: parseError.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    console.log('Parsed file data:', fileData)
+
+    if (!fileData || !fileData.name) {
+      console.error('Invalid file data structure')
+      return new Response(
+        JSON.stringify({ error: 'Invalid file data structure' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       )
     }
@@ -32,7 +46,7 @@ serve(async (req) => {
     )
 
     // Insert the CV data into the database
-    const { error: dbError } = await supabase
+    const { data, error: dbError } = await supabase
       .from('cv_uploads')
       .insert({
         file_name: fileData.name,
@@ -40,9 +54,10 @@ serve(async (req) => {
         content_type: fileData.type,
         file_size: fileData.size,
         status: 'Uploaded',
-        score: fileData.score,
-        match_percentage: fileData.matchPercentage,
+        score: fileData.score || 0,
+        match_percentage: fileData.matchPercentage || 0,
       })
+      .select()
 
     if (dbError) {
       console.error('Database error:', dbError)
@@ -52,9 +67,9 @@ serve(async (req) => {
       )
     }
 
-    console.log('CV upload completed successfully')
+    console.log('CV upload completed successfully:', data)
     return new Response(
-      JSON.stringify({ message: 'CV uploaded successfully' }),
+      JSON.stringify({ message: 'CV uploaded successfully', data }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
   } catch (error) {

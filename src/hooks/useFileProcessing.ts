@@ -90,14 +90,29 @@ export const useFileProcessing = () => {
   const uploadToDatabase = async () => {
     try {
       for (const file of processedFiles) {
+        // Create a clean object with only the necessary data
+        const fileData = {
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          preview: file.preview,
+          score: file.score || 0,
+          matchPercentage: file.matchPercentage || 0,
+        };
+
+        console.log('Uploading file data:', fileData);
+
         const { error } = await supabase.functions.invoke('upload-cv', {
-          body: JSON.stringify(file),
+          body: JSON.stringify(fileData),
           headers: {
             'Content-Type': 'application/json',
           },
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error('Upload error:', error);
+          throw error;
+        }
       }
 
       toast({
@@ -114,6 +129,7 @@ export const useFileProcessing = () => {
         description: "Failed to upload files to database. Please try again.",
         variant: "destructive",
       });
+      throw error;
     }
   };
 
