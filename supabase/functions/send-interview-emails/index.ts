@@ -33,8 +33,22 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Processing request for candidates:", selectedCandidates.map(c => ({ name: c.name, file_path: c.file_path })));
 
     const validAttachments = await processAttachments(selectedCandidates);
+    
+    // Check if all attachments were processed successfully
     if (validAttachments.length !== selectedCandidates.length) {
-      console.warn(`Warning: Only ${validAttachments.length} out of ${selectedCandidates.length} attachments were processed successfully`);
+      console.error('Not all attachments were processed successfully:', {
+        processed: validAttachments.length,
+        total: selectedCandidates.length,
+        failed: selectedCandidates.length - validAttachments.length
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Failed to process all attachments',
+        details: `Only ${validAttachments.length} out of ${selectedCandidates.length} attachments were processed successfully. Please try again.`
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const html = generateEmailHTML(jobTitle, selectedCandidates);
@@ -69,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     return new Response(JSON.stringify({
       success: true,
-      message: `Email sent successfully with ${validAttachments.length} attachments`,
+      message: `Email sent successfully with all ${validAttachments.length} attachments`,
       data: responseData
     }), {
       status: 200,

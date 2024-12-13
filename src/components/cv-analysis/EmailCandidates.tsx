@@ -66,7 +66,7 @@ export const EmailCandidates = ({
           score: match.score,
           file_name: match.file_name,
           file_path: match.file_path,
-          evidence: match.evidence, // Include the evidence object
+          evidence: match.evidence,
         }));
 
       console.log('Sending email with data:', {
@@ -86,11 +86,22 @@ export const EmailCandidates = ({
         }
       );
 
-      if (error) throw error;
+      if (error) {
+        // Check if the error is related to attachment processing
+        if (error.message?.includes('Failed to process all attachments')) {
+          toast({
+            title: "Processing Error",
+            description: "Some attachments failed to process. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+        throw error;
+      }
 
       toast({
         title: "Success",
-        description: "Emails sent successfully",
+        description: "Emails sent successfully with all attachments",
       });
 
       onEmailsSent();
