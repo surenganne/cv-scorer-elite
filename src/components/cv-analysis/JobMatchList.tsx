@@ -21,7 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { MatchesTable } from "./MatchesTable";
-import { useCVOperations } from "@/hooks/useCVOperations"; // Add this import
+import { useCVOperations } from "@/hooks/useCVOperations";
+import { JobDescriptionJSON } from "./JobDescriptionJSON";
 
 interface JobMatch {
   id: string;
@@ -33,13 +34,15 @@ interface JobMatch {
   skills_weight: number;
   education_weight: number;
   certifications_weight: number;
+  preferred_qualifications?: string;
   status: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export const JobMatchList = () => {
   const { toast } = useToast();
-  const { handleViewCV } = useCVOperations(); // Add this hook
+  const { handleViewCV } = useCVOperations();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
   const [topMatches, setTopMatches] = useState<Record<string, number>>({});
@@ -139,7 +142,7 @@ export const JobMatchList = () => {
               <TableCell>
                 {format(new Date(job.created_at), "MMM dd, yyyy")}
               </TableCell>
-              <TableCell>
+              <TableCell className="flex items-center">
                 <Button
                   variant="outline"
                   size="sm"
@@ -153,6 +156,7 @@ export const JobMatchList = () => {
                   )}
                   Find Matched Jobseekers
                 </Button>
+                <JobDescriptionJSON jobData={job} />
               </TableCell>
             </TableRow>
           ))}
@@ -198,7 +202,7 @@ export const JobMatchList = () => {
               matches={matches} 
               jobTitle={job.title} 
               weights={weights}
-              onViewResume={handleViewCV} // Add this prop
+              onViewResume={handleViewCV}
             />
           </div>
         );
