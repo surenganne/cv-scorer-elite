@@ -41,6 +41,7 @@ export const JobMatchList = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
   const [topMatches, setTopMatches] = useState<Record<string, number>>({});
+  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -91,6 +92,7 @@ export const JobMatchList = () => {
       .slice(0, topMatches[jobId] || 5);
 
       setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
+      setShowFilters((prev) => ({ ...prev, [jobId]: true }));
       
       toast({
         title: "Matches Found",
@@ -124,7 +126,6 @@ export const JobMatchList = () => {
             <TableHead>Job Title</TableHead>
             <TableHead>Min. Experience</TableHead>
             <TableHead>Created</TableHead>
-            <TableHead>Top Matches</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -135,24 +136,6 @@ export const JobMatchList = () => {
               <TableCell>{job.minimum_experience} years</TableCell>
               <TableCell>
                 {format(new Date(job.created_at), "MMM dd, yyyy")}
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={String(topMatches[job.id] || "5")}
-                  onValueChange={(value) => 
-                    setTopMatches(prev => ({ ...prev, [job.id]: Number(value) }))
-                  }
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Top 5" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Top 5</SelectItem>
-                    <SelectItem value="10">Top 10</SelectItem>
-                    <SelectItem value="15">Top 15</SelectItem>
-                    <SelectItem value="20">Top 20</SelectItem>
-                  </SelectContent>
-                </Select>
               </TableCell>
               <TableCell>
                 <Button
@@ -177,7 +160,34 @@ export const JobMatchList = () => {
       {Object.entries(matchedCVs).map(([jobId, matches]) => {
         const job = activeJobs.find((j) => j.id === jobId);
         if (!job || !matches?.length) return null;
-        return <MatchesTable key={jobId} matches={matches} jobTitle={job.title} />;
+        
+        return (
+          <div key={jobId} className="space-y-4">
+            {showFilters[jobId] && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select
+                  value={String(topMatches[jobId] || "5")}
+                  onValueChange={(value) => {
+                    setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
+                    findMatches(jobId);
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Top 5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="15">Top 15</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <MatchesTable matches={matches} jobTitle={job.title} />
+          </div>
+        );
       })}
     </div>
   );
