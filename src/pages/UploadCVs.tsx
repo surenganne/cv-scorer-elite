@@ -12,9 +12,10 @@ import Navbar from "@/components/layout/Navbar";
 
 const UploadCVs = () => {
   const [files, setFiles] = useState<FileWithPreview[]>([]);
+  const [processedFiles, setProcessedFiles] = useState<FileWithPreview[]>([]);
   const { toast } = useToast();
 
-  const uploadFile = async (file: FileWithPreview) => {
+  const processFile = async (file: FileWithPreview) => {
     try {
       // Start with initial progress
       setFiles((prevFiles) =>
@@ -37,19 +38,19 @@ const UploadCVs = () => {
         );
       }, 300);
 
-      console.log('Starting upload for:', file.name);
-      const response = await supabase.functions.invoke('upload-cv', {
+      console.log('Starting processing for:', file.name);
+      const response = await supabase.functions.invoke('process-cv', {
         body: formData,
       });
 
       clearInterval(progressInterval);
 
       if (response.error) {
-        console.error('Upload error:', response.error);
+        console.error('Processing error:', response.error);
         throw new Error(response.error.message);
       }
 
-      console.log('Upload completed:', response.data);
+      console.log('Processing completed:', response.data);
 
       // Set final progress and show success message
       setFiles((prevFiles) =>
@@ -58,16 +59,17 @@ const UploadCVs = () => {
         )
       );
 
+      // Add to processed files
+      setProcessedFiles(prev => [...prev, { ...file, processed: true }]);
+
       toast({
-        title: "Upload Complete",
-        description: file.type.includes('zip') 
-          ? "ZIP file contents have been extracted and uploaded successfully."
-          : `${file.name} has been uploaded successfully.`,
+        title: "Processing Complete",
+        description: `${file.name} has been processed successfully.`,
       });
 
       return response.data;
     } catch (error) {
-      console.error('Upload error:', error);
+      console.error('Processing error:', error);
       // Reset progress on error
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
@@ -76,11 +78,42 @@ const UploadCVs = () => {
       );
       
       toast({
-        title: "Upload Failed",
-        description: `Failed to upload ${file.name}. Please try again.`,
+        title: "Processing Failed",
+        description: `Failed to process ${file.name}. Please try again.`,
         variant: "destructive",
       });
       throw error;
+    }
+  };
+
+  const uploadToDatabase = async () => {
+    try {
+      for (const file of processedFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await supabase.functions.invoke('upload-cv', {
+          body: formData,
+        });
+
+        if (response.error) throw new Error(response.error.message);
+      }
+
+      toast({
+        title: "Upload Complete",
+        description: "All files have been uploaded to the database successfully.",
+      });
+
+      // Clear both files and processed files after successful upload
+      setFiles([]);
+      setProcessedFiles([]);
+    } catch (error) {
+      console.error('Upload to database failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload files to database. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -97,16 +130,17 @@ const UploadCVs = () => {
 
   const removeFile = (fileToRemove: FileWithPreview) => {
     setFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
+    setProcessedFiles((prevFiles) => prevFiles.filter((file) => file !== fileToRemove));
     if (fileToRemove.preview) {
       URL.revokeObjectURL(fileToRemove.preview);
     }
   };
 
-  const handleUpload = async (file: FileWithPreview) => {
+  const handleProcess = async (file: FileWithPreview) => {
     try {
-      await uploadFile(file);
+      await processFile(file);
     } catch (error) {
-      console.error('Upload failed:', error);
+      console.error('Processing failed:', error);
     }
   };
 
@@ -145,9 +179,35 @@ const UploadCVs = () => {
                     key={index}
                     file={file}
                     onRemove={removeFile}
-                    onUpload={handleUpload}
+                    onUpload={handleProcess}
+                    buttonText="Process"
                   />
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {processedFiles.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Processed Files</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {processedFiles.map((file, index) => (
+                  <FileItem
+                    key={index}
+                    file={file}
+                    onRemove={removeFile}
+                    processed={true}
+                  />
+                ))}
+                <div className="flex justify-end mt-4">
+                  <Button onClick={uploadToDatabase}>
+                    Upload All to Database
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

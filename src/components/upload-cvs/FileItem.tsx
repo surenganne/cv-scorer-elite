@@ -6,10 +6,12 @@ import { FileText, X, Check, Loader2 } from "lucide-react";
 interface FileItemProps {
   file: FileWithPreview;
   onRemove: (file: FileWithPreview) => void;
-  onUpload: (file: FileWithPreview) => void;
+  onUpload?: (file: FileWithPreview) => void;
+  buttonText?: string;
+  processed?: boolean;
 }
 
-const FileItem = ({ file, onRemove, onUpload }: FileItemProps) => {
+const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
@@ -22,23 +24,25 @@ const FileItem = ({ file, onRemove, onUpload }: FileItemProps) => {
           {file.progress !== undefined && file.progress < 100 && (
             <div className="w-full">
               <Progress value={file.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{file.progress}% uploaded</p>
+              <p className="text-sm text-gray-500 mt-1">{file.progress}% processed</p>
             </div>
           )}
         </div>
       </div>
       <div className="flex items-center gap-4 ml-4">
-        {file.progress === 100 ? (
+        {processed ? (
+          <Check className="h-5 w-5 text-green-500" />
+        ) : file.progress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
         ) : file.progress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
-        ) : (
+        ) : onUpload && (
           <Button
             variant="outline"
             size="sm"
             onClick={() => onUpload(file)}
           >
-            Upload
+            {buttonText}
           </Button>
         )}
         <Button
