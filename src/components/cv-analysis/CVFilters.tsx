@@ -36,7 +36,7 @@ export const CVFilters = () => {
           <SelectItem value="match">Match %</SelectItem>
         </SelectContent>
       </Select>
-      <Button className="bg-[#1C26A8] hover:bg-[#161d86]">
+      <Button>
         Apply Filters
       </Button>
     </div>
