@@ -11,13 +11,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Log incoming request details
-  console.log('Received request:', {
-    method: req.method,
-    url: req.url,
-    headers: Object.fromEntries(req.headers.entries())
-  });
-
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, {
@@ -28,16 +21,20 @@ serve(async (req) => {
 
   try {
     if (!RESEND_API_KEY) {
-      throw new Error('Missing RESEND_API_KEY');
+      console.error('Missing RESEND_API_KEY');
+      throw new Error('Server configuration error');
     }
 
     // Parse and validate request body
     let requestData;
     try {
-      requestData = await req.json();
-      console.log('Request payload:', JSON.stringify(requestData, null, 2));
+      const bodyText = await req.text();
+      console.log('Raw request body:', bodyText);
+      requestData = JSON.parse(bodyText);
+      console.log('Parsed request data:', requestData);
     } catch (error) {
-      throw new Error(`Invalid JSON payload: ${error.message}`);
+      console.error('Failed to parse request body:', error);
+      throw new Error(`Invalid request format: ${error.message}`);
     }
 
     const { to, selectedCandidates, jobTitle } = requestData;
@@ -56,7 +53,7 @@ serve(async (req) => {
     }
 
     // Process attachments
-    console.log('Processing attachments...');
+    console.log('Processing attachments for candidates:', selectedCandidates.length);
     const attachments = await processAttachments(selectedCandidates);
     console.log(`Processed ${attachments.length} attachments`);
 
@@ -72,8 +69,13 @@ serve(async (req) => {
       attachments
     };
 
+    console.log('Sending email to Resend API with data:', {
+      to: emailData.to,
+      subject: emailData.subject,
+      attachmentsCount: attachments.length
+    });
+
     // Send email
-    console.log('Sending email to Resend API...');
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -87,7 +89,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       console.error('Resend API error:', responseData);
-      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
+      throw new Error(`Failed to send email: ${JSON.stringify(responseData)}`);
     }
 
     console.log('Email sent successfully:', responseData);
@@ -100,12 +102,10 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in send-interview-emails function:', error);
     
-    const errorResponse = {
+    return new Response(JSON.stringify({
       error: error.message,
       details: 'Check function logs for more information'
-    };
-
-    return new Response(JSON.stringify(errorResponse), {
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
