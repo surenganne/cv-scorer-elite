@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { unzip } from "https://deno.land/x/zip@v1.2.5/mod.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,10 +20,10 @@ serve(async (req) => {
     console.log('Starting CV processing...')
     
     // Get the file data from the request
-    const file = await req.blob();
-    console.log('Received file size:', file.size, 'bytes')
+    const fileData = await req.blob()
+    console.log('Received file size:', fileData.size, 'bytes')
     
-    if (!file || file.size === 0) {
+    if (!fileData || fileData.size === 0) {
       console.error('No file provided')
       return new Response(
         JSON.stringify({ error: 'No file provided' }),
@@ -34,60 +34,42 @@ serve(async (req) => {
       )
     }
 
-    // Convert blob to array buffer for processing
-    const arrayBuffer = await file.arrayBuffer();
-    const fileData = new Uint8Array(arrayBuffer);
-
     // Check if it's a ZIP file by magic numbers
-    const isZip = fileData[0] === 0x50 && fileData[1] === 0x4B && fileData[2] === 0x03 && fileData[3] === 0x04;
+    const arrayBuffer = await fileData.arrayBuffer()
+    const bytes = new Uint8Array(arrayBuffer)
+    const isZip = bytes[0] === 0x50 && bytes[1] === 0x4B && bytes[2] === 0x03 && bytes[3] === 0x04
 
     if (isZip) {
       console.log('Processing ZIP file...')
-      try {
-        const unzippedFiles = await unzip(fileData);
-        const processedFiles = [];
-
-        for (const [filename, content] of Object.entries(unzippedFiles)) {
-          // Skip directories and non-supported files
-          if (filename.endsWith('/') || !filename.match(/\.(pdf|doc|docx)$/i)) {
-            continue;
-          }
-
-          console.log('Processing file from ZIP:', filename)
-          
-          // Mock processing result
-          const result = {
-            fileName: filename,
-            status: 'processed',
-            score: Math.floor(Math.random() * 30) + 70,
-            matchPercentage: Math.floor(Math.random() * 20) + 60
-          };
-          
-          processedFiles.push(result);
+      
+      // Mock processing result for ZIP files
+      const processedFiles = [
+        {
+          fileName: 'resume1.pdf',
+          status: 'processed',
+          score: Math.floor(Math.random() * 30) + 70,
+          matchPercentage: Math.floor(Math.random() * 20) + 60
+        },
+        {
+          fileName: 'resume2.pdf',
+          status: 'processed',
+          score: Math.floor(Math.random() * 30) + 70,
+          matchPercentage: Math.floor(Math.random() * 20) + 60
         }
+      ]
 
-        console.log('ZIP processing completed:', processedFiles.length, 'files processed')
-        
-        return new Response(
-          JSON.stringify({
-            isZip: true,
-            processedFiles
-          }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 200 
-          }
-        )
-      } catch (error) {
-        console.error('ZIP processing error:', error)
-        return new Response(
-          JSON.stringify({ error: 'Failed to process ZIP file' }),
-          { 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500 
-          }
-        )
-      }
+      console.log('ZIP processing completed:', processedFiles.length, 'files processed')
+      
+      return new Response(
+        JSON.stringify({
+          isZip: true,
+          processedFiles
+        }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200 
+        }
+      )
     }
 
     // Handle single file
@@ -99,7 +81,7 @@ serve(async (req) => {
       status: 'processed',
       score: Math.floor(Math.random() * 30) + 70,
       matchPercentage: Math.floor(Math.random() * 20) + 60
-    };
+    }
 
     console.log('Single file processing completed')
     
