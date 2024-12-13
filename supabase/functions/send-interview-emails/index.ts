@@ -1,82 +1,98 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { generateEmailHTML, Candidate } from './emailTemplate.ts';
-import { processAttachments } from './attachments.ts';
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { processAttachments } from "./attachments.ts";
+import { generateEmailContent } from "./emailTemplate.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-interface EmailRequest {
-  to: string[];
-  selectedCandidates: Candidate[];
-  jobTitle: string;
-}
-
-const handler = async (req: Request): Promise<Response> => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders
+    });
   }
 
   try {
-    console.log("Received request to send interview emails");
-    const { to, selectedCandidates, jobTitle } = await req.json() as EmailRequest;
-    
+    const { to, selectedCandidates, jobTitle } = await req.json();
+
+    console.log('Received request:', {
+      to,
+      candidatesCount: selectedCandidates?.length,
+      jobTitle
+    });
+
     if (!RESEND_API_KEY) {
-      throw new Error("Missing RESEND_API_KEY");
+      throw new Error('Missing RESEND_API_KEY');
     }
 
-    console.log("Request data:", { to, selectedCandidates, jobTitle });
+    if (!to || !Array.isArray(to) || to.length === 0) {
+      throw new Error('Invalid or missing recipient emails');
+    }
 
-    const validAttachments = await processAttachments(selectedCandidates);
-    const html = generateEmailHTML(jobTitle, selectedCandidates);
+    if (!selectedCandidates || !Array.isArray(selectedCandidates) || selectedCandidates.length === 0) {
+      throw new Error('No candidates selected');
+    }
 
-    console.log("Sending email with HTML and attachments:", {
-      attachmentsCount: validAttachments.length,
-      candidatesCount: selectedCandidates.length
+    const attachments = await processAttachments(selectedCandidates);
+    console.log(`Processed ${attachments.length} attachments`);
+
+    const emailContent = generateEmailContent(selectedCandidates, jobTitle);
+
+    const emailData = {
+      from: "CV Scorer Elite <onboarding@resend.dev>",
+      to,
+      subject: `Interview Candidates for ${jobTitle} Position`,
+      html: emailContent,
+      attachments
+    };
+
+    console.log('Sending email with attachments:', {
+      recipientsCount: to.length,
+      attachmentsCount: attachments.length
     });
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        from: "CV Scorer Elite <no-reply@incepta.ai>",
-        to,
-        subject: `Interview Candidates for ${jobTitle}`,
-        html,
-        attachments: validAttachments,
-      }),
+      body: JSON.stringify(emailData)
     });
 
-    const responseData = await res.json();
-    console.log("Resend API response:", responseData);
-
-    if (!res.ok) {
-      throw new Error(`Resend API error: ${JSON.stringify(responseData)}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Resend API error:', errorText);
+      throw new Error(`Resend API error: ${errorText}`);
     }
 
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  } catch (error: any) {
-    console.error("Error in send-interview-emails function:", error);
-    return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        details: "Check the function logs for more details"
-      }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-};
+    const result = await response.json();
+    console.log('Email sent successfully:', result);
 
-serve(handler);
+    return new Response(JSON.stringify(result), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+
+  } catch (error) {
+    console.error('Error in send-interview-emails:', error);
+    
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+        details: 'Check the function logs for more details'
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      }
+    );
+  }
+});
