@@ -57,18 +57,20 @@ serve(async (req) => {
 
     const content = data.choices[0].message.content;
     
-    // Parse the response
-    const requiredSkillsMatch = content.match(/REQUIRED_SKILLS: (.*)/);
-    const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE: (\d+)/);
-    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:• .*\n?)*)/);
+    // Parse the response with improved regex patterns
+    const requiredSkillsMatch = content.match(/REQUIRED_SKILLS:\s*(.*?)(?=\n|$)/);
+    const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE:\s*(\d+)/);
+    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:•[^\n]*\n?)*)/);
 
-    const preferredQualifications = preferredQualificationsMatch 
-      ? preferredQualificationsMatch[1]
-          .split('\n')
-          .filter(line => line.trim().startsWith('•'))
-          .map(line => line.trim().substring(2).trim())
-          .join('\n')
-      : '';
+    // Process preferred qualifications with better handling
+    let preferredQualifications = '';
+    if (preferredQualificationsMatch && preferredQualificationsMatch[1]) {
+      preferredQualifications = preferredQualificationsMatch[1]
+        .split('\n')
+        .filter(line => line.trim().startsWith('•'))
+        .map(line => line.trim().substring(1).trim())
+        .join('\n');
+    }
 
     console.log('Parsed preferred qualifications:', preferredQualifications);
 
