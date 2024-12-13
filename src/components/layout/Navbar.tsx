@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { Github } from "lucide-react"; // Using Github icon as a logo since it's one of the recommended options
 
 const Navbar = () => {
   const location = useLocation();
@@ -12,8 +13,12 @@ const Navbar = () => {
     <nav className="bg-white shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          <div className="flex">
-            <div className="flex space-x-8">
+          <div className="flex items-center">
+            <Link to="/" className="flex items-center">
+              <Github className="h-8 w-8 text-primary mr-2" />
+              <span className="text-xl font-semibold text-primary">CV Analyzer</span>
+            </Link>
+            <div className="flex space-x-8 ml-8">
               <Link
                 to="/"
                 className={cn(
