@@ -4,9 +4,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Progress } from "@/components/ui/progress";
 import { Trophy, Award, GraduationCap, Briefcase, Code } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface MatchEvidenceProps {
   score: number;
@@ -44,6 +44,15 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
     certifications: Math.round(score * (weights?.certifications_weight || 25) / 100),
   };
 
+  const COLORS = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b'];
+
+  const pieData = weights ? [
+    { name: 'Skills', value: mockScores.skills, weight: weights.skills_weight },
+    { name: 'Experience', value: mockScores.experience, weight: weights.experience_weight },
+    { name: 'Education', value: mockScores.education, weight: weights.education_weight },
+    { name: 'Certifications', value: mockScores.certifications, weight: weights.certifications_weight },
+  ] : [];
+
   return (
     <Accordion type="single" collapsible className="w-full">
       <AccordionItem value="evidence" className="border-none">
@@ -63,61 +72,51 @@ export const MatchEvidence = ({ score, evidence, weights }: MatchEvidenceProps) 
           )}>
             {weights && (
               <div className="space-y-3">
-                <div className="grid gap-3">
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Code className="h-3.5 w-3.5 text-blue-500" />
-                        <span className="font-medium">Technical Skills</span>
+                <div className="grid grid-cols-[1fr_200px] gap-4 items-center">
+                  <div className="space-y-2">
+                    {pieData.map((entry, index) => (
+                      <div key={entry.name} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-1.5">
+                          {index === 0 && <Code className="h-3.5 w-3.5 text-blue-500" />}
+                          {index === 1 && <Briefcase className="h-3.5 w-3.5 text-purple-500" />}
+                          {index === 2 && <GraduationCap className="h-3.5 w-3.5 text-green-500" />}
+                          {index === 3 && <Award className="h-3.5 w-3.5 text-amber-500" />}
+                          <span className="font-medium">{entry.name}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-gray-600">{entry.value}%</span>
+                          <span className="text-xs text-gray-400">Weight: {entry.weight}%</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-gray-600">{mockScores.skills}%</span>
-                        <span className="text-xs text-gray-400">Weight: {weights.skills_weight}%</span>
-                      </div>
-                    </div>
-                    <Progress value={mockScores.skills} className="h-1.5" />
+                    ))}
                   </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase className="h-3.5 w-3.5 text-purple-500" />
-                        <span className="font-medium">Experience</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-gray-600">{mockScores.experience}%</span>
-                        <span className="text-xs text-gray-400">Weight: {weights.experience_weight}%</span>
-                      </div>
-                    </div>
-                    <Progress value={mockScores.experience} className="h-1.5" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <GraduationCap className="h-3.5 w-3.5 text-green-500" />
-                        <span className="font-medium">Education</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-gray-600">{mockScores.education}%</span>
-                        <span className="text-xs text-gray-400">Weight: {weights.education_weight}%</span>
-                      </div>
-                    </div>
-                    <Progress value={mockScores.education} className="h-1.5" />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <Award className="h-3.5 w-3.5 text-amber-500" />
-                        <span className="font-medium">Certifications</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-gray-600">{mockScores.certifications}%</span>
-                        <span className="text-xs text-gray-400">Weight: {weights.certifications_weight}%</span>
-                      </div>
-                    </div>
-                    <Progress value={mockScores.certifications} className="h-1.5" />
+                  <div className="h-[200px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={40}
+                          outerRadius={80}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index]} />
+                          ))}
+                        </Pie>
+                        <Tooltip 
+                          formatter={(value: number) => `${value}%`}
+                          contentStyle={{ 
+                            backgroundColor: 'white',
+                            border: '1px solid #e2e8f0',
+                            borderRadius: '0.375rem',
+                            padding: '0.5rem'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
               </div>
