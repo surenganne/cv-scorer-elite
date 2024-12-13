@@ -6,6 +6,7 @@ import SelectedFiles from "@/components/upload-cvs/SelectedFiles";
 import ProcessedFiles from "@/components/upload-cvs/ProcessedFiles";
 import Navbar from "@/components/layout/Navbar";
 import { useFileProcessing } from "@/hooks/useFileProcessing";
+import { FileWithPreview } from "@/types/file";
 
 const UploadCVs = () => {
   const {
@@ -18,10 +19,11 @@ const UploadCVs = () => {
   } = useFileProcessing();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
-    const newFiles = acceptedFiles.map((file) => ({
+    const newFiles: FileWithPreview[] = acceptedFiles.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
-      progress: undefined
+      progress: undefined,
+      webkitRelativePath: file.webkitRelativePath
     }));
     
     setFiles((prevFiles) => [...prevFiles, ...newFiles]);

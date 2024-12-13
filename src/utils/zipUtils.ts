@@ -27,48 +27,22 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
                       ['doc', 'docx'].includes(fileType) ? 'application/msword' :
                       'application/octet-stream';
 
-      // Create a proper File object with bound methods
       const file = new File([content], fileName, {
         type: mimeType,
         lastModified: zipEntry.date.getTime(),
       });
 
-      // Create a FileWithPreview object that preserves File methods
-      const extractedFile = new File([file], file.name, {
-        type: file.type,
-        lastModified: file.lastModified,
-      }) as FileWithPreview;
-
-      // Add FileWithPreview specific properties
-      Object.defineProperties(extractedFile, {
-        preview: {
-          value: URL.createObjectURL(content),
-          writable: true,
-          enumerable: true,
-        },
-        progress: {
-          value: 0,
-          writable: true,
-          enumerable: true,
-        },
-        processed: {
-          value: false,
-          writable: true,
-          enumerable: true,
-        },
-        score: {
-          value: 0,
-          writable: true,
-          enumerable: true,
-        },
-        matchPercentage: {
-          value: 0,
-          writable: true,
-          enumerable: true,
-        }
-      });
+      const extractedFile: FileWithPreview = {
+        file,
+        preview: URL.createObjectURL(content),
+        progress: 0,
+        processed: false,
+        score: 0,
+        matchPercentage: 0,
+        webkitRelativePath: relativePath
+      };
       
-      console.log(`Extracted file: ${fileName}, size: ${extractedFile.size} bytes`);
+      console.log(`Extracted file: ${fileName}, size: ${file.size} bytes`);
       extractedFiles.push(extractedFile);
     }
     

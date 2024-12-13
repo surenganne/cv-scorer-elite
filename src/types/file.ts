@@ -5,5 +5,5 @@ export interface FileWithPreview {
   processed?: boolean;
   score?: number;
   matchPercentage?: number;
-  webkitRelativePath: string;
+  webkitRelativePath?: string;
 }

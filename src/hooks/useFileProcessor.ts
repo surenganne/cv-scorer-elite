@@ -12,10 +12,10 @@ export const useFileProcessor = () => {
       console.log('Starting processing for:', file.file.name, 'Size:', file.file.size, 'bytes');
       
       if (file.file.type === 'application/zip' || file.file.type === 'application/x-zip-compressed') {
-        updateProgress(10); // Start progress - Extracting ZIP
+        updateProgress(10);
         const extractedFiles = await extractFilesFromZip(file.file);
         console.log(`Successfully extracted ${extractedFiles.length} files from ZIP`);
-        updateProgress(20); // ZIP extracted
+        updateProgress(20);
 
         const processedFiles: FileWithPreview[] = [];
         let processedCount = 0;
@@ -23,10 +23,9 @@ export const useFileProcessor = () => {
         
         for (const extractedFile of extractedFiles) {
           const formData = new FormData();
-          formData.append('file', extractedFile);
+          formData.append('file', extractedFile.file);
 
           try {
-            // Calculate progress: 20% for extraction + up to 80% for processing
             const currentProgress = 20 + Math.round((processedCount / totalFiles) * 80);
             updateProgress(currentProgress);
             
@@ -41,17 +40,17 @@ export const useFileProcessor = () => {
 
             if (data) {
               processedFiles.push({
-                file: extractedFile,
+                file: extractedFile.file,
                 processed: true,
                 score: data.score || 0,
                 matchPercentage: data.matchPercentage || 0,
                 progress: 100,
-                webkitRelativePath: extractedFile.webkitRelativePath || ''
+                preview: extractedFile.preview,
+                webkitRelativePath: extractedFile.file.webkitRelativePath
               });
             }
             
             processedCount++;
-            // Update progress after each file is processed
             const newProgress = 20 + Math.round((processedCount / totalFiles) * 80);
             updateProgress(newProgress);
           } catch (error) {
@@ -60,7 +59,7 @@ export const useFileProcessor = () => {
           }
         }
 
-        updateProgress(100); // Complete
+        updateProgress(100);
         toast({
           title: "ZIP Processing Complete",
           description: `Processed ${processedCount} out of ${totalFiles} files from ${file.file.name}`,
@@ -83,7 +82,8 @@ export const useFileProcessor = () => {
           score: data?.score || 0,
           matchPercentage: data?.matchPercentage || 0,
           progress: 100,
-          preview: file.preview
+          preview: file.preview,
+          webkitRelativePath: file.file.webkitRelativePath
         };
 
         updateProgress(100);
