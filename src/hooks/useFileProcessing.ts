@@ -27,8 +27,12 @@ export const useFileProcessing = () => {
         // Process each extracted file
         for (const extractedFile of extractedFiles) {
           console.log(`Processing extracted file: ${extractedFile.name}, size: ${extractedFile.size} bytes`);
+          
+          // Create FormData and append the file
           const formData = new FormData();
-          formData.append('file', extractedFile);
+          const blob = new Blob([await extractedFile.arrayBuffer()], { type: extractedFile.type });
+          const fileObject = new File([blob], extractedFile.name, { type: extractedFile.type });
+          formData.append('file', fileObject);
 
           const { data, error } = await supabase.functions.invoke('process-cv', {
             body: formData,
@@ -46,6 +50,7 @@ export const useFileProcessing = () => {
               score: data.score || 0,
               matchPercentage: data.matchPercentage || 0,
               progress: 100,
+              webkitRelativePath: '',
             };
             
             console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
@@ -80,6 +85,7 @@ export const useFileProcessing = () => {
           score: data?.score || 0,
           matchPercentage: data?.matchPercentage || 0,
           progress: 100,
+          webkitRelativePath: file.webkitRelativePath || '',
         };
 
         setFiles((prevFiles) =>
