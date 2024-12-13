@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FileText, Download } from "lucide-react";
+import { FileText, Download, Calendar, FileType } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
@@ -52,32 +52,46 @@ export const CVTable = ({ data = [], onView, onDownload }: CVTableProps) => {
   };
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-lg border bg-white shadow-sm">
       <Table>
         <TableHeader>
-          <TableRow>
-            <TableHead>File Name</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Upload Date</TableHead>
-            <TableHead>Actions</TableHead>
+          <TableRow className="bg-muted/50">
+            <TableHead className="font-semibold">File Name</TableHead>
+            <TableHead className="font-semibold">Size</TableHead>
+            <TableHead className="font-semibold">Type</TableHead>
+            <TableHead className="font-semibold">Upload Date</TableHead>
+            <TableHead className="font-semibold text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.map((cv) => (
-            <TableRow key={cv.id}>
-              <TableCell className="font-medium">{cv.file_name}</TableCell>
-              <TableCell>{formatFileSize(cv.file_size)}</TableCell>
-              <TableCell>{formatContentType(cv.content_type)}</TableCell>
-              <TableCell>
-                {cv.upload_date ? format(new Date(cv.upload_date), 'MMM dd, yyyy') : 'N/A'}
+            <TableRow key={cv.id} className="hover:bg-muted/50 transition-colors">
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-blue-500" />
+                  {cv.file_name}
+                </div>
               </TableCell>
               <TableCell>
-                <div className="flex space-x-2">
+                <div className="flex items-center gap-2">
+                  <FileType className="h-4 w-4 text-gray-400" />
+                  {formatFileSize(cv.file_size)}
+                </div>
+              </TableCell>
+              <TableCell>{formatContentType(cv.content_type)}</TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-400" />
+                  {cv.upload_date ? format(new Date(cv.upload_date), 'MMM dd, yyyy') : 'N/A'}
+                </div>
+              </TableCell>
+              <TableCell className="text-right">
+                <div className="flex justify-end space-x-2">
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => onView(cv.file_path)}
+                    className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
                   >
                     <FileText className="h-4 w-4 mr-1" />
                     View
@@ -86,6 +100,7 @@ export const CVTable = ({ data = [], onView, onDownload }: CVTableProps) => {
                     variant="outline" 
                     size="sm"
                     onClick={() => onDownload(cv.file_path, cv.file_name)}
+                    className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200"
                   >
                     <Download className="h-4 w-4 mr-1" />
                     Download
