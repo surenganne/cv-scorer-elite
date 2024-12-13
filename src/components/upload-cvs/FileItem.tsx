@@ -33,28 +33,26 @@ const FileItem = ({
     onRemove(file);
   };
 
-  // Create a safe object with primitive values only
-  const safeFile = {
-    name: file?.name?.toString() || '',
-    size: parseInt(file?.size?.toString() || '0', 10),
-    type: file?.type?.toString() || '',
-    progress: typeof file.progress === 'number' ? file.progress : undefined,
-    preview: file?.preview?.toString() || ''
-  };
+  // Extract primitive values directly to avoid method binding issues
+  const fileName = file.name || '';
+  const fileSize = typeof file.size === 'number' ? file.size : 0;
+  const fileType = file.type || '';
+  const fileProgress = typeof file.progress === 'number' ? file.progress : undefined;
+  const filePreview = file.preview || '';
   
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">
         <FileText className="h-8 w-8 text-blue-500" />
         <div className="flex-1 space-y-2">
-          <p className="font-medium truncate">{safeFile.name}</p>
+          <p className="font-medium truncate">{fileName}</p>
           <p className="text-sm text-gray-500">
-            {formatFileSize(safeFile.size)}
+            {formatFileSize(fileSize)}
           </p>
-          {safeFile.progress !== undefined && safeFile.progress < 100 && (
+          {fileProgress !== undefined && fileProgress < 100 && (
             <div className="w-full">
-              <Progress value={safeFile.progress} className="h-2" />
-              <p className="text-sm text-gray-500 mt-1">{Math.round(safeFile.progress)}% processed</p>
+              <Progress value={fileProgress} className="h-2" />
+              <p className="text-sm text-gray-500 mt-1">{Math.round(fileProgress)}% processed</p>
             </div>
           )}
         </div>
@@ -62,9 +60,9 @@ const FileItem = ({
       <div className="flex items-center gap-4 ml-4">
         {processed ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : safeFile.progress === 100 ? (
+        ) : fileProgress === 100 ? (
           <Check className="h-5 w-5 text-green-500" />
-        ) : safeFile.progress !== undefined ? (
+        ) : fileProgress !== undefined ? (
           <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
         ) : onUpload && (
           <Button
