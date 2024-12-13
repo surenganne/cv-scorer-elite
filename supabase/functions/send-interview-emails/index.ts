@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "CV Scorer Elite <onboarding@resend.dev>",
+        from: "CV Scorer Elite <no-reply@incepta.ai>",
         to,
         subject: `Interview Candidates for ${jobTitle}`,
         html,
