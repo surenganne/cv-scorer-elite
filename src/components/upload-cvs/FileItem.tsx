@@ -13,6 +13,8 @@ interface FileItemProps {
 }
 
 const FileItem = ({ file, onRemove, onUpload, buttonText = "Upload", processed = false }: FileItemProps) => {
+  console.log('Rendering FileItem:', file.name, 'Size:', file.size, 'bytes', 'Progress:', file.progress);
+  
   return (
     <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
       <div className="flex items-center gap-3 flex-1">

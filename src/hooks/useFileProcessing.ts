@@ -25,6 +25,7 @@ export const useFileProcessing = () => {
 
         // Process each extracted file
         for (const extractedFile of extractedFiles) {
+          console.log(`Processing extracted file: ${extractedFile.name}, size: ${extractedFile.size} bytes`);
           const formData = new FormData();
           formData.append('file', extractedFile);
 
@@ -38,12 +39,14 @@ export const useFileProcessing = () => {
           }
 
           if (data) {
-            setProcessedFiles(prev => [...prev, {
+            const processedFile = {
               ...extractedFile,
               processed: true,
               score: data.score,
               matchPercentage: data.matchPercentage,
-            }]);
+            };
+            console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
+            setProcessedFiles(prev => [...prev, processedFile]);
           }
         }
 
@@ -74,7 +77,9 @@ export const useFileProcessing = () => {
           )
         );
         
-        setProcessedFiles(prev => [...prev, { ...file, processed: true }]);
+        const processedFile = { ...file, processed: true };
+        console.log(`Successfully processed single file: ${processedFile.name}, size: ${processedFile.size} bytes`);
+        setProcessedFiles(prev => [...prev, processedFile]);
 
         toast({
           title: "Processing Complete",
