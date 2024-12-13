@@ -15,19 +15,15 @@ export const extractFilesFromZip = async (zipFile: File): Promise<FileWithPrevie
         const fileName = relativePath.split('/').pop() || relativePath;
         const content = await zipEntry.async('blob');
         
-        // Create a new File object with the correct name and size
+        // Create a new File object with all properties set during construction
         const extractedFile = new File([content], fileName, {
           type: `application/${fileName.split('.').pop()}`,
           lastModified: zipEntry.date.getTime(),
         }) as FileWithPreview;
         
-        // Explicitly set name and size properties
-        extractedFile.name = fileName;
-        extractedFile.size = content.size;
-        
         // Add preview URL
         extractedFile.preview = URL.createObjectURL(content);
-        console.log(`Extracted file: ${fileName}, size: ${content.size} bytes`);
+        console.log(`Extracted file: ${fileName}, size: ${extractedFile.size} bytes`);
         
         extractedFiles.push(extractedFile);
       }
