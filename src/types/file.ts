@@ -4,4 +4,8 @@ export interface FileWithPreview extends File {
   processed?: boolean;
   score?: number;
   matchPercentage?: number;
+  slice: File['slice'];
+  stream: File['stream'];
+  text: File['text'];
+  arrayBuffer: File['arrayBuffer'];
 }

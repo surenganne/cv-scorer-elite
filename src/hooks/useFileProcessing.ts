@@ -39,11 +39,20 @@ export const useFileProcessing = () => {
           }
 
           if (data) {
-            const processedFile = {
-              ...extractedFile,
+            const processedFile: FileWithPreview = {
+              name: extractedFile.name,
+              size: extractedFile.size,
+              type: extractedFile.type,
+              lastModified: extractedFile.lastModified,
+              preview: extractedFile.preview,
               processed: true,
-              score: data.score,
-              matchPercentage: data.matchPercentage,
+              score: data.score || 0,
+              matchPercentage: data.matchPercentage || 0,
+              progress: 100,
+              slice: extractedFile.slice,
+              stream: extractedFile.stream,
+              text: extractedFile.text,
+              arrayBuffer: extractedFile.arrayBuffer,
             };
             console.log(`Successfully processed file: ${processedFile.name}, size: ${processedFile.size} bytes`);
             setProcessedFiles(prev => [...prev, processedFile]);
@@ -77,7 +86,21 @@ export const useFileProcessing = () => {
           )
         );
         
-        const processedFile = { ...file, processed: true };
+        const processedFile: FileWithPreview = {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+          preview: file.preview,
+          processed: true,
+          score: data?.score || 0,
+          matchPercentage: data?.matchPercentage || 0,
+          progress: 100,
+          slice: file.slice,
+          stream: file.stream,
+          text: file.text,
+          arrayBuffer: file.arrayBuffer,
+        };
         console.log(`Successfully processed single file: ${processedFile.name}, size: ${processedFile.size} bytes`);
         setProcessedFiles(prev => [...prev, processedFile]);
 
