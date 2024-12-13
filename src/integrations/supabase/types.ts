@@ -16,7 +16,6 @@ export type Database = {
           file_path: string
           file_size: number
           id: string
-          status: string | null
           upload_date: string | null
         }
         Insert: {
@@ -25,7 +24,6 @@ export type Database = {
           file_path: string
           file_size: number
           id?: string
-          status?: string | null
           upload_date?: string | null
         }
         Update: {
@@ -34,7 +32,6 @@ export type Database = {
           file_path?: string
           file_size?: number
           id?: string
-          status?: string | null
           upload_date?: string | null
         }
         Relationships: []
