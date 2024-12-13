@@ -35,7 +35,7 @@ export const processAttachments = async (candidates: Candidate[]) => {
 
           const fileArrayBuffer = await fileResponse.arrayBuffer();
           const uint8Array = new Uint8Array(fileArrayBuffer);
-          const base64String = btoa(String.fromCharCode.apply(null, uint8Array));
+          const base64String = btoa(String.fromCharCode.apply(null, Array.from(uint8Array)));
 
           console.log('Successfully processed file:', candidate.file_name);
 
@@ -50,5 +50,9 @@ export const processAttachments = async (candidates: Candidate[]) => {
       })
   );
 
-  return attachments.filter(Boolean);
+  // Filter out any null results from failed attachment processing
+  const validAttachments = attachments.filter(Boolean);
+  console.log(`Successfully processed ${validAttachments.length} attachments`);
+  
+  return validAttachments;
 };

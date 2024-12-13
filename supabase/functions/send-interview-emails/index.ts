@@ -35,7 +35,10 @@ const handler = async (req: Request): Promise<Response> => {
     const validAttachments = await processAttachments(selectedCandidates);
     const html = generateEmailHTML(jobTitle, selectedCandidates);
 
-    console.log("Sending email with HTML and attachments");
+    console.log("Sending email with HTML and attachments:", {
+      attachmentsCount: validAttachments.length,
+      candidatesCount: selectedCandidates.length
+    });
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
