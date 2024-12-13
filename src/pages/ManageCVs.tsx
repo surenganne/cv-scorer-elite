@@ -42,20 +42,11 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      console.log("Original file path:", filePath);
-      
-      // Get the UUID from the file path which is the actual filename in storage
-      const uuid = filePath.match(/([a-f0-9-]{36})/i)?.[1];
-      
-      if (!uuid) {
-        throw new Error("Could not extract UUID from file path");
-      }
-
-      console.log("Attempting to get signed URL for UUID:", uuid);
+      console.log("Attempting to get signed URL for file path:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(uuid, 60);
+        .createSignedUrl(filePath, 60);
 
       if (error) {
         console.error("Storage error:", error);
@@ -81,20 +72,11 @@ const ManageCVs = () => {
         throw new Error("Invalid file path");
       }
 
-      console.log("Original file path:", filePath);
-      
-      // Get the UUID from the file path which is the actual filename in storage
-      const uuid = filePath.match(/([a-f0-9-]{36})/i)?.[1];
-      
-      if (!uuid) {
-        throw new Error("Could not extract UUID from file path");
-      }
-
-      console.log("Attempting to download UUID:", uuid);
+      console.log("Attempting to download file path:", filePath);
 
       const { data, error } = await supabase.storage
         .from("cvs")
-        .download(uuid);
+        .download(filePath);
 
       if (error) {
         console.error("Storage error:", error);
