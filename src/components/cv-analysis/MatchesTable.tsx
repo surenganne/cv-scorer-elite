@@ -1,18 +1,9 @@
 import { useState } from "react";
-import { MatchEvidence } from "./MatchEvidence";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { FileText } from "lucide-react";
+import { Table, TableBody } from "@/components/ui/table";
 import { EmailCandidates } from "./EmailCandidates";
+import { TableHeaderComponent } from "./TableHeader";
+import { TableRowComponent } from "./TableRowComponent";
 
 interface Match {
   id: string;
@@ -65,6 +56,10 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
     }
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedCandidates(checked ? matches.map(match => match.id) : []);
+  };
+
   const handleCheckboxChange = (candidateId: string) => {
     setSelectedCandidates((prev) =>
       prev.includes(candidateId)
@@ -72,6 +67,8 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
         : [...prev, candidateId]
     );
   };
+
+  const allSelected = matches.length > 0 && selectedCandidates.length === matches.length;
 
   return (
     <div className="mt-4 space-y-4 animate-fade-in">
@@ -92,51 +89,22 @@ export const MatchesTable = ({ matches, jobTitle, weights }: MatchesTableProps) 
 
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
           <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="w-[50px]"></TableHead>
-                <TableHead className="font-semibold py-2 text-left">Candidate</TableHead>
-                <TableHead className="font-semibold py-2">Match Analysis</TableHead>
-              </TableRow>
-            </TableHeader>
+            <TableHeaderComponent
+              onSelectAll={handleSelectAll}
+              allSelected={allSelected}
+            />
             <TableBody>
               {matches.map((match) => (
-                <TableRow 
+                <TableRowComponent
                   key={match.id}
-                  className="hover:bg-gray-50/50 transition-colors"
-                >
-                  <TableCell className="w-[50px]">
-                    <Checkbox
-                      checked={selectedCandidates.includes(match.id)}
-                      onCheckedChange={() => handleCheckboxChange(match.id)}
-                    />
-                  </TableCell>
-                  <TableCell className="font-medium py-2 text-left">
-                    <div className="flex flex-col gap-2">
-                      <span>{match.file_name}</span>
-                      {match.file_path && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="w-fit"
-                          onClick={() => handleViewResume(match.file_path!)}
-                        >
-                          <FileText className="h-4 w-4 mr-2" />
-                          View Resume
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-2xl py-2">
-                    <MatchEvidence 
-                      score={match.score} 
-                      evidence={match.evidence} 
-                      weights={weights}
-                      isExpanded={expandedMatch === match.id}
-                      onToggle={() => setExpandedMatch(expandedMatch === match.id ? null : match.id)}
-                    />
-                  </TableCell>
-                </TableRow>
+                  match={match}
+                  isSelected={selectedCandidates.includes(match.id)}
+                  onSelect={handleCheckboxChange}
+                  expandedMatch={expandedMatch}
+                  onToggleExpand={(id) => setExpandedMatch(expandedMatch === id ? null : id)}
+                  onViewResume={handleViewResume}
+                  weights={weights}
+                />
               ))}
             </TableBody>
           </Table>
