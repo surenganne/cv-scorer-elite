@@ -16,9 +16,6 @@ export const useFileProcessing = () => {
         )
       );
 
-      const formData = new FormData();
-      formData.append('file', file);
-
       const progressInterval = setInterval(() => {
         setFiles((prevFiles) =>
           prevFiles.map((f) =>
@@ -32,9 +29,9 @@ export const useFileProcessing = () => {
       console.log('Starting processing for:', file.name);
       
       const { data, error } = await supabase.functions.invoke('process-cv', {
-        body: formData,
+        body: file,
         headers: {
-          'Accept': 'application/json',
+          'Content-Type': file.type,
         },
       });
 
@@ -92,13 +89,10 @@ export const useFileProcessing = () => {
   const uploadToDatabase = async () => {
     try {
       for (const file of processedFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-
         const { error } = await supabase.functions.invoke('upload-cv', {
-          body: formData,
+          body: file,
           headers: {
-            'Accept': 'application/json',
+            'Content-Type': file.type,
           },
         });
 
