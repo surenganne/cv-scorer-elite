@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MatchEvidence } from "./MatchEvidence";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
