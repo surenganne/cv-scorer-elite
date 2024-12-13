@@ -9,77 +9,56 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { FileText, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
 
 type CV = {
   id: string;
-  candidateName: string;
-  score: number;
-  matchPercentage: number;
-  status: "Pending" | "Reviewed" | "Shortlisted";
-  uploadDate: string;
+  file_name: string;
+  file_path: string;
+  content_type: string;
+  file_size: number;
+  upload_date: string;
 };
 
-const mockData: CV[] = [
-  {
-    id: "1",
-    candidateName: "John Smith",
-    score: 85,
-    matchPercentage: 78,
-    status: "Reviewed",
-    uploadDate: "2024-02-20",
-  },
-  {
-    id: "2",
-    candidateName: "Sarah Johnson",
-    score: 92,
-    matchPercentage: 89,
-    status: "Shortlisted",
-    uploadDate: "2024-02-19",
-  },
-  {
-    id: "3",
-    candidateName: "Michael Brown",
-    score: 67,
-    matchPercentage: 62,
-    status: "Pending",
-    uploadDate: "2024-02-18",
-  },
-];
+interface CVTableProps {
+  data?: CV[];
+}
 
-export const CVTable = () => {
+export const CVTable = ({ data = [] }: CVTableProps) => {
+  const formatFileSize = (bytes: number) => {
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    
+    return `${size.toFixed(1)} ${units[unitIndex]}`;
+  };
+
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Candidate Name</TableHead>
-            <TableHead>Score</TableHead>
-            <TableHead>Match %</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>File Name</TableHead>
+            <TableHead>Size</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Upload Date</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {mockData.map((cv) => (
+          {data.map((cv) => (
             <TableRow key={cv.id}>
-              <TableCell className="font-medium">{cv.candidateName}</TableCell>
-              <TableCell>{cv.score}</TableCell>
-              <TableCell>{cv.matchPercentage}%</TableCell>
+              <TableCell className="font-medium">{cv.file_name}</TableCell>
+              <TableCell>{formatFileSize(cv.file_size)}</TableCell>
+              <TableCell>{cv.content_type}</TableCell>
               <TableCell>
-                <Badge
-                  variant={
-                    cv.status === "Shortlisted"
-                      ? "default"
-                      : cv.status === "Reviewed"
-                      ? "secondary"
-                      : "outline"
-                  }
-                >
-                  {cv.status}
-                </Badge>
+                {cv.upload_date ? format(new Date(cv.upload_date), 'MMM dd, yyyy') : 'N/A'}
               </TableCell>
-              <TableCell>{cv.uploadDate}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
                   <Button variant="outline" size="sm">

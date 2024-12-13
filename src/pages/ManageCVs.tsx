@@ -40,7 +40,7 @@ const ManageCVs = () => {
           {isLoading ? (
             <div className="text-center py-4">Loading CVs...</div>
           ) : (
-            <CVTable />
+            <CVTable data={cvs} />
           )}
         </div>
       </div>
