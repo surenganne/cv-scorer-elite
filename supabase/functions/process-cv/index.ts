@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { JSZip } from "https://deno.land/x/jszip@0.11.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -6,7 +7,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -14,7 +14,6 @@ serve(async (req) => {
   try {
     console.log('Starting CV processing...')
     
-    // Get the file from FormData
     const formData = await req.formData()
     const file = formData.get('file')
     
@@ -39,23 +38,34 @@ serve(async (req) => {
     if (isZip) {
       console.log('Processing ZIP file...')
       
-      // Mock processing result for ZIP files
-      const processedFiles = [
-        {
-          fileName: 'resume1.pdf',
-          status: 'processed',
-          score: Math.floor(Math.random() * 30) + 70,
-          matchPercentage: Math.floor(Math.random() * 20) + 60
-        },
-        {
-          fileName: 'resume2.pdf',
-          status: 'processed',
-          score: Math.floor(Math.random() * 30) + 70,
-          matchPercentage: Math.floor(Math.random() * 20) + 60
+      // Process ZIP file
+      const zip = new JSZip();
+      await zip.loadAsync(arrayBuffer);
+      
+      const processedFiles = [];
+      
+      // Process each file in the ZIP
+      for (const [filename, zipEntry] of Object.entries(zip.files)) {
+        if (!zipEntry.dir) {
+          const extension = filename.split('.').pop()?.toLowerCase();
+          
+          // Only process .doc, .docx, or .pdf files
+          if (extension === 'doc' || extension === 'docx' || extension === 'pdf') {
+            console.log('Processing file from ZIP:', filename);
+            
+            // Mock processing result with random scores
+            // In a real implementation, you would process the actual file content
+            processedFiles.push({
+              fileName: filename,
+              status: 'processed',
+              score: Math.floor(Math.random() * 30) + 70,
+              matchPercentage: Math.floor(Math.random() * 20) + 60
+            });
+          }
         }
-      ]
+      }
 
-      console.log('ZIP processing completed:', processedFiles.length, 'files processed')
+      console.log('ZIP processing completed:', processedFiles.length, 'files processed');
       
       return new Response(
         JSON.stringify({
@@ -66,11 +76,11 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 200 
         }
-      )
+      );
     }
 
     // Handle single file
-    console.log('Processing single file...')
+    console.log('Processing single file...');
     
     // Mock processing for single file
     const result = {
@@ -78,9 +88,9 @@ serve(async (req) => {
       status: 'processed',
       score: Math.floor(Math.random() * 30) + 70,
       matchPercentage: Math.floor(Math.random() * 20) + 60
-    }
+    };
 
-    console.log('Single file processing completed')
+    console.log('Single file processing completed');
     
     return new Response(
       JSON.stringify({
@@ -91,9 +101,9 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
       }
-    )
+    );
   } catch (error) {
-    console.error('Processing error:', error)
+    console.error('Processing error:', error);
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process file',
@@ -103,6 +113,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500 
       }
-    )
+    );
   }
-})
+});
