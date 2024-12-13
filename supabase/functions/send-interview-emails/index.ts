@@ -1,8 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { processAttachments } from "./attachments.ts";
+import { Resend } from "npm:resend";
 import { generateEmailHTML } from "./emailTemplate.ts";
-
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -10,140 +8,87 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: corsHeaders
-    });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    if (!RESEND_API_KEY) {
-      console.error('Missing RESEND_API_KEY');
-      throw new Error('Server configuration error');
+    if (req.method !== 'POST') {
+      throw new Error('Method not allowed');
     }
 
-    // Parse and validate request body
-    let requestData;
-    try {
-      const bodyText = await req.text();
-      console.log('Raw request body:', bodyText);
-      requestData = JSON.parse(bodyText);
-      console.log('Parsed request data:', requestData);
-    } catch (error) {
-      console.error('Failed to parse request body:', error);
-      return new Response(JSON.stringify({ 
-        error: `Invalid request format: ${error.message}` 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
-    }
+    const { to, selectedCandidates, jobTitle } = await req.json();
 
-    const { to, selectedCandidates, jobTitle } = requestData;
-
-    // Validate required fields
     if (!to || !Array.isArray(to) || to.length === 0) {
-      return new Response(JSON.stringify({ 
-        error: 'Invalid or missing recipient emails' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('Invalid recipients');
     }
 
     if (!selectedCandidates || !Array.isArray(selectedCandidates) || selectedCandidates.length === 0) {
-      return new Response(JSON.stringify({ 
-        error: 'No candidates selected' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('No candidates selected');
     }
 
     if (!jobTitle) {
-      return new Response(JSON.stringify({ 
-        error: 'Job title is required' 
-      }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+      throw new Error('Job title is required');
     }
-
-    // Process attachments
-    console.log('Processing attachments for candidates:', selectedCandidates.length);
-    const attachments = await processAttachments(selectedCandidates);
-    console.log(`Processed ${attachments.length} attachments`);
 
     // Generate email content
     const emailContent = generateEmailHTML(jobTitle, selectedCandidates);
 
-    // Prepare email data with verified domain
-    const emailData = {
-      from: "CV Scorer Elite <onboarding@resend.dev>", // Using Resend's verified test domain
+    // Send email using Resend
+    const { data: emailResponse, error: emailError } = await resend.emails.send({
+      from: 'CV Scorer Elite <onboarding@resend.dev>',
       to,
       subject: `Interview Candidates for ${jobTitle} Position`,
       html: emailContent,
-      attachments
-    };
-
-    console.log('Sending email to Resend API with data:', {
-      to: emailData.to,
-      subject: emailData.subject,
-      attachmentsCount: attachments.length
     });
 
-    // Send email
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(emailData)
-    });
-
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      console.error('Resend API error:', responseData);
+    if (emailError) {
+      console.error('Resend API error:', emailError);
       
-      // Special handling for domain verification errors
-      if (responseData.statusCode === 403 && responseData.message?.includes('verify a domain')) {
-        return new Response(JSON.stringify({ 
-          error: 'Please verify your domain at resend.com/domains before sending emails to other recipients.',
-          details: responseData.message
-        }), {
-          status: 403,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
+      // Handle domain verification error
+      if (emailError.statusCode === 403 && emailError.message?.includes('verify a domain')) {
+        return new Response(
+          JSON.stringify({
+            error: 'Domain verification required',
+            message: 'Please verify your domain at resend.com/domains before sending emails to other recipients.',
+            details: emailError.message,
+          }),
+          {
+            status: 403,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
       }
-      
-      return new Response(JSON.stringify({ 
-        error: `Failed to send email: ${JSON.stringify(responseData)}` 
-      }), {
-        status: response.status,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      });
+
+      throw emailError;
     }
 
-    console.log('Email sent successfully:', responseData);
-
-    return new Response(JSON.stringify(responseData), {
-      status: 200,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: 'Emails sent successfully',
+        data: emailResponse,
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   } catch (error) {
-    console.error('Error in send-interview-emails function:', error);
+    console.error('Error in send-interview-emails:', error);
     
-    return new Response(JSON.stringify({
-      error: error.message,
-      details: 'Check function logs for more information'
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    return new Response(
+      JSON.stringify({
+        error: error.message || 'Internal server error',
+        details: error,
+      }),
+      {
+        status: error.statusCode || 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
