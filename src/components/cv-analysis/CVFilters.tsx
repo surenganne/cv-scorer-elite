@@ -9,7 +9,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Search, SlidersHorizontal } from "lucide-react";
 
-export const CVFilters = () => {
+interface CVFiltersProps {
+  onSearch: (query: string) => void;
+  onSort: (criteria: string) => void;
+}
+
+export const CVFilters = ({ onSearch, onSort }: CVFiltersProps) => {
   return (
     <div className="bg-white p-4 rounded-lg border shadow-sm">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -18,10 +23,11 @@ export const CVFilters = () => {
           <Input
             placeholder="Search candidates..."
             className="pl-9 max-w-md"
+            onChange={(e) => onSearch(e.target.value)}
           />
         </div>
         <div className="flex gap-3">
-          <Select>
+          <Select onValueChange={onSort}>
             <SelectTrigger className="w-[180px] bg-white">
               <SelectValue placeholder="Sort By" />
             </SelectTrigger>

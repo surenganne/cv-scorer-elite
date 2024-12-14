@@ -20,6 +20,8 @@ const ITEMS_PER_PAGE = 10;
 
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortCriteria, setSortCriteria] = useState("date");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { handleViewCV, handleDownloadCV } = useCVOperations();
@@ -36,12 +38,10 @@ const ManageCVs = () => {
           table: 'cv_uploads'
         },
         (payload) => {
-          // Show toast for new CV
           toast({
             title: "New CV Uploaded",
             description: `${payload.new.file_name} has been uploaded.`,
           });
-          // Invalidate and refetch CVs
           queryClient.invalidateQueries({ queryKey: ['cvs'] });
         }
       )
@@ -53,12 +53,10 @@ const ManageCVs = () => {
           table: 'cv_uploads'
         },
         (payload) => {
-          // Show toast for updated CV
           toast({
             title: "CV Updated",
             description: `${payload.new.file_name} has been updated.`,
           });
-          // Invalidate and refetch CVs
           queryClient.invalidateQueries({ queryKey: ['cvs'] });
         }
       )
@@ -70,13 +68,11 @@ const ManageCVs = () => {
           table: 'cv_uploads'
         },
         (payload) => {
-          // Show toast for deleted CV
           toast({
             title: "CV Deleted",
             description: `A CV has been removed.`,
             variant: "destructive",
           });
-          // Invalidate and refetch CVs
           queryClient.invalidateQueries({ queryKey: ['cvs'] });
         }
       )
@@ -98,15 +94,32 @@ const ManageCVs = () => {
       if (error) throw error;
       return data;
     },
-    // Disable automatic background refetching since we're using real-time updates
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
 
-  const totalPages = cvs ? Math.ceil(cvs.length / ITEMS_PER_PAGE) : 0;
+  // Filter and sort CVs
+  const filteredAndSortedCVs = cvs
+    ?.filter((cv) =>
+      cv.file_name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    ?.sort((a, b) => {
+      switch (sortCriteria) {
+        case "date":
+          return new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime();
+        case "name":
+          return a.file_name.localeCompare(b.file_name);
+        case "size":
+          return b.file_size - a.file_size;
+        default:
+          return 0;
+      }
+    });
+
+  const totalPages = filteredAndSortedCVs ? Math.ceil(filteredAndSortedCVs.length / ITEMS_PER_PAGE) : 0;
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedCVs = cvs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedCVs = filteredAndSortedCVs?.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   // Reset to first page when total pages changes
   useEffect(() => {
@@ -115,13 +128,25 @@ const ManageCVs = () => {
     }
   }, [totalPages, currentPage]);
 
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleSort = (criteria: string) => {
+    setSortCriteria(criteria);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <CVHeader />
         <div className="mt-8 space-y-6">
-          <CVFilters />
+          <CVFilters 
+            onSearch={handleSearch}
+            onSort={handleSort}
+          />
           {isLoading ? (
             <div className="text-center py-12 bg-white rounded-lg border shadow-sm">
               <div className="animate-pulse space-y-3">
