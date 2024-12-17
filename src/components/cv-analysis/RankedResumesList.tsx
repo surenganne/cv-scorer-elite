@@ -30,6 +30,13 @@ export const RankedResumesList = ({ resumes, isLoading }: RankedResumesListProps
     return <div className="text-center py-4">No matches found.</div>;
   }
 
+  const getBadgeVariant = (score: string) => {
+    const numericScore = parseInt(score);
+    if (numericScore >= 80) return "default";
+    if (numericScore >= 60) return "secondary";
+    return "destructive";
+  };
+
   return (
     <div className="space-y-4">
       <Table>
@@ -53,13 +60,7 @@ export const RankedResumesList = ({ resumes, isLoading }: RankedResumesListProps
               </TableCell>
               <TableCell>
                 <Badge
-                  variant={
-                    parseInt(resume.overall_match_with_jd) >= 80
-                      ? "success"
-                      : parseInt(resume.overall_match_with_jd) >= 60
-                      ? "warning"
-                      : "destructive"
-                  }
+                  variant={getBadgeVariant(resume.overall_match_with_jd)}
                 >
                   {resume.overall_match_with_jd}
                 </Badge>

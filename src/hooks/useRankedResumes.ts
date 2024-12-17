@@ -38,7 +38,18 @@ export const useRankedResumes = (jobId: string | null) => {
         throw error;
       }
 
-      return data?.ranked_resumes as RankedResume[] | null;
+      if (!data?.ranked_resumes) return null;
+
+      // Type assertion after validation
+      const rankedResumes = data.ranked_resumes as unknown as RankedResume[];
+      
+      // Validate the structure
+      if (!Array.isArray(rankedResumes)) {
+        console.error("Ranked resumes is not an array");
+        return null;
+      }
+
+      return rankedResumes;
     },
     enabled: !!jobId,
   });

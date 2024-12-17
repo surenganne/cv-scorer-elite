@@ -2,9 +2,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Loader2, Users } from "lucide-react";
-import { format } from "date-fns";
 import { useRankedResumes } from "@/hooks/useRankedResumes";
 import { RankedResumesList } from "./RankedResumesList";
 import { TableHeaderComponent } from "./TableHeader";
@@ -20,6 +17,7 @@ interface JobMatch {
 export const JobMatchList = () => {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const { data: rankedResumes, isLoading: isLoadingMatches } = useRankedResumes(selectedJobId);
+  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -42,6 +40,12 @@ export const JobMatchList = () => {
     console.log("New selectedJobId set to:", jobId);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    setSelectedCandidates(checked ? (rankedResumes || []).map(resume => resume.file_name) : []);
+  };
+
+  const allSelected = rankedResumes?.length ? selectedCandidates.length === rankedResumes.length : false;
+
   if (!activeJobs?.length) {
     return (
       <div className="text-center py-8">
@@ -53,7 +57,10 @@ export const JobMatchList = () => {
   return (
     <div className="space-y-6">
       <Table>
-        <TableHeaderComponent />
+        <TableHeaderComponent 
+          onSelectAll={handleSelectAll}
+          allSelected={allSelected}
+        />
         <TableBody>
           {activeJobs?.map((job) => (
             <TableRowComponent
