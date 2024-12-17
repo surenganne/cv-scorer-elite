@@ -15,6 +15,7 @@ import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RankedResumesList } from "./RankedResumesList";
 import { RankedResume } from "@/types/ranked-resume";
+import { CVFilters } from "./CVFilters";
 
 interface JobMatch {
   id: string;
@@ -37,6 +38,7 @@ export const JobMatchList = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedResumes, setMatchedResumes] = useState<Record<string, RankedResume[]>>({});
   const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
+  const [topN, setTopN] = useState("10");
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -64,13 +66,10 @@ export const JobMatchList = () => {
       if (rankingError) throw rankingError;
 
       if (rankingData?.ranked_resumes) {
-        // Type assertion to ensure the data matches our RankedResume type
         const rankedResumes = rankingData.ranked_resumes as unknown as RankedResume[];
         
-        // Extract all file paths from ranked resumes
         const filePaths = rankedResumes.map(resume => resume.file_name);
         
-        // Fetch actual file names from cv_uploads table
         const { data: cvData, error: cvError } = await supabase
           .from("cv_uploads")
           .select("file_name, file_path")
@@ -78,20 +77,16 @@ export const JobMatchList = () => {
 
         if (cvError) throw cvError;
 
-        // Create a mapping of file_path to original file_name
         const fileNameMap = cvData?.reduce((acc, cv) => {
           acc[cv.file_path] = cv.file_name;
           return acc;
         }, {} as Record<string, string>) || {};
 
-        // Update ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
           actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
-          file_name: fileNameMap[resume.file_name] || resume.file_name // Update the display name
+          file_name: fileNameMap[resume.file_name] || resume.file_name
         }));
-
-        console.log('Enriched resumes:', enrichedResumes);
 
         setMatchedResumes((prev) => ({
           ...prev,
@@ -114,6 +109,14 @@ export const JobMatchList = () => {
     } finally {
       setLoading((prev) => ({ ...prev, [jobId]: false }));
     }
+  };
+
+  const handleSearch = (query: string) => {
+    // Implement search functionality
+  };
+
+  const handleSort = (criteria: string) => {
+    // Implement sort functionality
   };
 
   if (!activeJobs?.length) {
@@ -173,7 +176,15 @@ export const JobMatchList = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
                 Matched Candidates for {job.title}
               </h3>
-              <RankedResumesList resumes={resumes} />
+              <CVFilters
+                onSearch={handleSearch}
+                onSort={handleSort}
+                onTopNChange={setTopN}
+                topN={topN}
+              />
+              <div className="mt-4">
+                <RankedResumesList resumes={resumes} topN={parseInt(topN)} />
+              </div>
             </div>
           </div>
         );

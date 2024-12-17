@@ -12,9 +12,11 @@ import { Search, SlidersHorizontal } from "lucide-react";
 interface CVFiltersProps {
   onSearch: (query: string) => void;
   onSort: (criteria: string) => void;
+  onTopNChange: (value: string) => void;
+  topN: string;
 }
 
-export const CVFilters = ({ onSearch, onSort }: CVFiltersProps) => {
+export const CVFilters = ({ onSearch, onSort, onTopNChange, topN }: CVFiltersProps) => {
   return (
     <div className="bg-white p-4 rounded-lg border shadow-sm">
       <div className="flex flex-col sm:flex-row gap-4">
@@ -27,6 +29,17 @@ export const CVFilters = ({ onSearch, onSort }: CVFiltersProps) => {
           />
         </div>
         <div className="flex gap-3">
+          <Select value={topN} onValueChange={onTopNChange}>
+            <SelectTrigger className="w-[180px] bg-white">
+              <SelectValue placeholder="Top N Resumes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="5">Top 5</SelectItem>
+              <SelectItem value="10">Top 10</SelectItem>
+              <SelectItem value="15">Top 15</SelectItem>
+              <SelectItem value="20">Top 20</SelectItem>
+            </SelectContent>
+          </Select>
           <Select onValueChange={onSort}>
             <SelectTrigger className="w-[180px] bg-white">
               <SelectValue placeholder="Sort By" />
