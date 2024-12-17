@@ -9,7 +9,7 @@ export const useRankedResumes = (jobId: string) => {
       
       try {
         const { data, error } = await supabase
-          .from("edb_cv_ranking") // Changed from "edb-cv-ranking" to "edb_cv_ranking"
+          .from("edb_cv_ranking")
           .select("ranked_resumes")
           .eq("job_id", jobId);
 
@@ -29,7 +29,7 @@ export const useRankedResumes = (jobId: string) => {
         // Get the first result if it exists
         const firstResult = data[0];
         
-        if (!firstResult.ranked_resumes) {
+        if (!firstResult?.ranked_resumes) {
           console.log("No ranked_resumes field in data");
           return [];
         }
