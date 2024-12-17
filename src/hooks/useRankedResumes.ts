@@ -40,8 +40,7 @@ export const useRankedResumes = (jobId: string) => {
       const { data, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
-        .eq("job_id", jobIdString)
-        .single();
+        .eq("job_id", jobIdString);
 
       console.log("Supabase query completed");
       console.log("Raw response data:", data);
@@ -52,20 +51,23 @@ export const useRankedResumes = (jobId: string) => {
         throw error;
       }
       
-      if (!data) {
+      if (!data || data.length === 0) {
         console.log("No data returned from Supabase");
         return [];
       }
 
-      if (!data.ranked_resumes) {
-        console.log("No ranked_resumes field in the data:", data);
+      // Get the first row since we're querying by job_id
+      const rankingData = data[0];
+
+      if (!rankingData?.ranked_resumes) {
+        console.log("No ranked_resumes field in the data:", rankingData);
         return [];
       }
 
       // Parse the ranked_resumes JSON if it's a string
-      const jsonData = typeof data.ranked_resumes === 'string' 
-        ? JSON.parse(data.ranked_resumes) 
-        : data.ranked_resumes;
+      const jsonData = typeof rankingData.ranked_resumes === 'string' 
+        ? JSON.parse(rankingData.ranked_resumes) 
+        : rankingData.ranked_resumes;
 
       console.log("Parsed ranked_resumes data:", jsonData);
 
