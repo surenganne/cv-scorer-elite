@@ -79,8 +79,10 @@ async function verifyFileExists(filePath: string): Promise<boolean> {
         return false;
       }
 
-      const fileExists = listData.some(file => file.name === filePath);
-      console.log('File exists in listing?', fileExists);
+      // When listing files, we need to check without the 'cvs/' prefix
+      const searchPath = filePath.replace(/^cvs\//, '');
+      const fileExists = listData.some(file => file.name === searchPath);
+      console.log('File exists in listing?', fileExists, 'Search path:', searchPath);
       return fileExists;
     }
 
@@ -110,7 +112,7 @@ export async function processAttachments(candidates: Candidate[]) {
         throw new Error(`Missing file path for ${candidate.name}`);
       }
 
-      // Remove 'cvs/' prefix if present for storage operations
+      // Always use the clean path (without 'cvs/' prefix) for storage operations
       const storagePath = candidate.file_path.replace(/^cvs\//, '');
       console.log('Storage path after processing:', storagePath);
 
