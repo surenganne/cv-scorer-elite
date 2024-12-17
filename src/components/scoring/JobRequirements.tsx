@@ -14,8 +14,8 @@ interface JobRequirementsProps {
   setJobDescription: (value: string) => void;
   requiredSkills: string;
   setRequiredSkills: (value: string) => void;
-  minimumExperience: string;
-  setMinimumExperience: (value: string) => void;
+  minimumExperience: number;
+  setMinimumExperience: (value: number) => void;
   preferredQualifications: string;
   setPreferredQualifications: (value: string) => void;
 }
@@ -57,7 +57,7 @@ export const JobRequirements = ({
         setRequiredSkills(data.requiredSkills);
       }
       if (data.minimumExperience) {
-        setMinimumExperience(data.minimumExperience.toString());
+        setMinimumExperience(Number(data.minimumExperience));
       }
       if (data.preferredQualifications) {
         setPreferredQualifications(data.preferredQualifications);
@@ -151,7 +151,7 @@ export const JobRequirements = ({
               type="number"
               placeholder="Enter minimum years of experience..."
               value={minimumExperience}
-              onChange={(e) => setMinimumExperience(e.target.value)}
+              onChange={(e) => setMinimumExperience(Number(e.target.value))}
               className="w-full transition-all border-gray-200 focus:border-primary focus:ring-primary"
             />
           </div>

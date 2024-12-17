@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { JobRequirements } from "@/components/scoring/JobRequirements";
 import { ScoringWeights } from "@/components/scoring/ScoringWeights";
@@ -25,7 +25,7 @@ const ConfigureScoring = () => {
   const [jobTitle, setJobTitle] = useState("");
   const [jobDescription, setJobDescription] = useState("");
   const [requiredSkills, setRequiredSkills] = useState("");
-  const [minimumExperience, setMinimumExperience] = useState("");
+  const [minimumExperience, setMinimumExperience] = useState<number>(0);
   const [preferredQualifications, setPreferredQualifications] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -53,7 +53,7 @@ const ConfigureScoring = () => {
       setJobTitle(existingJob.title);
       setJobDescription(existingJob.description);
       setRequiredSkills(existingJob.required_skills);
-      setMinimumExperience(existingJob.minimum_experience.toString());
+      setMinimumExperience(existingJob.minimum_experience);
       setPreferredQualifications(existingJob.preferred_qualifications || "");
       setExperienceWeight(existingJob.experience_weight);
       setSkillsWeight(existingJob.skills_weight);
@@ -81,7 +81,7 @@ const ConfigureScoring = () => {
   };
 
   const validateForm = () => {
-    if (!jobTitle || !jobDescription || !requiredSkills || !minimumExperience) {
+    if (!jobTitle || !jobDescription || !requiredSkills || minimumExperience === undefined) {
       toast({
         variant: "destructive",
         title: "Validation Error",
@@ -100,7 +100,7 @@ const ConfigureScoring = () => {
       title: jobTitle,
       description: jobDescription,
       required_skills: requiredSkills,
-      minimum_experience: parseInt(minimumExperience),
+      minimum_experience: minimumExperience,
       preferred_qualifications: preferredQualifications,
       experience_weight: experienceWeight,
       skills_weight: skillsWeight,
