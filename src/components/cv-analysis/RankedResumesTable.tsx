@@ -95,7 +95,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-gray-700">
-                      {resume.actual_file_name || resume.file_name}
+                      {resume.actual_file_name}
                     </TableCell>
                     <TableCell>
                       <Badge 
