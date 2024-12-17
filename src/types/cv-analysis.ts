@@ -18,10 +18,10 @@ export interface RankedResume {
   };
 }
 
-export function isRankedResume(item: Json): item is RankedResume {
-  if (!item || typeof item !== 'object') return false;
+export function isRankedResume(json: unknown): json is RankedResume {
+  if (!json || typeof json !== 'object') return false;
   
-  const resume = item as Record<string, unknown>;
+  const resume = json as Record<string, unknown>;
   const weights = resume.weights as Record<string, unknown>;
   
   return (

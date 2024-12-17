@@ -15,6 +15,7 @@ import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useRankedResumes } from "@/hooks/useRankedResumes";
 import { RankedResumesList } from "./RankedResumesList";
+import type { RankedResume } from "@/types/cv-analysis";
 
 interface JobMatch {
   id: string;

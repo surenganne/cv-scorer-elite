@@ -29,11 +29,13 @@ export const useRankedResumes = (jobId: string) => {
 
         if (!checkData?.ranked_resumes || !Array.isArray(checkData.ranked_resumes)) {
           console.log("No valid data found for job ID:", jobId);
-          return [];
+          return [] as RankedResume[];
         }
 
         // Filter and validate the ranked resumes
-        const validRankedResumes = checkData.ranked_resumes.filter(isRankedResume);
+        const validRankedResumes = checkData.ranked_resumes
+          .filter((item): item is RankedResume => isRankedResume(item));
+        
         console.log("Processed ranked resumes:", validRankedResumes);
         
         return validRankedResumes;
