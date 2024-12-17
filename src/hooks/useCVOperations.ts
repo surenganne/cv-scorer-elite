@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,6 +11,22 @@ export const useCVOperations = () => {
       }
 
       console.log("Attempting to get signed URL for:", filePath);
+
+      // First check if the file exists
+      const { data: fileExists, error: existsError } = await supabase.storage
+        .from("cvs")
+        .list("", {
+          search: filePath
+        });
+
+      if (existsError) {
+        console.error("Error checking file existence:", existsError);
+        throw existsError;
+      }
+
+      if (!fileExists || fileExists.length === 0) {
+        throw new Error("File not found in storage");
+      }
 
       // Create signed URL with longer expiration for viewing
       const { data, error } = await supabase.storage
@@ -40,7 +55,7 @@ export const useCVOperations = () => {
       console.error("Error viewing CV:", error);
       toast({
         title: "Error",
-        description: "Could not view the CV. Please try again.",
+        description: error.message || "Could not view the CV. Please try again.",
         variant: "destructive",
       });
     }
@@ -53,6 +68,22 @@ export const useCVOperations = () => {
       }
 
       console.log("Attempting to download:", filePath);
+
+      // First check if the file exists
+      const { data: fileExists, error: existsError } = await supabase.storage
+        .from("cvs")
+        .list("", {
+          search: filePath
+        });
+
+      if (existsError) {
+        console.error("Error checking file existence:", existsError);
+        throw existsError;
+      }
+
+      if (!fileExists || fileExists.length === 0) {
+        throw new Error("File not found in storage");
+      }
 
       const { data, error } = await supabase.storage
         .from("cvs")
@@ -82,7 +113,7 @@ export const useCVOperations = () => {
       console.error("Error downloading CV:", error);
       toast({
         title: "Error",
-        description: "Could not download the CV. Please try again.",
+        description: error.message || "Could not download the CV. Please try again.",
         variant: "destructive",
       });
     }
