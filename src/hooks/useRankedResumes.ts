@@ -27,10 +27,13 @@ export const useRankedResumes = (jobId: string | null) => {
     queryFn: async () => {
       if (!jobId) return null;
 
+      // Remove any 'eq.' prefix if it exists
+      const cleanJobId = jobId.replace('eq.', '');
+
       const { data, error } = await supabase
         .from("edb_cv_ranking")
         .select("ranked_resumes")
-        .eq("job_id", jobId)
+        .eq("job_id", cleanJobId)
         .maybeSingle();
 
       if (error) {
@@ -41,7 +44,7 @@ export const useRankedResumes = (jobId: string | null) => {
       if (!data?.ranked_resumes) return null;
 
       // Type assertion after validation
-      const rankedResumes = data.ranked_resumes as unknown as RankedResume[];
+      const rankedResumes = data.ranked_resumes as RankedResume[];
       
       // Validate the structure
       if (!Array.isArray(rankedResumes)) {
