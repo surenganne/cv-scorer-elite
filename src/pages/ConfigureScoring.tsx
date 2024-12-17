@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { JobRequirements } from "@/components/scoring/JobRequirements";
 import { ScoringWeights } from "@/components/scoring/ScoringWeights";
+import { SaveJobButton } from "@/components/scoring/SaveJobButton";
+import { JobStatusToggle } from "@/components/scoring/JobStatusToggle";
 import Navbar from "@/components/layout/Navbar";
 import { ArrowLeft } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 const ConfigureScoring = () => {
   const { toast } = useToast();
@@ -28,6 +28,7 @@ const ConfigureScoring = () => {
   const [minimumExperience, setMinimumExperience] = useState("");
   const [preferredQualifications, setPreferredQualifications] = useState("");
   const [isActive, setIsActive] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch existing job description if editing
   const { data: existingJob } = useQuery({
@@ -79,64 +80,42 @@ const ConfigureScoring = () => {
     }
   };
 
-  const saveJobMutation = useMutation({
-    mutationFn: async () => {
-      const jobData = {
-        title: jobTitle,
-        description: jobDescription,
-        required_skills: requiredSkills,
-        minimum_experience: parseInt(minimumExperience),
-        preferred_qualifications: preferredQualifications,
-        experience_weight: experienceWeight,
-        skills_weight: skillsWeight,
-        education_weight: educationWeight,
-        certifications_weight: certificationsWeight,
-        status: isActive ? 'active' : 'inactive',
-      };
-
-      if (id) {
-        const { data, error } = await supabase
-          .from("job_descriptions")
-          .update(jobData)
-          .eq("id", id);
-        if (error) throw error;
-        return data;
-      } else {
-        const { data, error } = await supabase
-          .from("job_descriptions")
-          .insert([jobData]);
-        if (error) throw error;
-        return data;
-      }
-    },
-    onSuccess: () => {
-      toast({
-        title: "Success",
-        description: `Job description ${id ? "updated" : "saved"} successfully.`,
-      });
-      navigate("/manage-jds");
-      queryClient.invalidateQueries({ queryKey: ["jobDescriptions"] });
-    },
-    onError: (error) => {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${id ? "update" : "save"} job description.`,
-      });
-      console.error("Error saving job description:", error);
-    },
-  });
-
-  const handleSave = () => {
+  const validateForm = () => {
     if (!jobTitle || !jobDescription || !requiredSkills || !minimumExperience) {
       toast({
         variant: "destructive",
         title: "Validation Error",
         description: "Please fill in all required fields.",
       });
-      return;
+      return false;
     }
-    saveJobMutation.mutate();
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validateForm()) return;
+    
+    setIsSaving(true);
+    const jobData = {
+      title: jobTitle,
+      description: jobDescription,
+      required_skills: requiredSkills,
+      minimum_experience: parseInt(minimumExperience),
+      preferred_qualifications: preferredQualifications,
+      experience_weight: experienceWeight,
+      skills_weight: skillsWeight,
+      education_weight: educationWeight,
+      certifications_weight: certificationsWeight,
+      status: isActive ? 'active' : 'inactive',
+    };
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
+      queryClient.invalidateQueries({ queryKey: ["jobDescriptions"] });
+      navigate("/manage-jds");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -163,18 +142,7 @@ const ConfigureScoring = () => {
             </Button>
           </div>
 
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="job-status"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-              />
-              <Label htmlFor="job-status">
-                Job Status: {isActive ? 'Active' : 'Inactive'}
-              </Label>
-            </div>
-          </div>
+          <JobStatusToggle isActive={isActive} onToggle={setIsActive} />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <JobRequirements
@@ -206,17 +174,23 @@ const ConfigureScoring = () => {
           </div>
 
           <div className="flex justify-end">
-            <Button 
-              onClick={handleSave}
-              size="lg"
-              className="px-8"
-              disabled={saveJobMutation.isPending}
-            >
-              {saveJobMutation.isPending 
-                ? "Saving..." 
-                : id ? "Update Job Description" : "Save Job Description"
-              }
-            </Button>
+            <SaveJobButton
+              id={id}
+              jobData={{
+                title: jobTitle,
+                description: jobDescription,
+                required_skills: requiredSkills,
+                minimum_experience: minimumExperience,
+                preferred_qualifications: preferredQualifications,
+                experience_weight: experienceWeight,
+                skills_weight: skillsWeight,
+                education_weight: educationWeight,
+                certifications_weight: certificationsWeight,
+                status: isActive ? 'active' : 'inactive',
+              }}
+              isLoading={isSaving}
+              onSuccess={handleSave}
+            />
           </div>
         </div>
       </main>
