@@ -70,7 +70,7 @@ export async function processAttachments(candidates: Candidate[]) {
         throw new Error(`Missing file path for ${candidate.name}`);
       }
 
-      // Ensure file path starts with 'cvs/' and get the storage path
+      // Get the storage path without the bucket prefix
       const storagePath = candidate.file_path.replace(/^cvs\//, '');
       console.log('Storage path after processing:', storagePath);
 
@@ -81,6 +81,7 @@ export async function processAttachments(candidates: Candidate[]) {
           .createSignedUrl(storagePath, 300);
 
         if (error) {
+          console.error('Signed URL error:', error);
           throw new Error(`Failed to get signed URL: ${error.message}`);
         }
         if (!data?.signedUrl) {
@@ -155,7 +156,7 @@ export async function processAttachments(candidates: Candidate[]) {
     total: candidates.length,
     successful: processedAttachments.length,
     failed: failedAttachments.length,
-    failedCandidates: failedAttachments.map(f => f.name)
+    failedCandidates: failedAttachments.map(f => ({ name: f.name, error: f.error }))
   });
 
   if (processedAttachments.length === 0) {

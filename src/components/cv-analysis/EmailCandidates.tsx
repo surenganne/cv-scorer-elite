@@ -70,13 +70,17 @@ export const EmailCandidates = ({
               name: match.file_name,
               score: match.score,
               file_name: match.file_name,
-              file_path: match.file_path || match.file_name, // Ensure file_path is always set
+              // Ensure file_path includes 'cvs/' prefix
+              file_path: match.file_path ? 
+                (match.file_path.startsWith('cvs/') ? match.file_path : `cvs/${match.file_path}`) : 
+                `cvs/${match.file_name}`,
               evidence: match.evidence,
             }))
         : selectedCandidates.map(candidate => ({
             name: candidate,
             file_name: candidate,
-            file_path: candidate, // Use the candidate string as file_path
+            // Ensure file_path includes 'cvs/' prefix for direct file names
+            file_path: candidate.startsWith('cvs/') ? candidate : `cvs/${candidate}`,
             score: 0,
             evidence: {
               skills: [],
