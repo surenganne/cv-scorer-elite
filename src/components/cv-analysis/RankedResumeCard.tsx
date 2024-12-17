@@ -26,7 +26,9 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
             {resume.overall_match_with_jd} Match
           </Badge>
         </div>
-        <CardDescription>{resume.actual_file_name || resume.file_name}</CardDescription>
+        <CardDescription className="text-sm font-medium text-gray-700">
+          {resume.actual_file_name || resume.file_name}
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
