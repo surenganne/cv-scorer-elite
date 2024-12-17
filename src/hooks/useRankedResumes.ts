@@ -21,6 +21,30 @@ export interface RankedResume {
   overall_match_with_jd: string;
 }
 
+// Type guard to validate if an object is a RankedResume
+function isRankedResume(obj: any): obj is RankedResume {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    typeof obj.rank === 'string' &&
+    typeof obj.file_name === 'string' &&
+    typeof obj.overall_match_with_jd === 'string' &&
+    typeof obj.weights === 'object' &&
+    obj.weights !== null &&
+    typeof obj.matching_details === 'object' &&
+    obj.matching_details !== null &&
+    Array.isArray(obj.matching_details.matching_skills) &&
+    Array.isArray(obj.matching_details.matching_education) &&
+    Array.isArray(obj.matching_details.matching_experience) &&
+    Array.isArray(obj.matching_details.matching_certifications)
+  );
+}
+
+// Type guard to validate if an array is RankedResume[]
+function isRankedResumeArray(arr: any): arr is RankedResume[] {
+  return Array.isArray(arr) && arr.every(isRankedResume);
+}
+
 export const useRankedResumes = (jobId: string | null) => {
   return useQuery({
     queryKey: ["rankedResumes", jobId],
@@ -43,16 +67,15 @@ export const useRankedResumes = (jobId: string | null) => {
 
       if (!data?.ranked_resumes) return null;
 
-      // Type assertion after validation
-      const rankedResumes = data.ranked_resumes as RankedResume[];
+      // First cast to unknown, then validate
+      const jsonData = data.ranked_resumes as unknown;
       
-      // Validate the structure
-      if (!Array.isArray(rankedResumes)) {
-        console.error("Ranked resumes is not an array");
+      if (!isRankedResumeArray(jsonData)) {
+        console.error("Invalid ranked resumes data structure");
         return null;
       }
 
-      return rankedResumes;
+      return jsonData;
     },
     enabled: !!jobId,
   });
