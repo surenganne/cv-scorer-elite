@@ -28,7 +28,7 @@ export const useRankedResumes = (jobId: string) => {
       try {
         const { data: checkData, error: checkError } = await supabase
           .from('edb_cv_ranking')
-          .select('*')
+          .select('ranked_resumes')
           .eq('job_id', jobId)
           .maybeSingle();
 
