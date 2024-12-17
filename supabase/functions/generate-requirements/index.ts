@@ -20,17 +20,14 @@ serve(async (req) => {
     const prompt = `Based on the following job description, provide:
     1. A comma-separated list of required technical and soft skills
     2. The minimum years of experience recommended
-    3. A bullet-pointed list of preferred qualifications
+    3. A comma-separated list of preferred qualifications (additional skills, certifications, or experiences that would be beneficial but not required)
     
     Job Description: ${jobDescription}
     
     Format your response exactly like this, keeping the exact labels:
     REQUIRED_SKILLS: skill1, skill2, skill3
     MINIMUM_EXPERIENCE: X
-    PREFERRED_QUALIFICATIONS:
-    • qualification1
-    • qualification2
-    • qualification3`;
+    PREFERRED_QUALIFICATIONS: qualification1, qualification2, qualification3`;
 
     console.log('Sending request to OpenAI with prompt:', prompt);
 
@@ -60,23 +57,15 @@ serve(async (req) => {
     // Parse the response
     const requiredSkillsMatch = content.match(/REQUIRED_SKILLS: (.*)/);
     const minimumExperienceMatch = content.match(/MINIMUM_EXPERIENCE: (\d+)/);
-    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS:\n((?:• .*\n?)*)/);
-
-    const preferredQualifications = preferredQualificationsMatch 
-      ? preferredQualificationsMatch[1]
-          .split('\n')
-          .filter(line => line.trim().startsWith('•'))
-          .map(line => line.trim().substring(2).trim())
-          .join('\n')
-      : '';
-
-    console.log('Parsed preferred qualifications:', preferredQualifications);
+    const preferredQualificationsMatch = content.match(/PREFERRED_QUALIFICATIONS: (.*)/);
 
     const requirements = {
       requiredSkills: requiredSkillsMatch ? requiredSkillsMatch[1].trim() : '',
       minimumExperience: minimumExperienceMatch ? parseInt(minimumExperienceMatch[1]) : 0,
-      preferredQualifications: preferredQualifications,
+      preferredQualifications: preferredQualificationsMatch ? preferredQualificationsMatch[1].trim() : '',
     };
+
+    console.log('Parsed requirements:', requirements);
 
     return new Response(JSON.stringify(requirements), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
