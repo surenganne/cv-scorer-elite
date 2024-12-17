@@ -8,7 +8,7 @@ interface SaveJobButtonProps {
     title: string;
     description: string;
     required_skills: string;
-    minimum_experience: string;
+    minimum_experience: number; // Changed from string to number
     preferred_qualifications: string;
     experience_weight: number;
     skills_weight: number;
@@ -25,16 +25,21 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
 
   const handleSave = async () => {
     try {
+      const dataToSave = {
+        ...jobData,
+        minimum_experience: Number(jobData.minimum_experience), // Ensure it's a number
+      };
+
       if (id) {
         const { error } = await supabase
           .from("job_descriptions")
-          .update(jobData)
+          .update(dataToSave)
           .eq("id", id);
         if (error) throw error;
       } else {
         const { data: jobResponse, error: jobError } = await supabase
           .from("job_descriptions")
-          .insert([jobData])
+          .insert([dataToSave])
           .select()
           .single();
         
@@ -43,7 +48,7 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
         // Call the resume ranking function with the new job ID
         const { error: rankingError } = await supabase.functions.invoke('rank-resumes', {
           body: {
-            ...jobData,
+            ...dataToSave,
             job_id: jobResponse.id
           }
         });
