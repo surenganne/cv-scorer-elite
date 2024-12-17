@@ -67,12 +67,14 @@ export const JobMatchList = () => {
         // Type assertion to ensure the data matches our RankedResume type
         const rankedResumes = rankingData.ranked_resumes as unknown as RankedResume[];
         
+        // Extract all file paths from ranked resumes
+        const filePaths = rankedResumes.map(resume => resume.file_name);
+        
         // Fetch actual file names from cv_uploads table
-        const fileNames = rankedResumes.map(resume => resume.file_name);
         const { data: cvData, error: cvError } = await supabase
           .from("cv_uploads")
           .select("file_name, file_path")
-          .in("file_path", fileNames);
+          .in("file_path", filePaths);
 
         if (cvError) throw cvError;
 
@@ -80,13 +82,16 @@ export const JobMatchList = () => {
         const fileNameMap = cvData?.reduce((acc, cv) => {
           acc[cv.file_path] = cv.file_name;
           return acc;
-        }, {} as Record<string, string>);
+        }, {} as Record<string, string>) || {};
 
-        // Add actual file names to ranked resumes
+        // Update ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
-          actual_file_name: fileNameMap[resume.file_name] || resume.file_name
+          actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
+          file_name: fileNameMap[resume.file_name] || resume.file_name // Update the display name
         }));
+
+        console.log('Enriched resumes:', enrichedResumes);
 
         setMatchedResumes((prev) => ({
           ...prev,
