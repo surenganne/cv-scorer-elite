@@ -50,18 +50,41 @@ async function processFile(fileArrayBuffer: ArrayBuffer): Promise<string> {
 
 async function verifyFileExists(filePath: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase.storage
+    console.log('Checking file existence for path:', filePath);
+    
+    // First try to get the file directly
+    const { data: fileData, error: fileError } = await supabase.storage
       .from('cvs')
-      .list('', {
-        search: filePath,
-      });
+      .download(filePath);
 
-    if (error) {
-      console.error('Error checking file existence:', error);
-      return false;
+    if (fileData) {
+      console.log('File found directly:', filePath);
+      return true;
     }
 
-    return data && data.length > 0;
+    if (fileError) {
+      console.log('Error getting file directly:', fileError);
+      
+      // If direct download fails, try listing the files
+      const { data: listData, error: listError } = await supabase.storage
+        .from('cvs')
+        .list('', {
+          limit: 100,
+          offset: 0,
+          sortBy: { column: 'name', order: 'asc' },
+        });
+
+      if (listError) {
+        console.error('Error listing files:', listError);
+        return false;
+      }
+
+      const fileExists = listData.some(file => file.name === filePath);
+      console.log('File exists in listing?', fileExists);
+      return fileExists;
+    }
+
+    return false;
   } catch (error) {
     console.error('Error in verifyFileExists:', error);
     return false;
@@ -87,7 +110,7 @@ export async function processAttachments(candidates: Candidate[]) {
         throw new Error(`Missing file path for ${candidate.name}`);
       }
 
-      // Remove 'cvs/' prefix if present and verify file exists
+      // Remove 'cvs/' prefix if present for storage operations
       const storagePath = candidate.file_path.replace(/^cvs\//, '');
       console.log('Storage path after processing:', storagePath);
 
