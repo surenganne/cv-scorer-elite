@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FileText, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Trophy, CheckSquare, Square } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/select";
 import { RankedResumeCard } from "./RankedResumeCard";
 import { useCVOperations } from "@/hooks/useCVOperations";
+import { Checkbox } from "@/components/ui/checkbox";
+import { EmailCandidates } from "./EmailCandidates";
 
 interface RankedResume {
   rank: string;
@@ -47,7 +49,9 @@ interface RankedResumesTableProps {
 
 export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResumesTableProps) => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const [selectedResumes, setSelectedResumes] = useState<string[]>([]);
   const { handleViewCV } = useCVOperations();
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   const toggleRow = (rank: number) => {
     setExpandedRows((prev) =>
@@ -57,13 +61,29 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
     );
   };
 
+  const toggleSelectResume = (fileName: string) => {
+    setSelectedResumes(prev => 
+      prev.includes(fileName)
+        ? prev.filter(f => f !== fileName)
+        : [...prev, fileName]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedResumes.length === filteredResumes.length) {
+      setSelectedResumes([]);
+    } else {
+      setSelectedResumes(filteredResumes.map(resume => resume.file_name));
+    }
+  };
+
   const filteredResumes = resumes
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-6">
+      <div className="flex justify-between items-center mb-6">
         <Select value={topN.toString()} onValueChange={(value) => onTopNChange(parseInt(value))}>
           <SelectTrigger className="w-[180px] bg-white shadow-sm hover:bg-gray-50/50 transition-colors">
             <SelectValue placeholder="Show top N resumes" />
@@ -75,38 +95,48 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
             <SelectItem value="20">Top 20 Resumes</SelectItem>
           </SelectContent>
         </Select>
+        {selectedResumes.length > 0 && (
+          <Button 
+            variant="outline"
+            onClick={() => setShowEmailDialog(true)}
+            className="gap-2"
+          >
+            Email Selected Candidates ({selectedResumes.length})
+          </Button>
+        )}
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-50/50 hover:bg-gray-50/70 transition-colors">
-              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[50px]">
+                <Checkbox
+                  checked={selectedResumes.length === filteredResumes.length}
+                  onCheckedChange={toggleSelectAll}
+                  aria-label="Select all candidates"
+                />
+              </TableHead>
               <TableHead className="w-[100px] font-semibold text-gray-700">Rank</TableHead>
               <TableHead className="font-semibold text-gray-700">Candidate</TableHead>
               <TableHead className="font-semibold text-gray-700">Match Score</TableHead>
               <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredResumes.map((resume) => {
               const isExpanded = expandedRows.includes(parseInt(resume.rank));
+              const isSelected = selectedResumes.includes(resume.file_name);
               return (
                 <React.Fragment key={resume.rank}>
                   <TableRow className="hover:bg-gray-50/50 transition-colors">
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => toggleRow(parseInt(resume.rank))}
-                        className="hover:bg-gray-100/80"
-                      >
-                        {isExpanded ? (
-                          <ChevronDown className="h-4 w-4 text-gray-500" />
-                        ) : (
-                          <ChevronRight className="h-4 w-4 text-gray-500" />
-                        )}
-                      </Button>
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleSelectResume(resume.file_name)}
+                        aria-label={`Select ${resume.actual_file_name || resume.file_name}`}
+                      />
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -136,10 +166,24 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                         View Resume
                       </Button>
                     </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleRow(parseInt(resume.rank))}
+                        className="hover:bg-gray-100/80"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                        )}
+                      </Button>
+                    </TableCell>
                   </TableRow>
                   {isExpanded && (
                     <TableRow>
-                      <TableCell colSpan={5} className="bg-gradient-to-r from-purple-50/30 to-blue-50/30 p-0">
+                      <TableCell colSpan={6} className="bg-gradient-to-r from-purple-50/30 to-blue-50/30 p-0">
                         <div className="p-6">
                           <RankedResumeCard resume={resume} />
                         </div>
@@ -152,6 +196,13 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
           </TableBody>
         </Table>
       </div>
+
+      {showEmailDialog && (
+        <EmailCandidates
+          selectedCandidates={selectedResumes}
+          onClose={() => setShowEmailDialog(false)}
+        />
+      )}
     </div>
   );
 };
