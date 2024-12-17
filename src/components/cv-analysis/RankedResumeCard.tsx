@@ -1,7 +1,7 @@
 import { RankedResume } from "@/types/ranked-resume";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Trophy, Code, Briefcase, GraduationCap, Award } from "lucide-react";
+import { Code, Briefcase, GraduationCap, Award } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface RankedResumeCardProps {
@@ -21,18 +21,6 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
   return (
     <Card className="bg-white">
       <CardContent className="space-y-6 p-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            <h3 className="font-semibold text-gray-900">
-              Rank #{resume.rank}
-            </h3>
-          </div>
-          <Badge variant="secondary" className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100">
-            {resume.overall_match_with_jd}% Match
-          </Badge>
-        </div>
-
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_200px] gap-4 items-center">
             <div className="space-y-2">
