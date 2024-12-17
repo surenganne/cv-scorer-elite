@@ -1,12 +1,11 @@
-import { RankedResume } from "@/types/ranked-resume";
 import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Code, GraduationCap, Briefcase, Award } from "lucide-react";
+import { RankedResume } from "@/types/ranked-resume";
 
 interface RankedResumeCardProps {
   resume: RankedResume;
@@ -15,11 +14,7 @@ interface RankedResumeCardProps {
 export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
   return (
     <Card className="w-full bg-white shadow-sm border-gray-100">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-semibold text-gray-800">
-          {resume.actual_file_name || resume.file_name}
-        </CardTitle>
-      </CardHeader>
+      <CardHeader className="pb-2" />
       <CardContent className="space-y-6">
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
