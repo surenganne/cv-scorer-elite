@@ -39,13 +39,18 @@ export const JobMatchList = () => {
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
     queryFn: async () => {
+      console.log("Fetching active jobs...");
       const { data, error } = await supabase
         .from("job_descriptions")
         .select("*")
         .eq("status", "active")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching active jobs:", error);
+        throw error;
+      }
+      console.log("Active jobs fetched:", data);
       return data as JobMatch[];
     },
   });
@@ -53,7 +58,10 @@ export const JobMatchList = () => {
   const { data: rankedResumes, isLoading: isLoadingMatches } = useRankedResumes(selectedJobId || "");
 
   const findMatches = (jobId: string) => {
+    console.log("Finding matches for job ID:", jobId);
+    console.log("Previous selectedJobId:", selectedJobId);
     setSelectedJobId(jobId);
+    console.log("New selectedJobId set to:", jobId);
     toast({
       title: "Finding Matches",
       description: "Retrieving ranked resumes for this position...",
@@ -61,12 +69,17 @@ export const JobMatchList = () => {
   };
 
   if (!activeJobs?.length) {
+    console.log("No active jobs found");
     return (
       <div className="text-center py-8">
         <p className="text-gray-500">No active job descriptions found.</p>
       </div>
     );
   }
+
+  console.log("Current selectedJobId:", selectedJobId);
+  console.log("Current rankedResumes:", rankedResumes);
+  console.log("isLoadingMatches:", isLoadingMatches);
 
   return (
     <div className="space-y-6">
