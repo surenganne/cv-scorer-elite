@@ -32,19 +32,18 @@ export const useRankedResumes = (jobId: string) => {
       const { data, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
-        .eq("job_id", jobId)
-        .single();
+        .eq("job_id", jobId);
 
       if (error) throw error;
       
-      const jsonData = data?.ranked_resumes;
+      const jsonData = data?.[0]?.ranked_resumes;
       if (!jsonData || !Array.isArray(jsonData)) {
         return [];
       }
 
       // Transform the data to match our expected format
-      const rankedResumes = jsonData.map((item: RankedResumeResponse) => ({
-        id: `${item.rank}-${item.file_name}`, // Create a unique ID
+      const rankedResumes = (jsonData as RankedResumeResponse[]).map(item => ({
+        id: `${item.rank}-${item.file_name}`,
         file_name: item.file_name,
         score: parseInt(item.overall_match_with_jd),
         evidence: {
