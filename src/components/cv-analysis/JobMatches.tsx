@@ -30,6 +30,7 @@ export const JobMatches = ({ jobId, jobTitle, weights }: JobMatchesProps) => {
     id: match.rank,
     file_name: match.file_name,
     score: parseInt(match.overall_match_with_jd),
+    upload_date: new Date().toISOString(), // Adding the required upload_date field
     evidence: {
       skills: [],
       experience: "Based on CV analysis",
