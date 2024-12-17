@@ -25,7 +25,8 @@ export const JobMatches = ({ jobId, jobTitle, weights }: JobMatchesProps) => {
     return <div>Loading matches...</div>;
   }
 
-  const matches = (rankedResumes || []).map((match: any) => ({
+  // Ensure rankedResumes is an array before mapping
+  const matches = (Array.isArray(rankedResumes) ? rankedResumes : []).map((match: any) => ({
     id: match.rank,
     file_name: match.file_name,
     score: parseInt(match.overall_match_with_jd),

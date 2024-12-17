@@ -22,8 +22,15 @@ export const useRankedResumes = (jobId: string) => {
         return [];
       }
 
-      console.log("Raw ranked resumes data:", data.ranked_resumes);
-      return data.ranked_resumes;
+      // Ensure we're working with parsed JSON data
+      const parsedData = Array.isArray(data.ranked_resumes) 
+        ? data.ranked_resumes 
+        : typeof data.ranked_resumes === 'string' 
+          ? JSON.parse(data.ranked_resumes) 
+          : [];
+
+      console.log("Parsed ranked resumes data:", parsedData);
+      return parsedData;
     },
   });
 };
