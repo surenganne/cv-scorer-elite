@@ -17,7 +17,6 @@ export const useRankedResumes = (jobId: string) => {
   return useQuery({
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
-      // Don't make the API call if no jobId is provided
       if (!jobId) {
         console.log("No job ID provided");
         return [];
@@ -26,13 +25,14 @@ export const useRankedResumes = (jobId: string) => {
       console.log("Starting fetch for job ID:", jobId);
       
       try {
+        // Using double quotes for the table name since it contains a hyphen
         const { data, error } = await supabase
           .from("edb-cv-ranking")
-          .select("ranked_resumes")
-          .eq("job_id", jobId)
-          .maybeSingle();
+          .select('*')  // Select all columns to debug
+          .eq('job_id', jobId)
+          .single();
 
-        console.log("Raw Supabase response:", { data, error });
+        console.log("Full Supabase response:", { data, error });
 
         if (error) {
           console.error("Error fetching ranked resumes:", error);
@@ -50,8 +50,12 @@ export const useRankedResumes = (jobId: string) => {
         }
 
         try {
-          const parsedResumes = JSON.parse(data.ranked_resumes as string) as RankedResume[];
-          return parsedResumes.slice(0, 10); // Only return top 10 results
+          // If ranked_resumes is already an object/array, no need to parse
+          const parsedResumes = typeof data.ranked_resumes === 'string' 
+            ? JSON.parse(data.ranked_resumes) 
+            : data.ranked_resumes;
+          
+          return Array.isArray(parsedResumes) ? parsedResumes.slice(0, 10) : [];
         } catch (e) {
           console.error("Error parsing ranked resumes:", e);
           return [];
@@ -61,7 +65,7 @@ export const useRankedResumes = (jobId: string) => {
         throw error;
       }
     },
-    enabled: Boolean(jobId), // Only run the query if jobId is provided
-    retry: false, // Don't retry on failure
+    enabled: Boolean(jobId),
+    retry: false,
   });
 };
