@@ -36,25 +36,44 @@ export const JobMatchList = () => {
   const findMatches = async (jobId: string) => {
     console.log("Finding matches for job ID:", jobId);
     
-    // First, trigger the ranking process
-    const { data: rankingData, error: rankingError } = await supabase
-      .from('edb_cv_ranking')
-      .upsert([
-        {
-          job_id: jobId,
-          ranked_resumes: null // This will be updated by the backend process
-        }
-      ])
-      .select()
-      .single();
+    try {
+      // First, trigger the ranking process
+      const { data: rankingData, error: rankingError } = await supabase
+        .from('edb_cv_ranking')
+        .upsert([
+          {
+            job_id: jobId,
+            ranked_resumes: null // This will be updated by the backend process
+          }
+        ])
+        .select();
 
-    if (rankingError) {
-      console.error("Error initiating ranking process:", rankingError);
-      return;
+      if (rankingError) {
+        console.error("Error initiating ranking process:", rankingError);
+        return;
+      }
+
+      console.log("Ranking process initiated:", rankingData);
+      
+      // Call the resume ranking API
+      const rankingResponse = await fetch('https://3ltge7zfy7j26bdyygdwlcrtse0rcixl.lambda-url.ap-south-1.on.aws/rank-resumes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ job_id: jobId })
+      });
+
+      if (!rankingResponse.ok) {
+        console.error('Error from ranking API:', await rankingResponse.text());
+        return;
+      }
+
+      console.log("Ranking API called successfully");
+      setSelectedJobId(jobId);
+    } catch (error) {
+      console.error("Error in findMatches:", error);
     }
-
-    console.log("Ranking process initiated:", rankingData);
-    setSelectedJobId(jobId);
   };
 
   const handleSelectAll = (checked: boolean) => {
