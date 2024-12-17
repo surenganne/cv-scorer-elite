@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 export interface RankedResumeResponse {
   rank: string;
@@ -36,13 +37,13 @@ export const useRankedResumes = (jobId: string) => {
 
       if (error) throw error;
       
-      const jsonData = data?.[0]?.ranked_resumes;
+      const jsonData = data?.[0]?.ranked_resumes as unknown as RankedResumeResponse[];
       if (!jsonData || !Array.isArray(jsonData)) {
         return [];
       }
 
       // Transform the data to match our expected format
-      const rankedResumes = (jsonData as RankedResumeResponse[]).map(item => ({
+      const rankedResumes = jsonData.map(item => ({
         id: `${item.rank}-${item.file_name}`,
         file_name: item.file_name,
         score: parseInt(item.overall_match_with_jd),
