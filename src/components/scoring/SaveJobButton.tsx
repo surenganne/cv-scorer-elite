@@ -2,7 +2,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
 
 interface SaveJobButtonProps {
   id?: string;
@@ -24,12 +23,8 @@ interface SaveJobButtonProps {
 
 export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButtonProps) => {
   const { toast } = useToast();
-  const [inProgress, setInProgress] = useState(false);
 
   const handleSave = async () => {
-    if (inProgress) return; // Prevent multiple clicks
-    setInProgress(true);
-    
     try {
       const dataToSave = {
         ...jobData,
@@ -88,8 +83,6 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
         title: "Error",
         description: `Failed to ${id ? "update" : "save"} job description.`,
       });
-    } finally {
-      setInProgress(false);
     }
   };
 
@@ -98,14 +91,9 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
       onClick={handleSave}
       size="lg"
       className="px-8"
-      disabled={isLoading || inProgress}
+      disabled={isLoading}
     >
-      {inProgress ? (
-        <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          In Progress...
-        </>
-      ) : isLoading ? (
+      {isLoading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Saving...
