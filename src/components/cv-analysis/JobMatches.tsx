@@ -36,14 +36,11 @@ export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatche
   const matches = rankedResumes
     .slice(0, topMatches)
     .map((match) => ({
-      ...match,
-      upload_date: match.upload_date || new Date().toISOString(),
-      evidence: {
-        skills: match.matched_skills || [],
-        experience: match.experience_summary || "",
-        education: match.education_summary || "",
-        certifications: match.certifications || [],
-      },
+      id: match.id,
+      file_name: match.file_name,
+      score: match.score,
+      evidence: match.evidence,
+      upload_date: new Date().toISOString() // Default date for now
     }));
 
   return (

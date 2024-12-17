@@ -1,16 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export interface RankedResumeResponse {
+  rank: string;
+  file_name: string;
+  overall_match_with_jd: string;
+  weights: {
+    skills_weight: string;
+    education_weight: string;
+    experience_weight: string;
+    certifications_weight: string;
+  };
+}
+
 export interface RankedResume {
   id: string;
   file_name: string;
-  file_path?: string;
   score: number;
-  matched_skills?: string[];
-  experience_summary?: string;
-  education_summary?: string;
-  certifications?: string[];
-  upload_date?: string;
+  evidence: {
+    skills: string[];
+    experience: string;
+    education: string;
+    certifications: string[];
+  };
 }
 
 export const useRankedResumes = (jobId: string) => {
@@ -25,22 +37,23 @@ export const useRankedResumes = (jobId: string) => {
 
       if (error) throw error;
       
-      // Safely type cast the ranked_resumes JSON data
       const jsonData = data?.ranked_resumes;
       if (!jsonData || !Array.isArray(jsonData)) {
         return [];
       }
 
-      // Type cast and validate each resume object
-      const rankedResumes = jsonData.filter((item): item is RankedResume => {
-        return (
-          typeof item === 'object' &&
-          item !== null &&
-          'id' in item &&
-          'file_name' in item &&
-          'score' in item
-        );
-      });
+      // Transform the data to match our expected format
+      const rankedResumes = jsonData.map((item: RankedResumeResponse) => ({
+        id: `${item.rank}-${item.file_name}`, // Create a unique ID
+        file_name: item.file_name,
+        score: parseInt(item.overall_match_with_jd),
+        evidence: {
+          skills: [], // These will be populated from the CV analysis
+          experience: "",
+          education: "",
+          certifications: []
+        }
+      }));
 
       return rankedResumes;
     },
