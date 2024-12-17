@@ -37,7 +37,10 @@ export const RankedResumesTable = ({ resumes }: RankedResumesTableProps) => {
     setExpandedRows(newExpandedRows);
   };
 
-  const filteredResumes = resumes.slice(0, topN);
+  // Sort resumes by rank (converted to number) and slice to get top N
+  const filteredResumes = [...resumes]
+    .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
+    .slice(0, topN);
 
   return (
     <div className="space-y-4">
@@ -72,20 +75,20 @@ export const RankedResumesTable = ({ resumes }: RankedResumesTableProps) => {
             {filteredResumes.map((resume) => (
               <>
                 <TableRow key={resume.rank}>
-                  <TableCell className="font-medium">#{resume.rank}</TableCell>
+                  <TableCell className="font-medium">#{parseInt(resume.rank)}</TableCell>
                   <TableCell>{resume.actual_file_name || resume.file_name}</TableCell>
                   <TableCell>
                     <Badge variant="secondary">
-                      {resume.overall_match_with_jd}
+                      {parseFloat(resume.overall_match_with_jd).toFixed(1)}%
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => toggleRow(resume.rank)}
+                      onClick={() => toggleRow(parseInt(resume.rank))}
                     >
-                      {expandedRows.has(resume.rank) ? (
+                      {expandedRows.has(parseInt(resume.rank)) ? (
                         <ChevronUp className="h-4 w-4" />
                       ) : (
                         <ChevronDown className="h-4 w-4" />
@@ -93,7 +96,7 @@ export const RankedResumesTable = ({ resumes }: RankedResumesTableProps) => {
                     </Button>
                   </TableCell>
                 </TableRow>
-                {expandedRows.has(resume.rank) && (
+                {expandedRows.has(parseInt(resume.rank)) && (
                   <TableRow>
                     <TableCell colSpan={4} className="bg-muted/50">
                       <div className="p-4 space-y-4">
