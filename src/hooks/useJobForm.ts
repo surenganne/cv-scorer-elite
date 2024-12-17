@@ -74,7 +74,7 @@ export const useJobForm = (id?: string) => {
     skills_weight: skillsWeight,
     education_weight: educationWeight,
     certifications_weight: certificationsWeight,
-    status: isActive ? 'active' : 'inactive',
+    status: isActive ? 'active' as const : 'inactive' as const,
   });
 
   return {
