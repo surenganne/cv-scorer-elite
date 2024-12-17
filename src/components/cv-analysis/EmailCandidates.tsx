@@ -7,7 +7,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface EmailCandidatesProps {
   selectedCandidates: string[];
-  matches: Array<{
+  onClose?: () => void;
+  matches?: Array<{
     id: string;
     file_name: string;
     file_path?: string;
@@ -19,15 +20,16 @@ interface EmailCandidatesProps {
       certifications: string[];
     };
   }>;
-  jobTitle: string;
-  onEmailsSent: () => void;
+  jobTitle?: string;
+  onEmailsSent?: () => void;
 }
 
 export const EmailCandidates = ({ 
   selectedCandidates, 
   matches, 
   jobTitle,
-  onEmailsSent 
+  onEmailsSent,
+  onClose 
 }: EmailCandidatesProps) => {
   const [emailAddresses, setEmailAddresses] = useState("");
   const [isSending, setIsSending] = useState(false);
@@ -60,14 +62,18 @@ export const EmailCandidates = ({
     setIsSending(true);
     try {
       const selectedCandidatesData = matches
-        .filter((match) => selectedCandidates.includes(match.id))
-        .map((match) => ({
-          name: match.file_name,
-          score: match.score,
-          file_name: match.file_name,
-          file_path: match.file_path,
-          evidence: match.evidence, // Include the evidence object
-        }));
+        ? matches
+            .filter((match) => selectedCandidates.includes(match.id))
+            .map((match) => ({
+              name: match.file_name,
+              score: match.score,
+              file_name: match.file_name,
+              file_path: match.file_path,
+              evidence: match.evidence,
+            }))
+        : selectedCandidates.map(candidate => ({
+            file_name: candidate
+          }));
 
       console.log('Sending email with data:', {
         to: emails,
@@ -93,7 +99,8 @@ export const EmailCandidates = ({
         description: "Emails sent successfully",
       });
 
-      onEmailsSent();
+      if (onEmailsSent) onEmailsSent();
+      if (onClose) onClose();
       setEmailAddresses("");
     } catch (error) {
       console.error("Error sending emails:", error);
@@ -122,6 +129,11 @@ export const EmailCandidates = ({
         <Mail className="h-4 w-4 mr-2" />
         {isSending ? "Sending..." : "Send to Interviewers"}
       </Button>
+      {onClose && (
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+      )}
     </div>
   );
 };
