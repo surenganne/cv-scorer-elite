@@ -8,9 +8,8 @@ export const useRankedResumes = (jobId: string) => {
       console.log("Starting fetch for job ID:", jobId);
       
       try {
-        // Remove .single() and handle the array response
         const { data, error } = await supabase
-          .from("edb-cv-ranking")
+          .from("edb_cv_ranking") // Changed from "edb-cv-ranking" to "edb_cv_ranking"
           .select("ranked_resumes")
           .eq("job_id", jobId);
 
