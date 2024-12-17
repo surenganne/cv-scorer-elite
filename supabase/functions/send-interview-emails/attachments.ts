@@ -11,7 +11,6 @@ interface Candidate {
   file_name?: string;
 }
 
-// Retry function with exponential backoff
 async function retry<T>(
   operation: () => Promise<T>,
   maxAttempts: number = 3,
@@ -36,7 +35,7 @@ async function retry<T>(
 }
 
 async function processFile(fileArrayBuffer: ArrayBuffer): Promise<string> {
-  const chunkSize = 256 * 1024; // Process in 256KB chunks
+  const chunkSize = 256 * 1024;
   const chunks: string[] = [];
   
   for (let i = 0; i < fileArrayBuffer.byteLength; i += chunkSize) {
@@ -49,6 +48,26 @@ async function processFile(fileArrayBuffer: ArrayBuffer): Promise<string> {
   return chunks.join('');
 }
 
+async function verifyFileExists(filePath: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('cvs')
+      .list('', {
+        search: filePath,
+      });
+
+    if (error) {
+      console.error('Error checking file existence:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
+  } catch (error) {
+    console.error('Error in verifyFileExists:', error);
+    return false;
+  }
+}
+
 export async function processAttachments(candidates: Candidate[]) {
   console.log('Starting attachment processing for', candidates.length, 'files');
   console.log('Candidates to process:', candidates.map(c => ({ name: c.name, path: c.file_path })));
@@ -56,7 +75,6 @@ export async function processAttachments(candidates: Candidate[]) {
   const processedAttachments = [];
   const failedAttachments = [];
 
-  // Process files sequentially
   for (const candidate of candidates) {
     try {
       console.log('\nProcessing candidate:', {
@@ -65,14 +83,18 @@ export async function processAttachments(candidates: Candidate[]) {
         fileName: candidate.file_name
       });
       
-      // Validate file path
       if (!candidate.file_path) {
         throw new Error(`Missing file path for ${candidate.name}`);
       }
 
-      // Get the storage path without the bucket prefix
+      // Remove 'cvs/' prefix if present and verify file exists
       const storagePath = candidate.file_path.replace(/^cvs\//, '');
       console.log('Storage path after processing:', storagePath);
+
+      const fileExists = await verifyFileExists(storagePath);
+      if (!fileExists) {
+        throw new Error(`File not found in storage: ${storagePath}`);
+      }
 
       // Get signed URL with retry
       const { signedUrl } = await retry(async () => {
@@ -118,7 +140,6 @@ export async function processAttachments(candidates: Candidate[]) {
         size: fileArrayBuffer.byteLength
       });
 
-      // Process file in chunks
       const base64String = await processFile(fileArrayBuffer);
 
       console.log('Successfully processed file:', {
@@ -133,7 +154,6 @@ export async function processAttachments(candidates: Candidate[]) {
         type: 'application/pdf'
       });
 
-      // Add a small delay between files
       if (candidates.indexOf(candidate) < candidates.length - 1) {
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
