@@ -2,7 +2,6 @@ import { RankedResume } from "@/types/ranked-resume";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -20,9 +19,6 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
         <CardTitle className="text-lg font-semibold text-gray-800">
           {resume.actual_file_name || resume.file_name}
         </CardTitle>
-        <CardDescription className="text-sm font-medium text-gray-600">
-          Candidate Details
-        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-3">
