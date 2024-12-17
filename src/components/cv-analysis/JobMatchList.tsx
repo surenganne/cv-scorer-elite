@@ -9,13 +9,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
@@ -71,15 +64,17 @@ export const JobMatchList = () => {
       if (rankingError) throw rankingError;
 
       if (rankingData?.ranked_resumes) {
+        // Type assertion to ensure the data matches our RankedResume type
+        const rankedResumes = rankingData.ranked_resumes as unknown as RankedResume[];
         setMatchedResumes((prev) => ({
           ...prev,
-          [jobId]: rankingData.ranked_resumes as RankedResume[],
+          [jobId]: rankedResumes,
         }));
         setShowFilters((prev) => ({ ...prev, [jobId]: true }));
 
         toast({
           title: "Matches Found",
-          description: `Found ${(rankingData.ranked_resumes as RankedResume[]).length} potential matches for this position.`,
+          description: `Found ${rankedResumes.length} potential matches for this position.`,
         });
       }
     } catch (error) {
