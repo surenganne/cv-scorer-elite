@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { RankedResume } from "@/types/cv-analysis";
 import type { Json } from "@/integrations/supabase/types";
 
-function isValidRankedResume(item: Json): item is RankedResume {
+// Type guard to validate if a Json value matches RankedResume structure
+function isValidRankedResume(item: Json): item is RankedResume & { [key: string]: Json } {
   if (!item || typeof item !== 'object') return false;
   
   const resume = item as Record<string, unknown>;
@@ -53,8 +54,8 @@ export const useRankedResumes = (jobId: string) => {
         }
 
         // Filter and validate the ranked resumes
-        const validRankedResumes = (checkData.ranked_resumes as Json[])
-          .filter(isValidRankedResume);
+        const validRankedResumes = checkData.ranked_resumes
+          .filter(isValidRankedResume) as RankedResume[];
         
         console.log("Processed ranked resumes:", validRankedResumes);
         
