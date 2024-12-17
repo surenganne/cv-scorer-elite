@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Json } from "@/integrations/supabase/types";
 
 export interface RankedResumeResponse {
   rank: string;
@@ -34,63 +33,60 @@ export const useRankedResumes = (jobId: string) => {
     queryFn: async () => {
       console.log("Starting to fetch ranked resumes for job ID:", jobId);
       
-      // Convert UUID to string format if needed
-      const jobIdString = jobId.toString();
-      
-      const { data, error } = await supabase
+      const { data: cvRankings, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
-        .eq("job_id", jobIdString);
-
-      console.log("Supabase query completed");
-      console.log("Raw response data:", data);
-      console.log("Any errors:", error);
+        .eq("job_id", jobId);
 
       if (error) {
         console.error("Error fetching ranked resumes:", error);
         throw error;
       }
+
+      console.log("Raw CV rankings data:", cvRankings);
+
+      // If no rankings found, return empty array
+      if (!cvRankings || cvRankings.length === 0) {
+        console.log("No rankings found for job ID:", jobId);
+        return [];
+      }
+
+      // Get the first ranking entry (should be the most recent)
+      const rankingData = cvRankings[0];
       
-      if (!data || data.length === 0) {
-        console.log("No data returned from Supabase");
+      if (!rankingData.ranked_resumes) {
+        console.log("No ranked_resumes field in the data");
         return [];
       }
 
-      // Get the first row since we're querying by job_id
-      const rankingData = data[0];
+      let jsonData;
+      try {
+        // Parse the ranked_resumes if it's a string
+        jsonData = typeof rankingData.ranked_resumes === 'string' 
+          ? JSON.parse(rankingData.ranked_resumes) 
+          : rankingData.ranked_resumes;
 
-      if (!rankingData?.ranked_resumes) {
-        console.log("No ranked_resumes field in the data:", rankingData);
+        console.log("Parsed ranked_resumes data:", jsonData);
+      } catch (e) {
+        console.error("Error parsing ranked_resumes:", e);
         return [];
       }
-
-      // Parse the ranked_resumes JSON if it's a string
-      const jsonData = typeof rankingData.ranked_resumes === 'string' 
-        ? JSON.parse(rankingData.ranked_resumes) 
-        : rankingData.ranked_resumes;
-
-      console.log("Parsed ranked_resumes data:", jsonData);
 
       if (!Array.isArray(jsonData)) {
-        console.log("ranked_resumes is not an array:", typeof jsonData);
+        console.log("ranked_resumes is not an array");
         return [];
       }
 
-      console.log("Number of ranked resumes found:", jsonData.length);
-
-      // Transform the data to match our expected format
-      const rankedResumes = (jsonData as RankedResumeResponse[]).map(item => {
-        console.log("Processing resume:", item.file_name);
-        // Remove the % sign and convert to number
-        const score = parseInt(item.overall_match_with_jd.replace('%', ''));
-        console.log("Parsed score:", score);
+      // Transform the data
+      const rankedResumes = jsonData.map((item: RankedResumeResponse, index: number) => {
+        const score = parseFloat(item.overall_match_with_jd.replace('%', ''));
         
         return {
-          id: `${item.rank}-${item.file_name}`,
+          id: `${index + 1}-${item.file_name}`,
           file_name: item.file_name,
-          score,
+          score: isNaN(score) ? 0 : score,
           evidence: {
-            skills: [],
+            skills: [],  // These could be populated if available in the response
             experience: "",
             education: "",
             certifications: []
@@ -98,7 +94,7 @@ export const useRankedResumes = (jobId: string) => {
         };
       });
 
-      console.log("Final transformed resumes:", rankedResumes);
+      console.log("Transformed ranked resumes:", rankedResumes);
       return rankedResumes;
     },
     enabled: !!jobId,
