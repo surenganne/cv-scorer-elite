@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { RankedResume } from "@/types/ranked-resume";
 import {
   Table,
   TableBody,
@@ -20,6 +19,25 @@ import {
 } from "@/components/ui/select";
 import { RankedResumeCard } from "./RankedResumeCard";
 import { useCVOperations } from "@/hooks/useCVOperations";
+
+interface RankedResume {
+  rank: string;
+  file_name: string;
+  actual_file_name?: string;
+  overall_match_with_jd: string;
+  weights: {
+    skills_weight: string;
+    education_weight: string;
+    experience_weight: string;
+    certifications_weight: string;
+  };
+  matching_details: {
+    matching_skills: string[];
+    matching_education: string[];
+    matching_experience: string[];
+    matching_certifications: string[];
+  };
+}
 
 interface RankedResumesTableProps {
   resumes: RankedResume[];
@@ -97,7 +115,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-gray-700">
-                      {resume.actual_file_name}
+                      {resume.actual_file_name || resume.file_name}
                     </TableCell>
                     <TableCell>
                       <Badge 
