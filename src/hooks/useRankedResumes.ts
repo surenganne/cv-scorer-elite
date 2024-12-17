@@ -49,8 +49,30 @@ export const useRankedResumes = (jobId: string) => {
           return [];
         }
 
-        // Return the ranked_resumes array directly since it's already in the correct format
-        return checkData.ranked_resumes as RankedResume[];
+        // Type guard function to validate the shape of the ranked resume
+        const isRankedResume = (item: any): item is RankedResume => {
+          return (
+            typeof item === 'object' &&
+            item !== null &&
+            typeof item.rank === 'string' &&
+            typeof item.file_name === 'string' &&
+            typeof item.overall_match_with_jd === 'string' &&
+            typeof item.weights === 'object' &&
+            item.weights !== null &&
+            typeof item.weights.skills_weight === 'string' &&
+            typeof item.weights.education_weight === 'string' &&
+            typeof item.weights.experience_weight === 'string' &&
+            typeof item.weights.certifications_weight === 'string'
+          );
+        };
+
+        // Safely type cast the ranked_resumes array
+        const rankedResumes = Array.isArray(checkData.ranked_resumes) 
+          ? checkData.ranked_resumes.filter(isRankedResume)
+          : [];
+
+        console.log("Processed ranked resumes:", rankedResumes);
+        return rankedResumes;
       } catch (error) {
         console.error("Error in useRankedResumes:", error);
         throw error;
