@@ -29,13 +29,13 @@ export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatche
     return <div className="text-center py-4">Loading matches...</div>;
   }
 
-  if (!rankedResumes) {
-    return null;
+  if (!rankedResumes || !Array.isArray(rankedResumes)) {
+    return <div className="text-center py-4">No matches found.</div>;
   }
 
   const matches = rankedResumes
     .slice(0, topMatches)
-    .map((match: any) => ({
+    .map((match) => ({
       ...match,
       evidence: {
         skills: match.matched_skills || [],
