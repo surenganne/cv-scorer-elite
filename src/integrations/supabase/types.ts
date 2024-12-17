@@ -36,24 +36,6 @@ export type Database = {
         }
         Relationships: []
       }
-      "edb-cv-ranking": {
-        Row: {
-          id: number
-          job_id: string
-          ranked_resumes: Json | null
-        }
-        Insert: {
-          id?: number
-          job_id: string
-          ranked_resumes?: Json | null
-        }
-        Update: {
-          id?: number
-          job_id?: string
-          ranked_resumes?: Json | null
-        }
-        Relationships: []
-      }
       job_descriptions: {
         Row: {
           certifications_weight: number

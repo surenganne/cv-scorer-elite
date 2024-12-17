@@ -3,15 +3,24 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Table,
   TableBody,
+  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Users } from "lucide-react";
+import { format } from "date-fns";
 import { MatchesTable } from "./MatchesTable";
-import { JobCard } from "./JobCard";
-import { fetchRankedResumes } from "@/services/rankingApi";
 import { useCVOperations } from "@/hooks/useCVOperations";
 
 interface JobMatch {
@@ -35,8 +44,8 @@ export const JobMatchList = () => {
   const { handleViewCV } = useCVOperations();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
-  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
   const [topMatches, setTopMatches] = useState<Record<string, number>>({});
+  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -58,22 +67,33 @@ export const JobMatchList = () => {
       const job = activeJobs?.find((j) => j.id === jobId);
       if (!job) return;
 
-      const jobData = {
-        title: job.title,
-        description: job.description,
-        required_skills: job.required_skills,
-        minimum_experience: job.minimum_experience,
-        preferred_qualifications: job.preferred_qualifications,
-        weights: {
-          experience_weight: job.experience_weight,
-          skills_weight: job.skills_weight,
-          education_weight: job.education_weight,
-          certifications_weight: job.certifications_weight,
-        },
-      };
+      const { data: cvs, error } = await supabase
+        .from("cv_uploads")
+        .select("*");
 
-      const matches = await fetchRankedResumes(jobId, jobData);
-      
+      if (error) throw error;
+
+      const matches = cvs?.map((cv) => ({
+        ...cv,
+        score: Math.random() * 100,
+        evidence: {
+          skills: [
+            "JavaScript",
+            "React",
+            "TypeScript",
+            "Node.js",
+          ],
+          experience: "5 years of relevant experience in software development",
+          education: "Bachelor's degree in Computer Science",
+          certifications: [
+            "AWS Certified Developer",
+            "Professional Scrum Master I",
+          ],
+        },
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topMatches[jobId] || 5);
+
       setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
       setShowFilters((prev) => ({ ...prev, [jobId]: true }));
       
@@ -114,12 +134,28 @@ export const JobMatchList = () => {
         </TableHeader>
         <TableBody>
           {activeJobs?.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              loading={loading[job.id] || false}
-              onFindMatches={findMatches}
-            />
+            <TableRow key={job.id}>
+              <TableCell className="font-medium">{job.title}</TableCell>
+              <TableCell>{job.minimum_experience} years</TableCell>
+              <TableCell>
+                {format(new Date(job.created_at), "MMM dd, yyyy")}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => findMatches(job.id)}
+                  disabled={loading[job.id]}
+                >
+                  {loading[job.id] ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Users className="h-4 w-4 mr-2" />
+                  )}
+                  Find Matched Jobseekers
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
@@ -140,19 +176,23 @@ export const JobMatchList = () => {
             {showFilters[jobId] && (
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">Show:</span>
-                <select
+                <Select
                   value={String(topMatches[jobId] || "5")}
-                  onChange={(e) => {
-                    setTopMatches(prev => ({ ...prev, [jobId]: Number(e.target.value) }));
+                  onValueChange={(value) => {
+                    setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
                     findMatches(jobId);
                   }}
-                  className="border rounded px-2 py-1 text-sm"
                 >
-                  <option value="5">Top 5</option>
-                  <option value="10">Top 10</option>
-                  <option value="15">Top 15</option>
-                  <option value="20">Top 20</option>
-                </select>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Top 5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="15">Top 15</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             )}
             <MatchesTable 
