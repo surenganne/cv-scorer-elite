@@ -9,19 +9,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
-import { MatchesTable } from "./MatchesTable";
 import { useCVOperations } from "@/hooks/useCVOperations";
+import { JobMatches } from "./JobMatches";
 
 interface JobMatch {
   id: string;
@@ -43,9 +36,7 @@ export const JobMatchList = () => {
   const { toast } = useToast();
   const { handleViewCV } = useCVOperations();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
-  const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
-  const [topMatches, setTopMatches] = useState<Record<string, number>>({});
-  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
+  const [showMatches, setShowMatches] = useState<Record<string, boolean>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -61,52 +52,20 @@ export const JobMatchList = () => {
     },
   });
 
-  const findMatches = async (jobId: string) => {
+  const toggleMatches = async (jobId: string) => {
     setLoading((prev) => ({ ...prev, [jobId]: true }));
     try {
-      const job = activeJobs?.find((j) => j.id === jobId);
-      if (!job) return;
-
-      const { data: cvs, error } = await supabase
-        .from("cv_uploads")
-        .select("*");
-
-      if (error) throw error;
-
-      const matches = cvs?.map((cv) => ({
-        ...cv,
-        score: Math.random() * 100,
-        evidence: {
-          skills: [
-            "JavaScript",
-            "React",
-            "TypeScript",
-            "Node.js",
-          ],
-          experience: "5 years of relevant experience in software development",
-          education: "Bachelor's degree in Computer Science",
-          certifications: [
-            "AWS Certified Developer",
-            "Professional Scrum Master I",
-          ],
-        },
-      }))
-      .sort((a, b) => b.score - a.score)
-      .slice(0, topMatches[jobId] || 5);
-
-      setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
-      setShowFilters((prev) => ({ ...prev, [jobId]: true }));
-      
+      setShowMatches((prev) => ({ ...prev, [jobId]: !prev[jobId] }));
       toast({
-        title: "Matches Found",
-        description: `Found top ${matches?.length || 0} potential matches for this position.`,
+        title: "Matches Loaded",
+        description: "Successfully loaded matches for this position.",
       });
     } catch (error) {
-      console.error("Error finding matches:", error);
+      console.error("Error loading matches:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to find matches. Please try again.",
+        description: "Failed to load matches. Please try again.",
       });
     } finally {
       setLoading((prev) => ({ ...prev, [jobId]: false }));
@@ -144,7 +103,7 @@ export const JobMatchList = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => findMatches(job.id)}
+                  onClick={() => toggleMatches(job.id)}
                   disabled={loading[job.id]}
                 >
                   {loading[job.id] ? (
@@ -152,7 +111,7 @@ export const JobMatchList = () => {
                   ) : (
                     <Users className="h-4 w-4 mr-2" />
                   )}
-                  Find Matched Jobseekers
+                  {showMatches[job.id] ? "Hide Matches" : "Find Matched Jobseekers"}
                 </Button>
               </TableCell>
             </TableRow>
@@ -160,50 +119,22 @@ export const JobMatchList = () => {
         </TableBody>
       </Table>
 
-      {Object.entries(matchedCVs).map(([jobId, matches]) => {
-        const job = activeJobs?.find((j) => j.id === jobId);
-        if (!job || !matches?.length) return null;
-        
-        const weights = {
-          experience_weight: job.experience_weight,
-          skills_weight: job.skills_weight,
-          education_weight: job.education_weight,
-          certifications_weight: job.certifications_weight,
-        };
-        
-        return (
-          <div key={jobId} className="space-y-4">
-            {showFilters[jobId] && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">Show:</span>
-                <Select
-                  value={String(topMatches[jobId] || "5")}
-                  onValueChange={(value) => {
-                    setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
-                    findMatches(jobId);
-                  }}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Top 5" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5">Top 5</SelectItem>
-                    <SelectItem value="10">Top 10</SelectItem>
-                    <SelectItem value="15">Top 15</SelectItem>
-                    <SelectItem value="20">Top 20</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <MatchesTable 
-              matches={matches} 
-              jobTitle={job.title} 
-              weights={weights}
-              onViewResume={handleViewCV}
-            />
-          </div>
-        );
-      })}
+      {activeJobs?.map((job) =>
+        showMatches[job.id] ? (
+          <JobMatches
+            key={job.id}
+            jobId={job.id}
+            jobTitle={job.title}
+            weights={{
+              experience_weight: job.experience_weight,
+              skills_weight: job.skills_weight,
+              education_weight: job.education_weight,
+              certifications_weight: job.certifications_weight,
+            }}
+            onViewResume={handleViewCV}
+          />
+        ) : null
+      )}
     </div>
   );
 };
