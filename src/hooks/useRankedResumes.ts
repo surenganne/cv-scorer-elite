@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Json } from "@/integrations/supabase/types";
 
 interface RankedResume {
   rank: string;
@@ -17,6 +18,23 @@ interface RankedResume {
     matching_experience: string[];
     matching_certifications: string[];
   };
+}
+
+// Type guard to validate the structure of a RankedResume
+function isRankedResume(item: Json): item is RankedResume {
+  if (!item || typeof item !== 'object') return false;
+  
+  const resume = item as any;
+  return (
+    typeof resume.rank === 'string' &&
+    typeof resume.file_name === 'string' &&
+    typeof resume.overall_match_with_jd === 'string' &&
+    typeof resume.weights === 'object' &&
+    typeof resume.weights.skills_weight === 'string' &&
+    typeof resume.weights.education_weight === 'string' &&
+    typeof resume.weights.experience_weight === 'string' &&
+    typeof resume.weights.certifications_weight === 'string'
+  );
 }
 
 export const useRankedResumes = (jobId: string) => {
@@ -44,35 +62,16 @@ export const useRankedResumes = (jobId: string) => {
           throw checkError;
         }
 
-        if (!checkData?.ranked_resumes) {
-          console.log("No data found for job ID:", jobId);
+        if (!checkData?.ranked_resumes || !Array.isArray(checkData.ranked_resumes)) {
+          console.log("No valid data found for job ID:", jobId);
           return [];
         }
 
-        // Type guard function to validate the shape of the ranked resume
-        const isRankedResume = (item: any): item is RankedResume => {
-          return (
-            typeof item === 'object' &&
-            item !== null &&
-            typeof item.rank === 'string' &&
-            typeof item.file_name === 'string' &&
-            typeof item.overall_match_with_jd === 'string' &&
-            typeof item.weights === 'object' &&
-            item.weights !== null &&
-            typeof item.weights.skills_weight === 'string' &&
-            typeof item.weights.education_weight === 'string' &&
-            typeof item.weights.experience_weight === 'string' &&
-            typeof item.weights.certifications_weight === 'string'
-          );
-        };
-
-        // Safely type cast the ranked_resumes array
-        const rankedResumes = Array.isArray(checkData.ranked_resumes) 
-          ? checkData.ranked_resumes.filter(isRankedResume)
-          : [];
-
-        console.log("Processed ranked resumes:", rankedResumes);
-        return rankedResumes;
+        // Filter and validate the ranked resumes
+        const validRankedResumes = checkData.ranked_resumes.filter(isRankedResume);
+        console.log("Processed ranked resumes:", validRankedResumes);
+        
+        return validRankedResumes;
       } catch (error) {
         console.error("Error in useRankedResumes:", error);
         throw error;
