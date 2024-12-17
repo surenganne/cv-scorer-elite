@@ -59,30 +59,31 @@ export const useRankedResumes = (jobId: string) => {
         return [];
       }
 
-      let jsonData;
+      let rankedResumesData;
       try {
         // Parse the ranked_resumes if it's a string
-        jsonData = typeof rankingData.ranked_resumes === 'string' 
+        rankedResumesData = typeof rankingData.ranked_resumes === 'string' 
           ? JSON.parse(rankingData.ranked_resumes) 
           : rankingData.ranked_resumes;
 
-        console.log("Parsed ranked_resumes data:", jsonData);
+        console.log("Parsed ranked_resumes data:", rankedResumesData);
       } catch (e) {
         console.error("Error parsing ranked_resumes:", e);
         return [];
       }
 
-      if (!Array.isArray(jsonData)) {
+      if (!Array.isArray(rankedResumesData)) {
         console.log("ranked_resumes is not an array");
         return [];
       }
 
       // Transform the data
-      const rankedResumes = jsonData.map((item: RankedResumeResponse, index: number) => {
+      const rankedResumes = rankedResumesData.map((item: RankedResumeResponse) => {
+        // Remove the % sign and convert to number
         const score = parseFloat(item.overall_match_with_jd.replace('%', ''));
         
         return {
-          id: `${index + 1}-${item.file_name}`,
+          id: `${item.rank}-${item.file_name}`,
           file_name: item.file_name,
           score: isNaN(score) ? 0 : score,
           evidence: {
