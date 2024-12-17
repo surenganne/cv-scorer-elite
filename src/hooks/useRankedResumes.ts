@@ -11,7 +11,8 @@ export const useRankedResumes = (jobId: string) => {
         const { data, error } = await supabase
           .from("edb-cv-ranking")
           .select("ranked_resumes")
-          .eq("job_id", jobId);
+          .eq("job_id", jobId)
+          .single();
 
         if (error) {
           console.error("Error fetching ranked resumes:", error);
@@ -19,23 +20,18 @@ export const useRankedResumes = (jobId: string) => {
         }
 
         // If no data is found, return an empty array
-        if (!data || data.length === 0) {
+        if (!data) {
           console.log("No ranked resumes found for job:", jobId);
           return [];
         }
 
-        // Get the first row's ranked_resumes
-        const rankedResumes = data[0]?.ranked_resumes;
+        // Parse the ranked_resumes if it's a string
+        const rankedResumes = typeof data.ranked_resumes === 'string' 
+          ? JSON.parse(data.ranked_resumes) 
+          : data.ranked_resumes;
 
-        // Ensure we're working with parsed JSON data
-        const parsedData = Array.isArray(rankedResumes) 
-          ? rankedResumes 
-          : typeof rankedResumes === 'string' 
-            ? JSON.parse(rankedResumes) 
-            : [];
-
-        console.log("Parsed ranked resumes data:", parsedData);
-        return parsedData;
+        console.log("Fetched ranked resumes:", rankedResumes);
+        return Array.isArray(rankedResumes) ? rankedResumes : [];
       } catch (error) {
         console.error("Error in useRankedResumes:", error);
         throw error;
