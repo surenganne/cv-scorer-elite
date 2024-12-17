@@ -30,20 +30,39 @@ export const useRankedResumes = (jobId: string) => {
   return useQuery({
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
+      console.log("Fetching ranked resumes for job ID:", jobId);
+      
       const { data, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
         .eq("job_id", jobId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching ranked resumes:", error);
+        throw error;
+      }
       
-      const jsonData = data?.[0]?.ranked_resumes as unknown as RankedResumeResponse[];
-      if (!jsonData || !Array.isArray(jsonData)) {
+      console.log("Raw data from Supabase:", data);
+      
+      if (!data || data.length === 0 || !data[0]?.ranked_resumes) {
+        console.log("No ranked resumes found");
+        return [];
+      }
+
+      // Parse the ranked_resumes JSON if it's a string
+      const jsonData = typeof data[0].ranked_resumes === 'string' 
+        ? JSON.parse(data[0].ranked_resumes) 
+        : data[0].ranked_resumes;
+
+      console.log("Parsed JSON data:", jsonData);
+
+      if (!Array.isArray(jsonData)) {
+        console.log("Ranked resumes is not an array");
         return [];
       }
 
       // Transform the data to match our expected format
-      const rankedResumes = jsonData.map(item => ({
+      const rankedResumes = jsonData.map((item: RankedResumeResponse) => ({
         id: `${item.rank}-${item.file_name}`,
         file_name: item.file_name,
         score: parseInt(item.overall_match_with_jd),
@@ -55,6 +74,7 @@ export const useRankedResumes = (jobId: string) => {
         }
       }));
 
+      console.log("Transformed ranked resumes:", rankedResumes);
       return rankedResumes;
     },
     enabled: !!jobId,
