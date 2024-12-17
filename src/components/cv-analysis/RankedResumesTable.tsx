@@ -43,9 +43,9 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
+      <div className="flex justify-end mb-6">
         <Select value={topN.toString()} onValueChange={(value) => onTopNChange(parseInt(value))}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-[180px] bg-white shadow-sm hover:bg-gray-50/50 transition-colors">
             <SelectValue placeholder="Show top N resumes" />
           </SelectTrigger>
           <SelectContent>
@@ -57,63 +57,73 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
         </Select>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]"></TableHead>
-            <TableHead>Candidate</TableHead>
-            <TableHead>Match Score</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredResumes.map((resume) => {
-            const isExpanded = expandedRows.includes(parseInt(resume.rank));
-            return (
-              <>
-                <TableRow key={resume.rank}>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleRow(parseInt(resume.rank))}
-                    >
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {resume.actual_file_name || resume.file_name}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="text-base">
-                      {parseFloat(resume.overall_match_with_jd).toFixed(1)}% Match
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <FileText className="h-4 w-4" />
-                      View Resume
-                    </Button>
-                  </TableCell>
-                </TableRow>
-                {isExpanded && (
-                  <TableRow>
-                    <TableCell colSpan={5} className="bg-gray-50/50 p-0">
-                      <div className="p-4">
-                        <RankedResumeCard resume={resume} />
-                      </div>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-50/50 hover:bg-gray-50/70 transition-colors">
+              <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="font-semibold text-gray-700">Candidate</TableHead>
+              <TableHead className="font-semibold text-gray-700">Match Score</TableHead>
+              <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredResumes.map((resume) => {
+              const isExpanded = expandedRows.includes(parseInt(resume.rank));
+              return (
+                <>
+                  <TableRow key={resume.rank} className="hover:bg-gray-50/50 transition-colors">
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleRow(parseInt(resume.rank))}
+                        className="hover:bg-gray-100/80"
+                      >
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                        )}
+                      </Button>
+                    </TableCell>
+                    <TableCell className="font-medium text-gray-700">
+                      {resume.actual_file_name || resume.file_name}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant="secondary" 
+                        className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
+                      >
+                        {parseFloat(resume.overall_match_with_jd).toFixed(1)}% Match
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="gap-2 hover:bg-purple-50/50 hover:border-purple-200 transition-colors"
+                      >
+                        <FileText className="h-4 w-4 text-purple-500" />
+                        View Resume
+                      </Button>
                     </TableCell>
                   </TableRow>
-                )}
-              </>
-            );
-          })}
-        </TableBody>
-      </Table>
+                  {isExpanded && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="bg-gradient-to-r from-purple-50/30 to-blue-50/30 p-0">
+                        <div className="p-6">
+                          <RankedResumeCard resume={resume} />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 };
