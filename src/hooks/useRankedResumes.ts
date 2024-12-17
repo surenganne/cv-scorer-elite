@@ -27,25 +27,34 @@ export interface RankedResume {
 }
 
 export const useRankedResumes = (jobId: string) => {
+  console.log("useRankedResumes hook called with jobId:", jobId); // New log
+
   return useQuery({
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
-      console.log("Fetching ranked resumes for job ID:", jobId);
+      console.log("Starting to fetch ranked resumes for job ID:", jobId);
       
       const { data, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
         .eq("job_id", jobId);
 
+      console.log("Supabase query completed");
+      console.log("Raw response data:", data);
+      console.log("Any errors:", error);
+
       if (error) {
         console.error("Error fetching ranked resumes:", error);
         throw error;
       }
       
-      console.log("Raw data from Supabase:", data);
-      
-      if (!data || data.length === 0 || !data[0]?.ranked_resumes) {
-        console.log("No ranked resumes found");
+      if (!data || data.length === 0) {
+        console.log("No data returned from Supabase");
+        return [];
+      }
+
+      if (!data[0]?.ranked_resumes) {
+        console.log("No ranked_resumes field in the first row:", data[0]);
         return [];
       }
 
@@ -54,27 +63,35 @@ export const useRankedResumes = (jobId: string) => {
         ? JSON.parse(data[0].ranked_resumes) 
         : data[0].ranked_resumes;
 
-      console.log("Parsed JSON data:", jsonData);
+      console.log("Parsed ranked_resumes data:", jsonData);
 
       if (!Array.isArray(jsonData)) {
-        console.log("Ranked resumes is not an array");
+        console.log("ranked_resumes is not an array:", typeof jsonData);
         return [];
       }
 
-      // Transform the data to match our expected format
-      const rankedResumes = jsonData.map((item: RankedResumeResponse) => ({
-        id: `${item.rank}-${item.file_name}`,
-        file_name: item.file_name,
-        score: parseInt(item.overall_match_with_jd),
-        evidence: {
-          skills: [], // These will be populated from the CV analysis
-          experience: "",
-          education: "",
-          certifications: []
-        }
-      }));
+      console.log("Number of ranked resumes found:", jsonData.length);
 
-      console.log("Transformed ranked resumes:", rankedResumes);
+      // Transform the data to match our expected format
+      const rankedResumes = (jsonData as RankedResumeResponse[]).map(item => {
+        console.log("Processing resume:", item.file_name);
+        const score = parseInt(item.overall_match_with_jd.replace('%', ''));
+        console.log("Parsed score:", score);
+        
+        return {
+          id: `${item.rank}-${item.file_name}`,
+          file_name: item.file_name,
+          score,
+          evidence: {
+            skills: [],
+            experience: "",
+            education: "",
+            certifications: []
+          }
+        };
+      });
+
+      console.log("Final transformed resumes:", rankedResumes);
       return rankedResumes;
     },
     enabled: !!jobId,

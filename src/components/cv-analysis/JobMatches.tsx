@@ -22,14 +22,20 @@ interface JobMatchesProps {
 }
 
 export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatchesProps) => {
+  console.log("JobMatches component rendered with jobId:", jobId);
   const [topMatches, setTopMatches] = useState(5);
   const { data: rankedResumes, isLoading } = useRankedResumes(jobId);
 
+  console.log("JobMatches received rankedResumes:", rankedResumes);
+  console.log("JobMatches isLoading:", isLoading);
+
   if (isLoading) {
+    console.log("JobMatches is in loading state");
     return <div className="text-center py-4">Loading matches...</div>;
   }
 
   if (!rankedResumes || !Array.isArray(rankedResumes)) {
+    console.log("No valid ranked resumes data:", rankedResumes);
     return <div className="text-center py-4">No matches found.</div>;
   }
 
@@ -42,6 +48,8 @@ export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatche
       evidence: match.evidence,
       upload_date: new Date().toISOString() // Default date for now
     }));
+
+  console.log("JobMatches filtered matches:", matches);
 
   return (
     <div className="space-y-4">
