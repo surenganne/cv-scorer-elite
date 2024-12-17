@@ -5,7 +5,7 @@ export const useRankedResumes = (jobId: string) => {
   return useQuery({
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
-      console.log("Fetching ranked resumes for job:", jobId);
+      console.log("Starting fetch for job ID:", jobId);
       
       try {
         const { data, error } = await supabase
@@ -14,30 +14,36 @@ export const useRankedResumes = (jobId: string) => {
           .eq("job_id", jobId)
           .single();
 
+        console.log("Raw Supabase response:", { data, error });
+
         if (error) {
-          console.error("Error fetching ranked resumes:", error);
+          console.error("Supabase query error:", error);
           throw error;
         }
 
-        // If no data is found, return an empty array
         if (!data || !data.ranked_resumes) {
-          console.log("No ranked resumes found for job:", jobId);
+          console.log("No ranked resumes data found:", { data });
           return [];
         }
 
-        // Parse the ranked_resumes if it's a string
         let rankedResumes;
         try {
           rankedResumes = typeof data.ranked_resumes === 'string' 
             ? JSON.parse(data.ranked_resumes) 
             : data.ranked_resumes;
+          
+          console.log("Parsed ranked resumes:", rankedResumes);
+          
+          if (!Array.isArray(rankedResumes)) {
+            console.warn("Ranked resumes is not an array:", rankedResumes);
+            return [];
+          }
+
+          return rankedResumes;
         } catch (e) {
           console.error("Error parsing ranked_resumes:", e);
           return [];
         }
-
-        console.log("Fetched ranked resumes:", rankedResumes);
-        return Array.isArray(rankedResumes) ? rankedResumes : [];
       } catch (error) {
         console.error("Error in useRankedResumes:", error);
         throw error;
