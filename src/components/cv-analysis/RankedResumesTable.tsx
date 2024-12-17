@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RankedResumeCard } from "./RankedResumeCard";
+import { useCVOperations } from "@/hooks/useCVOperations";
 
 interface RankedResumesTableProps {
   resumes: RankedResume[];
@@ -28,6 +29,7 @@ interface RankedResumesTableProps {
 
 export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResumesTableProps) => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
+  const { handleViewCV } = useCVOperations();
 
   const toggleRow = (rank: number) => {
     setExpandedRows((prev) =>
@@ -110,6 +112,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                         variant="outline" 
                         size="sm" 
                         className="gap-2 hover:bg-purple-50/50 hover:border-purple-200 transition-colors"
+                        onClick={() => handleViewCV(resume.file_name)}
                       >
                         <FileText className="h-4 w-4 text-purple-500" />
                         View Resume
