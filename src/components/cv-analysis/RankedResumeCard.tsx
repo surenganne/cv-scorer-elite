@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Code, GraduationCap, Briefcase, Award } from "lucide-react";
+import { Code, GraduationCap, Briefcase, Award } from "lucide-react";
 
 interface RankedResumeCardProps {
   resume: RankedResume;
@@ -18,9 +18,8 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
     <Card className="w-full bg-white shadow-sm border-gray-100">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold flex items-center gap-2 text-gray-800">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            Rank #{resume.rank}
+          <CardTitle className="text-lg font-semibold text-gray-800">
+            {resume.actual_file_name || resume.file_name}
           </CardTitle>
           <Badge 
             variant="secondary" 
@@ -30,7 +29,7 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
           </Badge>
         </div>
         <CardDescription className="text-sm font-medium text-gray-600">
-          {resume.actual_file_name || resume.file_name}
+          Candidate Details
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">

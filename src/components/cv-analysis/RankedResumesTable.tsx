@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Trophy } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -62,6 +62,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
           <TableHeader>
             <TableRow className="bg-gray-50/50 hover:bg-gray-50/70 transition-colors">
               <TableHead className="w-[50px]"></TableHead>
+              <TableHead className="w-[100px] font-semibold text-gray-700">Rank</TableHead>
               <TableHead className="font-semibold text-gray-700">Candidate</TableHead>
               <TableHead className="font-semibold text-gray-700">Match Score</TableHead>
               <TableHead className="font-semibold text-gray-700">Actions</TableHead>
@@ -87,6 +88,12 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                         )}
                       </Button>
                     </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-amber-500" />
+                        <span className="font-medium text-gray-700">#{resume.rank}</span>
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium text-gray-700">
                       {resume.actual_file_name || resume.file_name}
                     </TableCell>
@@ -95,7 +102,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                         variant="secondary" 
                         className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
                       >
-                        {parseFloat(resume.overall_match_with_jd).toFixed(1)}% Match
+                        {resume.overall_match_with_jd}% Match
                       </Badge>
                     </TableCell>
                     <TableCell>
