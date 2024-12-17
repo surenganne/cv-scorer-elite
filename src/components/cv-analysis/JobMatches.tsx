@@ -1,13 +1,5 @@
-import { useState } from "react";
 import { useRankedResumes } from "@/hooks/useRankedResumes";
 import { MatchesTable } from "./MatchesTable";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 interface JobMatchesProps {
   jobId: string;
@@ -23,7 +15,6 @@ interface JobMatchesProps {
 
 export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatchesProps) => {
   console.log("JobMatches component rendered with jobId:", jobId);
-  const [topMatches, setTopMatches] = useState(5);
   const { data: rankedResumes, isLoading } = useRankedResumes(jobId);
 
   console.log("JobMatches received rankedResumes:", rankedResumes);
@@ -40,7 +31,7 @@ export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatche
   }
 
   const matches = rankedResumes
-    .slice(0, topMatches)
+    .slice(0, 10)
     .map((match) => ({
       id: match.id,
       file_name: match.file_name,
@@ -53,23 +44,6 @@ export const JobMatches = ({ jobId, jobTitle, weights, onViewResume }: JobMatche
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-600">Show:</span>
-        <Select
-          value={String(topMatches)}
-          onValueChange={(value) => setTopMatches(Number(value))}
-        >
-          <SelectTrigger className="w-[100px]">
-            <SelectValue placeholder="Top 5" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="5">Top 5</SelectItem>
-            <SelectItem value="10">Top 10</SelectItem>
-            <SelectItem value="15">Top 15</SelectItem>
-            <SelectItem value="20">Top 20</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
       <MatchesTable 
         matches={matches} 
         jobTitle={jobTitle} 
