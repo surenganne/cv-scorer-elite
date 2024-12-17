@@ -33,11 +33,28 @@ export const JobMatchList = () => {
     },
   });
 
-  const findMatches = (jobId: string) => {
+  const findMatches = async (jobId: string) => {
     console.log("Finding matches for job ID:", jobId);
-    console.log("Previous selectedJobId:", selectedJobId);
+    
+    // First, trigger the ranking process
+    const { data: rankingData, error: rankingError } = await supabase
+      .from('edb_cv_ranking')
+      .upsert([
+        {
+          job_id: jobId,
+          ranked_resumes: null // This will be updated by the backend process
+        }
+      ])
+      .select()
+      .single();
+
+    if (rankingError) {
+      console.error("Error initiating ranking process:", rankingError);
+      return;
+    }
+
+    console.log("Ranking process initiated:", rankingData);
     setSelectedJobId(jobId);
-    console.log("New selectedJobId set to:", jobId);
   };
 
   const handleSelectAll = (checked: boolean) => {
