@@ -1,7 +1,4 @@
-import { useEffect, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { JobRequirements } from "@/components/scoring/JobRequirements";
 import { ScoringWeights } from "@/components/scoring/ScoringWeights";
@@ -10,111 +7,43 @@ import { JobStatusToggle } from "@/components/scoring/JobStatusToggle";
 import Navbar from "@/components/layout/Navbar";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useJobForm } from "@/hooks/useJobForm";
 
 const ConfigureScoring = () => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const { id } = useParams();
-  const queryClient = useQueryClient();
   
-  // State management
-  const [experienceWeight, setExperienceWeight] = useState(25);
-  const [skillsWeight, setSkillsWeight] = useState(25);
-  const [educationWeight, setEducationWeight] = useState(25);
-  const [certificationsWeight, setCertificationsWeight] = useState(25);
-  const [jobTitle, setJobTitle] = useState("");
-  const [jobDescription, setJobDescription] = useState("");
-  const [requiredSkills, setRequiredSkills] = useState("");
-  const [minimumExperience, setMinimumExperience] = useState<number>(0);
-  const [preferredQualifications, setPreferredQualifications] = useState("");
-  const [isActive, setIsActive] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const {
+    formState,
+    setters,
+    handlers,
+    existingJob,
+  } = useJobForm(id);
 
-  // Fetch existing job description if editing
-  const { data: existingJob } = useQuery({
-    queryKey: ["jobDescription", id],
-    queryFn: async () => {
-      if (!id) return null;
-      const { data, error } = await supabase
-        .from("job_descriptions")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
-
-  // Update form with existing data when editing
   useEffect(() => {
     if (existingJob) {
-      setJobTitle(existingJob.title);
-      setJobDescription(existingJob.description);
-      setRequiredSkills(existingJob.required_skills);
-      setMinimumExperience(existingJob.minimum_experience);
-      setPreferredQualifications(existingJob.preferred_qualifications || "");
-      setExperienceWeight(existingJob.experience_weight);
-      setSkillsWeight(existingJob.skills_weight);
-      setEducationWeight(existingJob.education_weight);
-      setCertificationsWeight(existingJob.certifications_weight);
-      setIsActive(existingJob.status === 'active');
+      setters.setJobTitle(existingJob.title);
+      setters.setJobDescription(existingJob.description);
+      setters.setRequiredSkills(existingJob.required_skills);
+      setters.setMinimumExperience(existingJob.minimum_experience);
+      setters.setPreferredQualifications(existingJob.preferred_qualifications || "");
+      setters.setExperienceWeight(existingJob.experience_weight);
+      setters.setSkillsWeight(existingJob.skills_weight);
+      setters.setEducationWeight(existingJob.education_weight);
+      setters.setCertificationsWeight(existingJob.certifications_weight);
+      setters.setIsActive(existingJob.status === 'active');
     }
-  }, [existingJob]);
-
-  const handleWeightChange = (type: string, value: number) => {
-    switch (type) {
-      case "experience":
-        setExperienceWeight(value);
-        break;
-      case "skills":
-        setSkillsWeight(value);
-        break;
-      case "education":
-        setEducationWeight(value);
-        break;
-      case "certifications":
-        setCertificationsWeight(value);
-        break;
-    }
-  };
-
-  const validateForm = () => {
-    if (!jobTitle || !jobDescription || !requiredSkills || minimumExperience === undefined) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return false;
-    }
-    return true;
-  };
+  }, [existingJob, setters]);
 
   const handleSave = async () => {
-    if (!validateForm()) return;
+    if (!handlers.validateForm()) return;
     
-    setIsSaving(true);
-    const jobData = {
-      title: jobTitle,
-      description: jobDescription,
-      required_skills: requiredSkills,
-      minimum_experience: minimumExperience,
-      preferred_qualifications: preferredQualifications,
-      experience_weight: experienceWeight,
-      skills_weight: skillsWeight,
-      education_weight: educationWeight,
-      certifications_weight: certificationsWeight,
-      status: isActive ? 'active' : 'inactive',
-    };
-
+    setters.setIsSaving(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate loading
-      queryClient.invalidateQueries({ queryKey: ["jobDescriptions"] });
       navigate("/manage-jds");
     } finally {
-      setIsSaving(false);
+      setters.setIsSaving(false);
     }
   };
 
@@ -142,20 +71,23 @@ const ConfigureScoring = () => {
             </Button>
           </div>
 
-          <JobStatusToggle isActive={isActive} onToggle={setIsActive} />
+          <JobStatusToggle 
+            isActive={formState.isActive} 
+            onToggle={setters.setIsActive} 
+          />
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <JobRequirements
-              jobTitle={jobTitle}
-              setJobTitle={setJobTitle}
-              jobDescription={jobDescription}
-              setJobDescription={setJobDescription}
-              requiredSkills={requiredSkills}
-              setRequiredSkills={setRequiredSkills}
-              minimumExperience={minimumExperience}
-              setMinimumExperience={setMinimumExperience}
-              preferredQualifications={preferredQualifications}
-              setPreferredQualifications={setPreferredQualifications}
+              jobTitle={formState.jobTitle}
+              setJobTitle={setters.setJobTitle}
+              jobDescription={formState.jobDescription}
+              setJobDescription={setters.setJobDescription}
+              requiredSkills={formState.requiredSkills}
+              setRequiredSkills={setters.setRequiredSkills}
+              minimumExperience={formState.minimumExperience}
+              setMinimumExperience={setters.setMinimumExperience}
+              preferredQualifications={formState.preferredQualifications}
+              setPreferredQualifications={setters.setPreferredQualifications}
             />
 
             <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 space-y-6 transition-all hover:shadow-md">
@@ -164,11 +96,11 @@ const ConfigureScoring = () => {
                 Adjust the importance of each criterion in the candidate evaluation process.
               </p>
               <ScoringWeights
-                experienceWeight={experienceWeight}
-                skillsWeight={skillsWeight}
-                educationWeight={educationWeight}
-                certificationsWeight={certificationsWeight}
-                onWeightChange={handleWeightChange}
+                experienceWeight={formState.experienceWeight}
+                skillsWeight={formState.skillsWeight}
+                educationWeight={formState.educationWeight}
+                certificationsWeight={formState.certificationsWeight}
+                onWeightChange={handlers.handleWeightChange}
               />
             </div>
           </div>
@@ -176,19 +108,8 @@ const ConfigureScoring = () => {
           <div className="flex justify-end">
             <SaveJobButton
               id={id}
-              jobData={{
-                title: jobTitle,
-                description: jobDescription,
-                required_skills: requiredSkills,
-                minimum_experience: minimumExperience,
-                preferred_qualifications: preferredQualifications,
-                experience_weight: experienceWeight,
-                skills_weight: skillsWeight,
-                education_weight: educationWeight,
-                certifications_weight: certificationsWeight,
-                status: isActive ? 'active' : 'inactive',
-              }}
-              isLoading={isSaving}
+              jobData={handlers.getFormData()}
+              isLoading={formState.isSaving}
               onSuccess={handleSave}
             />
           </div>
