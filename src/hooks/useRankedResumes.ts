@@ -36,7 +36,9 @@ export const useRankedResumes = (jobId: string) => {
       const { data: cvRankings, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
-        .eq("job_id", jobId);
+        .eq("job_id", jobId)
+        .order('id', { ascending: false })
+        .limit(1);
 
       if (error) {
         console.error("Error fetching ranked resumes:", error);
@@ -51,7 +53,7 @@ export const useRankedResumes = (jobId: string) => {
         return [];
       }
 
-      // Get the first ranking entry (should be the most recent)
+      // Get the first ranking entry (most recent)
       const rankingData = cvRankings[0];
       
       if (!rankingData.ranked_resumes) {
@@ -61,7 +63,6 @@ export const useRankedResumes = (jobId: string) => {
 
       let rankedResumesData;
       try {
-        // Parse the ranked_resumes if it's a string
         rankedResumesData = typeof rankingData.ranked_resumes === 'string' 
           ? JSON.parse(rankingData.ranked_resumes) 
           : rankingData.ranked_resumes;
@@ -79,7 +80,6 @@ export const useRankedResumes = (jobId: string) => {
 
       // Transform the data
       const rankedResumes = rankedResumesData.map((item: RankedResumeResponse) => {
-        // Remove the % sign and convert to number
         const score = parseFloat(item.overall_match_with_jd.replace('%', ''));
         
         return {
@@ -87,9 +87,9 @@ export const useRankedResumes = (jobId: string) => {
           file_name: item.file_name,
           score: isNaN(score) ? 0 : score,
           evidence: {
-            skills: [],  // These could be populated if available in the response
-            experience: "",
-            education: "",
+            skills: [], // These could be populated if available in the response
+            experience: "Experience match based on job requirements",
+            education: "Education match based on job requirements",
             certifications: []
           }
         };
