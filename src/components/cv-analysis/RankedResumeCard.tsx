@@ -17,17 +17,9 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
   return (
     <Card className="w-full bg-white shadow-sm border-gray-100">
       <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-800">
-            {resume.actual_file_name || resume.file_name}
-          </CardTitle>
-          <Badge 
-            variant="secondary" 
-            className="text-lg bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
-          >
-            {resume.overall_match_with_jd}% Match
-          </Badge>
-        </div>
+        <CardTitle className="text-lg font-semibold text-gray-800">
+          {resume.actual_file_name || resume.file_name}
+        </CardTitle>
         <CardDescription className="text-sm font-medium text-gray-600">
           Candidate Details
         </CardDescription>
