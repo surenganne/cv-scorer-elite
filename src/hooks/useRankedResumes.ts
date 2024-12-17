@@ -6,31 +6,40 @@ export const useRankedResumes = (jobId: string) => {
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
       console.log("Fetching ranked resumes for job:", jobId);
-      const { data, error } = await supabase
-        .from("edb-cv-ranking")
-        .select("ranked_resumes")
-        .eq("job_id", jobId)
-        .single();
+      
+      try {
+        const { data, error } = await supabase
+          .from("edb-cv-ranking")
+          .select("ranked_resumes")
+          .eq("job_id", jobId);
 
-      if (error) {
-        console.error("Error fetching ranked resumes:", error);
+        if (error) {
+          console.error("Error fetching ranked resumes:", error);
+          throw error;
+        }
+
+        // If no data is found, return an empty array
+        if (!data || data.length === 0) {
+          console.log("No ranked resumes found for job:", jobId);
+          return [];
+        }
+
+        // Get the first row's ranked_resumes
+        const rankedResumes = data[0]?.ranked_resumes;
+
+        // Ensure we're working with parsed JSON data
+        const parsedData = Array.isArray(rankedResumes) 
+          ? rankedResumes 
+          : typeof rankedResumes === 'string' 
+            ? JSON.parse(rankedResumes) 
+            : [];
+
+        console.log("Parsed ranked resumes data:", parsedData);
+        return parsedData;
+      } catch (error) {
+        console.error("Error in useRankedResumes:", error);
         throw error;
       }
-
-      if (!data?.ranked_resumes) {
-        console.log("No ranked resumes found for job:", jobId);
-        return [];
-      }
-
-      // Ensure we're working with parsed JSON data
-      const parsedData = Array.isArray(data.ranked_resumes) 
-        ? data.ranked_resumes 
-        : typeof data.ranked_resumes === 'string' 
-          ? JSON.parse(data.ranked_resumes) 
-          : [];
-
-      console.log("Parsed ranked resumes data:", parsedData);
-      return parsedData;
     },
   });
 };
