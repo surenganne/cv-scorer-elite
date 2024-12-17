@@ -23,14 +23,14 @@ export const useRankedResumes = (jobId: string) => {
       }
 
       console.log("Starting fetch for job ID:", jobId);
+      console.log("Query parameters:", { jobId });
       
       try {
-        // Using double quotes for the table name since it contains a hyphen
+        console.log("Executing Supabase query...");
         const { data, error } = await supabase
           .from("edb-cv-ranking")
-          .select('*')  // Select all columns to debug
-          .eq('job_id', jobId)
-          .single();
+          .select('*')
+          .eq('job_id', jobId);
 
         console.log("Full Supabase response:", { data, error });
 
@@ -39,23 +39,37 @@ export const useRankedResumes = (jobId: string) => {
           throw error;
         }
 
-        if (!data) {
+        if (!data || data.length === 0) {
           console.log("No data found for job ID:", jobId);
           return [];
         }
 
-        if (!data.ranked_resumes) {
-          console.log("No ranked resumes found for job ID:", jobId);
+        console.log("Raw data from database:", data);
+
+        // Get the first result since we expect only one record per job
+        const record = data[0];
+        
+        if (!record.ranked_resumes) {
+          console.log("No ranked_resumes found in the record:", record);
           return [];
         }
 
         try {
-          // If ranked_resumes is already an object/array, no need to parse
-          const parsedResumes = typeof data.ranked_resumes === 'string' 
-            ? JSON.parse(data.ranked_resumes) 
-            : data.ranked_resumes;
+          console.log("Attempting to parse ranked_resumes:", record.ranked_resumes);
+          const parsedResumes = typeof record.ranked_resumes === 'string' 
+            ? JSON.parse(record.ranked_resumes) 
+            : record.ranked_resumes;
           
-          return Array.isArray(parsedResumes) ? parsedResumes.slice(0, 10) : [];
+          console.log("Successfully parsed resumes:", parsedResumes);
+          
+          if (!Array.isArray(parsedResumes)) {
+            console.log("Parsed data is not an array:", parsedResumes);
+            return [];
+          }
+          
+          const topResumes = parsedResumes.slice(0, 10);
+          console.log("Returning top 10 resumes:", topResumes);
+          return topResumes;
         } catch (e) {
           console.error("Error parsing ranked resumes:", e);
           return [];
