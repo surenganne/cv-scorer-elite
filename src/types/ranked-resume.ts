@@ -7,6 +7,7 @@ export interface RankedResume {
     certifications_weight: string;
   };
   file_name: string;
+  actual_file_name?: string;  // Added this field
   matching_details: {
     matching_skills: string[];
     matching_education: string[];
