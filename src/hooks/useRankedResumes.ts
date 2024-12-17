@@ -9,7 +9,7 @@ export const useRankedResumes = (jobId: string) => {
       
       try {
         const { data, error } = await supabase
-          .from("edb_cv_ranking")
+          .from("edb-cv-ranking")
           .select("ranked_resumes")
           .eq("job_id", jobId);
 
