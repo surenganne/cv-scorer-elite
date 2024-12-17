@@ -1,22 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
 import { FileWithPreview } from "@/types/file";
 import { useToast } from "./use-toast";
-import { triggerBatchJob } from "@/utils/batchJobApi";
+import { triggerBatchJob, checkJobStatus } from "@/utils/batchJobApi";
 
 export const useFileUpload = () => {
   const { toast } = useToast();
 
   const uploadToStorageAndDB = async (file: FileWithPreview) => {
     try {
-      // Create a unique filename while preserving the original extension
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(7);
       const extension = file.file.name.split('.').pop()?.toLowerCase() || '';
       const fileName = `${timestamp}-${randomString}.${extension}`;
 
-      // Start both uploads in parallel
       const [storageResult, dbResult] = await Promise.all([
-        // Upload to storage
         (async () => {
           const fileBlob = new Blob([await file.file.arrayBuffer()], { 
             type: file.file.type || 'application/octet-stream'
@@ -41,7 +38,6 @@ export const useFileUpload = () => {
           return { fileName, publicUrl: urlData?.publicUrl };
         })(),
 
-        // Upload to database
         (async () => {
           const fileData = {
             file_name: file.file.name,
@@ -74,17 +70,42 @@ export const useFileUpload = () => {
     }
   };
 
+  const pollJobStatus = async (jobId: string): Promise<boolean> => {
+    try {
+      const result = await checkJobStatus(jobId);
+      if (result.status === 'SUCCEEDED') {
+        return true;
+      } else if (result.status === 'FAILED') {
+        throw new Error('Batch job failed');
+      }
+      // Wait for 5 seconds before checking again
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      return pollJobStatus(jobId);
+    } catch (error) {
+      console.error('Error polling job status:', error);
+      throw error;
+    }
+  };
+
   const uploadFiles = async (files: FileWithPreview[]) => {
     try {
       const uploadPromises = files.map(file => uploadToStorageAndDB(file));
       const uploadedFiles = await Promise.all(uploadPromises);
 
-      // After successful upload, trigger the batch job
-      await triggerBatchJob();
+      // Trigger the batch job and get the job ID
+      const batchJobResult = await triggerBatchJob();
+      
+      toast({
+        title: "Files Uploaded",
+        description: "Processing files in batch job...",
+      });
+
+      // Poll for job status
+      await pollJobStatus(batchJobResult.jobId);
 
       toast({
-        title: "Upload Complete",
-        description: "Files uploaded and batch processing initiated.",
+        title: "Processing Complete",
+        description: "Files have been processed successfully.",
       });
 
       return uploadedFiles;
@@ -92,7 +113,7 @@ export const useFileUpload = () => {
       console.error('Upload failed:', error);
       toast({
         title: "Upload Failed",
-        description: "Failed to upload files. Please try again.",
+        description: error.message || "Failed to upload files. Please try again.",
         variant: "destructive",
       });
       throw error;

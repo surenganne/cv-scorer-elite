@@ -15,3 +15,21 @@ export const triggerBatchJob = async () => {
     throw error;
   }
 };
+
+export const checkJobStatus = async (jobId: string) => {
+  try {
+    const { data, error } = await supabase.functions.invoke('check-job-status', {
+      body: { jobId }
+    });
+    
+    if (error) {
+      console.error('Error checking job status:', error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error checking job status:', error);
+    throw error;
+  }
+};

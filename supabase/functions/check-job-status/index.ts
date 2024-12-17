@@ -11,30 +11,31 @@ serve(async (req) => {
   }
 
   try {
-    console.log('Triggering batch job...')
+    const { jobId } = await req.json()
+    console.log('Checking status for job:', jobId)
     
     const response = await fetch(
-      'https://q6iagsh8w1.execute-api.ap-south-2.amazonaws.com/dev/triggerBatchJob',
+      'https://q6iagsh8w1.execute-api.ap-south-2.amazonaws.com/dev/checkJobStatus',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          INGESTION_TYPE: "full"
+          job_id: jobId
         }),
       }
     )
 
     const data = await response.json()
-    console.log('Batch job response:', data)
+    console.log('Job status response:', data)
 
-    return new Response(JSON.stringify({ ...data, jobId: data.job_id }), {
+    return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
-    console.error('Error triggering batch job:', error)
+    console.error('Error checking job status:', error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
