@@ -11,9 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, LayoutGrid, Table as TableIcon, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RankedResumesList } from "./RankedResumesList";
+import { RankedResumesTable } from "./RankedResumesTable";
 import { RankedResume } from "@/types/ranked-resume";
 
 interface JobMatch {
@@ -37,6 +38,8 @@ export const JobMatchList = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedResumes, setMatchedResumes] = useState<Record<string, RankedResume[]>>({});
   const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
+  const [viewMode, setViewMode] = useState<Record<string, 'grid' | 'table'>>({});
+  const [topN, setTopN] = useState<Record<string, number>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -64,13 +67,10 @@ export const JobMatchList = () => {
       if (rankingError) throw rankingError;
 
       if (rankingData?.ranked_resumes) {
-        // Type assertion to ensure the data matches our RankedResume type
         const rankedResumes = rankingData.ranked_resumes as unknown as RankedResume[];
         
-        // Extract all file paths from ranked resumes
         const filePaths = rankedResumes.map(resume => resume.file_name);
         
-        // Fetch actual file names from cv_uploads table
         const { data: cvData, error: cvError } = await supabase
           .from("cv_uploads")
           .select("file_name, file_path")
@@ -78,26 +78,24 @@ export const JobMatchList = () => {
 
         if (cvError) throw cvError;
 
-        // Create a mapping of file_path to original file_name
         const fileNameMap = cvData?.reduce((acc, cv) => {
           acc[cv.file_path] = cv.file_name;
           return acc;
         }, {} as Record<string, string>) || {};
 
-        // Update ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
           actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
-          file_name: fileNameMap[resume.file_name] || resume.file_name // Update the display name
+          file_name: fileNameMap[resume.file_name] || resume.file_name
         }));
-
-        console.log('Enriched resumes:', enrichedResumes);
 
         setMatchedResumes((prev) => ({
           ...prev,
           [jobId]: enrichedResumes,
         }));
         setShowFilters((prev) => ({ ...prev, [jobId]: true }));
+        setViewMode((prev) => ({ ...prev, [jobId]: 'grid' }));
+        setTopN((prev) => ({ ...prev, [jobId]: 10 }));
 
         toast({
           title: "Matches Found",
@@ -170,10 +168,38 @@ export const JobMatchList = () => {
         return (
           <div key={jobId} className="space-y-4">
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Matched Candidates for {job.title}
-              </h3>
-              <RankedResumesList resumes={resumes} />
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Matched Candidates for {job.title}
+                </h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewMode(prev => ({
+                      ...prev,
+                      [jobId]: prev[jobId] === 'grid' ? 'table' : 'grid'
+                    }))}
+                  >
+                    {viewMode[jobId] === 'grid' ? (
+                      <TableIcon className="h-4 w-4 mr-2" />
+                    ) : (
+                      <LayoutGrid className="h-4 w-4 mr-2" />
+                    )}
+                    {viewMode[jobId] === 'grid' ? 'Table View' : 'Grid View'}
+                  </Button>
+                </div>
+              </div>
+              
+              {viewMode[jobId] === 'grid' ? (
+                <RankedResumesList resumes={resumes} />
+              ) : (
+                <RankedResumesTable
+                  resumes={resumes}
+                  topN={topN[jobId]}
+                  onTopNChange={(value) => setTopN(prev => ({ ...prev, [jobId]: value }))}
+                />
+              )}
             </div>
           </div>
         );
