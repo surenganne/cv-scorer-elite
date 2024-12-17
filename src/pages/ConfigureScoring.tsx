@@ -79,21 +79,6 @@ const ConfigureScoring = () => {
     }
   };
 
-  const sendToExternalSource = async (jobData: any) => {
-    try {
-      const { data, error } = await supabase.functions.invoke('send-jd-external', {
-        body: { jobData }
-      });
-
-      if (error) throw error;
-      console.log('Job description sent to external source:', data);
-      return data;
-    } catch (error) {
-      console.error('Error sending to external source:', error);
-      throw error;
-    }
-  };
-
   const saveJobMutation = useMutation({
     mutationFn: async () => {
       const jobData = {
@@ -109,25 +94,20 @@ const ConfigureScoring = () => {
         status: isActive ? 'active' : 'inactive',
       };
 
-      let result;
       if (id) {
         const { data, error } = await supabase
           .from("job_descriptions")
           .update(jobData)
           .eq("id", id);
         if (error) throw error;
-        result = data;
+        return data;
       } else {
         const { data, error } = await supabase
           .from("job_descriptions")
           .insert([jobData]);
         if (error) throw error;
-        result = data;
-
-        // Only send to external source for new job descriptions
-        await sendToExternalSource(jobData);
+        return data;
       }
-      return result;
     },
     onSuccess: () => {
       toast({
