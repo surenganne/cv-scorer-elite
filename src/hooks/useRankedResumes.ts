@@ -1,6 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { RankedResume, isRankedResume } from "@/types/cv-analysis";
+import type { RankedResume } from "@/types/cv-analysis";
+import type { Json } from "@/integrations/supabase/types";
+
+function isValidRankedResume(item: Json): item is RankedResume {
+  if (!item || typeof item !== 'object') return false;
+  
+  const resume = item as Record<string, unknown>;
+  const weights = resume.weights as Record<string, unknown>;
+  
+  return (
+    typeof resume.rank === 'string' &&
+    typeof resume.file_name === 'string' &&
+    typeof resume.overall_match_with_jd === 'string' &&
+    weights !== null &&
+    typeof weights === 'object' &&
+    typeof weights.skills_weight === 'string' &&
+    typeof weights.education_weight === 'string' &&
+    typeof weights.experience_weight === 'string' &&
+    typeof weights.certifications_weight === 'string'
+  );
+}
 
 export const useRankedResumes = (jobId: string) => {
   return useQuery({
@@ -8,7 +28,7 @@ export const useRankedResumes = (jobId: string) => {
     queryFn: async () => {
       if (!jobId) {
         console.log("No job ID provided");
-        return [];
+        return [] as RankedResume[];
       }
 
       console.log("Starting fetch for job ID:", jobId);
@@ -33,8 +53,8 @@ export const useRankedResumes = (jobId: string) => {
         }
 
         // Filter and validate the ranked resumes
-        const validRankedResumes = checkData.ranked_resumes
-          .filter((item): item is RankedResume => isRankedResume(item));
+        const validRankedResumes = (checkData.ranked_resumes as Json[])
+          .filter(isValidRankedResume);
         
         console.log("Processed ranked resumes:", validRankedResumes);
         
