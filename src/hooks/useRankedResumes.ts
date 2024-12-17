@@ -27,17 +27,21 @@ export interface RankedResume {
 }
 
 export const useRankedResumes = (jobId: string) => {
-  console.log("useRankedResumes hook called with jobId:", jobId); // New log
+  console.log("useRankedResumes hook called with jobId:", jobId);
 
   return useQuery({
     queryKey: ["rankedResumes", jobId],
     queryFn: async () => {
       console.log("Starting to fetch ranked resumes for job ID:", jobId);
       
+      // Convert UUID to string format if needed
+      const jobIdString = jobId.toString();
+      
       const { data, error } = await supabase
         .from("edb-cv-ranking")
         .select("*")
-        .eq("job_id", jobId);
+        .eq("job_id", jobIdString)
+        .single();
 
       console.log("Supabase query completed");
       console.log("Raw response data:", data);
@@ -48,20 +52,20 @@ export const useRankedResumes = (jobId: string) => {
         throw error;
       }
       
-      if (!data || data.length === 0) {
+      if (!data) {
         console.log("No data returned from Supabase");
         return [];
       }
 
-      if (!data[0]?.ranked_resumes) {
-        console.log("No ranked_resumes field in the first row:", data[0]);
+      if (!data.ranked_resumes) {
+        console.log("No ranked_resumes field in the data:", data);
         return [];
       }
 
       // Parse the ranked_resumes JSON if it's a string
-      const jsonData = typeof data[0].ranked_resumes === 'string' 
-        ? JSON.parse(data[0].ranked_resumes) 
-        : data[0].ranked_resumes;
+      const jsonData = typeof data.ranked_resumes === 'string' 
+        ? JSON.parse(data.ranked_resumes) 
+        : data.ranked_resumes;
 
       console.log("Parsed ranked_resumes data:", jsonData);
 
@@ -75,6 +79,7 @@ export const useRankedResumes = (jobId: string) => {
       // Transform the data to match our expected format
       const rankedResumes = (jsonData as RankedResumeResponse[]).map(item => {
         console.log("Processing resume:", item.file_name);
+        // Remove the % sign and convert to number
         const score = parseInt(item.overall_match_with_jd.replace('%', ''));
         console.log("Parsed score:", score);
         
