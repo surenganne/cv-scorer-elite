@@ -51,13 +51,12 @@ export const useRankedResumes = (jobId: string | null) => {
     queryFn: async () => {
       if (!jobId) return null;
 
-      // Remove any 'eq.' prefix if it exists
-      const cleanJobId = jobId.replace('eq.', '');
+      console.log("Fetching ranked resumes for job ID:", jobId);
 
       const { data, error } = await supabase
         .from("edb_cv_ranking")
         .select("ranked_resumes")
-        .eq("job_id", cleanJobId)
+        .eq("job_id", jobId)
         .maybeSingle();
 
       if (error) {
@@ -65,16 +64,22 @@ export const useRankedResumes = (jobId: string | null) => {
         throw error;
       }
 
-      if (!data?.ranked_resumes) return null;
+      console.log("Raw data from Supabase:", data);
+
+      if (!data?.ranked_resumes) {
+        console.log("No ranked resumes found for job ID:", jobId);
+        return null;
+      }
 
       // First cast to unknown, then validate
       const jsonData = data.ranked_resumes as unknown;
       
       if (!isRankedResumeArray(jsonData)) {
-        console.error("Invalid ranked resumes data structure");
+        console.error("Invalid ranked resumes data structure:", jsonData);
         return null;
       }
 
+      console.log("Validated ranked resumes:", jsonData);
       return jsonData;
     },
     enabled: !!jobId,
