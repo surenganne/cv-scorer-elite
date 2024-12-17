@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Loader2 } from "lucide-react";
 
 interface SaveJobButtonProps {
   id?: string;
@@ -8,7 +9,7 @@ interface SaveJobButtonProps {
     title: string;
     description: string;
     required_skills: string;
-    minimum_experience: number; // Changed from string to number
+    minimum_experience: number;
     preferred_qualifications: string;
     experience_weight: number;
     skills_weight: number;
@@ -27,7 +28,7 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
     try {
       const dataToSave = {
         ...jobData,
-        minimum_experience: Number(jobData.minimum_experience), // Ensure it's a number
+        minimum_experience: Number(jobData.minimum_experience),
       };
 
       if (id) {
@@ -85,10 +86,14 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
       className="px-8"
       disabled={isLoading}
     >
-      {isLoading 
-        ? "Saving..." 
-        : id ? "Update Job Description" : "Save Job Description"
-      }
+      {isLoading ? (
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Saving...
+        </>
+      ) : (
+        id ? "Update Job Description" : "Save Job Description"
+      )}
     </Button>
   );
 };
