@@ -74,8 +74,8 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
             {filteredResumes.map((resume) => {
               const isExpanded = expandedRows.includes(parseInt(resume.rank));
               return (
-                <>
-                  <TableRow key={resume.rank} className="hover:bg-gray-50/50 transition-colors">
+                <React.Fragment key={resume.rank}>
+                  <TableRow className="hover:bg-gray-50/50 transition-colors">
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -128,7 +128,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </TableBody>
