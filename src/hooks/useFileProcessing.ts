@@ -13,7 +13,7 @@ export const useFileProcessing = () => {
   } = useFileState();
   
   const { processFile } = useFileProcessor();
-  const { uploadToDatabase } = useFileUpload();
+  const { uploadFiles } = useFileUpload();
 
   const handleProcess = async (file: FileWithPreview) => {
     try {
@@ -27,7 +27,6 @@ export const useFileProcessing = () => {
 
       const newProcessedFiles = await processFile(file, updateProgress);
       
-      // Update the original file as processed
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
           f.file.name === file.file.name ? { ...f, processed: true, progress: 100 } : f
@@ -37,7 +36,6 @@ export const useFileProcessing = () => {
       setProcessedFiles(prev => [...prev, ...newProcessedFiles]);
     } catch (error) {
       console.error('Processing failed:', error);
-      // Reset progress on error
       setFiles((prevFiles) =>
         prevFiles.map((f) =>
           f.file.name === file.file.name ? { ...f, progress: 0 } : f
@@ -48,7 +46,7 @@ export const useFileProcessing = () => {
 
   const handleUploadToDatabase = async () => {
     try {
-      await uploadToDatabase(processedFiles);
+      await uploadFiles(processedFiles);
       setFiles([]);
       setProcessedFiles([]);
     } catch (error) {
