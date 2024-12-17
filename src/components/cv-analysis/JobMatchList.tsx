@@ -11,9 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, LayoutGrid, Table as TableIcon, Users } from "lucide-react";
+import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
-import { RankedResumesList } from "./RankedResumesList";
 import { RankedResumesTable } from "./RankedResumesTable";
 import { RankedResume } from "@/types/ranked-resume";
 
@@ -37,8 +36,6 @@ export const JobMatchList = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedResumes, setMatchedResumes] = useState<Record<string, RankedResume[]>>({});
-  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
-  const [viewMode, setViewMode] = useState<Record<string, 'grid' | 'table'>>({});
   const [topN, setTopN] = useState<Record<string, number>>({});
 
   const { data: activeJobs } = useQuery({
@@ -93,8 +90,6 @@ export const JobMatchList = () => {
           ...prev,
           [jobId]: enrichedResumes,
         }));
-        setShowFilters((prev) => ({ ...prev, [jobId]: true }));
-        setViewMode((prev) => ({ ...prev, [jobId]: 'grid' }));
         setTopN((prev) => ({ ...prev, [jobId]: 10 }));
 
         toast({
@@ -172,34 +167,13 @@ export const JobMatchList = () => {
                 <h3 className="text-lg font-semibold text-gray-900">
                   Matched Candidates for {job.title}
                 </h3>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setViewMode(prev => ({
-                      ...prev,
-                      [jobId]: prev[jobId] === 'grid' ? 'table' : 'grid'
-                    }))}
-                  >
-                    {viewMode[jobId] === 'grid' ? (
-                      <TableIcon className="h-4 w-4 mr-2" />
-                    ) : (
-                      <LayoutGrid className="h-4 w-4 mr-2" />
-                    )}
-                    {viewMode[jobId] === 'grid' ? 'Table View' : 'Grid View'}
-                  </Button>
-                </div>
               </div>
               
-              {viewMode[jobId] === 'grid' ? (
-                <RankedResumesList resumes={resumes} />
-              ) : (
-                <RankedResumesTable
-                  resumes={resumes}
-                  topN={topN[jobId]}
-                  onTopNChange={(value) => setTopN(prev => ({ ...prev, [jobId]: value }))}
-                />
-              )}
+              <RankedResumesTable
+                resumes={resumes}
+                topN={topN[jobId]}
+                onTopNChange={(value) => setTopN(prev => ({ ...prev, [jobId]: value }))}
+              />
             </div>
           </div>
         );

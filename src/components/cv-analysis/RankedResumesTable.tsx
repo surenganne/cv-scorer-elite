@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RankedResumeCard } from "./RankedResumeCard";
 
 interface RankedResumesTableProps {
   resumes: RankedResume[];
@@ -116,40 +117,9 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                 </TableRow>
                 {isExpanded && (
                   <TableRow>
-                    <TableCell colSpan={5} className="bg-gray-50/50">
-                      <div className="p-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-medium mb-2">Experience</h4>
-                            <div className="space-y-1">
-                              {resume.matching_details.matching_experience.map((exp, idx) => (
-                                <p key={idx} className="text-sm text-gray-600">
-                                  • {exp}
-                                </p>
-                              ))}
-                            </div>
-                          </div>
-                          <div>
-                            <h4 className="font-medium mb-2">Education</h4>
-                            <div className="flex flex-wrap gap-1">
-                              {resume.matching_details.matching_education.map((edu, idx) => (
-                                <Badge key={idx} variant="outline" className="bg-green-50">
-                                  {edu}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="font-medium mb-2">Certifications</h4>
-                          <div className="flex flex-wrap gap-1">
-                            {resume.matching_details.matching_certifications.map((cert, idx) => (
-                              <Badge key={idx} variant="outline" className="bg-amber-50">
-                                {cert}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
+                    <TableCell colSpan={5} className="bg-gray-50/50 p-0">
+                      <div className="p-4">
+                        <RankedResumeCard resume={resume} />
                       </div>
                     </TableCell>
                   </TableRow>
