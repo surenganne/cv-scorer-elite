@@ -25,16 +25,16 @@ export const JobMatches = ({ jobId, jobTitle, weights }: JobMatchesProps) => {
     return <div>Loading matches...</div>;
   }
 
-  // Ensure rankedResumes is an array before mapping
-  const matches = (Array.isArray(rankedResumes) ? rankedResumes : []).map((match: any) => ({
+  // Transform the ranked resumes data to match the expected format
+  const matches = (Array.isArray(rankedResumes) ? rankedResumes : []).map((match) => ({
     id: match.rank,
     file_name: match.file_name,
     score: parseInt(match.overall_match_with_jd),
-    upload_date: new Date().toISOString(), // Adding the required upload_date field
+    upload_date: new Date().toISOString(),
     evidence: {
       skills: [],
-      experience: "Based on CV analysis",
-      education: "Based on CV analysis",
+      experience: `Match score: ${match.overall_match_with_jd}`,
+      education: `Weights: Skills ${match.weights.skills_weight}%, Education ${match.weights.education_weight}%, Experience ${match.weights.experience_weight}%, Certifications ${match.weights.certifications_weight}%`,
       certifications: [],
     },
   }));

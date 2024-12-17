@@ -20,15 +20,21 @@ export const useRankedResumes = (jobId: string) => {
         }
 
         // If no data is found, return an empty array
-        if (!data) {
+        if (!data || !data.ranked_resumes) {
           console.log("No ranked resumes found for job:", jobId);
           return [];
         }
 
         // Parse the ranked_resumes if it's a string
-        const rankedResumes = typeof data.ranked_resumes === 'string' 
-          ? JSON.parse(data.ranked_resumes) 
-          : data.ranked_resumes;
+        let rankedResumes;
+        try {
+          rankedResumes = typeof data.ranked_resumes === 'string' 
+            ? JSON.parse(data.ranked_resumes) 
+            : data.ranked_resumes;
+        } catch (e) {
+          console.error("Error parsing ranked_resumes:", e);
+          return [];
+        }
 
         console.log("Fetched ranked resumes:", rankedResumes);
         return Array.isArray(rankedResumes) ? rankedResumes : [];
