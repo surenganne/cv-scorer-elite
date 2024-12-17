@@ -86,7 +86,7 @@ export const JobMatchList = () => {
         // Enrich ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
-          actual_file_name: fileNameMap[resume.file_name],
+          actual_file_name: fileNameMap[resume.file_name] || resume.file_name, // Fallback to file_name if mapping not found
           file_name: resume.file_name // Keep original file_name (path) for reference
         }));
 
