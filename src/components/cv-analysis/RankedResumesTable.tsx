@@ -63,7 +63,6 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
             <TableHead className="w-[50px]"></TableHead>
             <TableHead>Candidate</TableHead>
             <TableHead>Match Score</TableHead>
-            <TableHead>Skills Match</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -93,20 +92,6 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                     <Badge variant="secondary" className="text-base">
                       {parseFloat(resume.overall_match_with_jd).toFixed(1)}% Match
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {resume.matching_details.matching_skills.slice(0, 3).map((skill, idx) => (
-                        <Badge key={idx} variant="outline" className="bg-blue-50">
-                          {skill}
-                        </Badge>
-                      ))}
-                      {resume.matching_details.matching_skills.length > 3 && (
-                        <Badge variant="outline">
-                          +{resume.matching_details.matching_skills.length - 3}
-                        </Badge>
-                      )}
-                    </div>
                   </TableCell>
                   <TableCell>
                     <Button variant="outline" size="sm" className="gap-2">
