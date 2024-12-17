@@ -17,71 +17,108 @@ import {
 import { useEffect, useState } from "react";
 
 const ITEMS_PER_PAGE = 10;
+const MAX_RECONNECTION_ATTEMPTS = 3;
+const RECONNECTION_DELAY = 2000; // 2 seconds
 
 const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortCriteria, setSortCriteria] = useState("date");
+  const [reconnectionAttempts, setReconnectionAttempts] = useState(0);
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { handleViewCV, handleDownloadCV } = useCVOperations();
 
-  // Set up real-time subscription
+  // Set up real-time subscription with reconnection logic
   useEffect(() => {
-    const channel = supabase
-      .channel('cv-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'cv_uploads'
-        },
-        (payload) => {
-          toast({
-            title: "New CV Uploaded",
-            description: `${payload.new.file_name} has been uploaded.`,
-          });
-          queryClient.invalidateQueries({ queryKey: ['cvs'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'cv_uploads'
-        },
-        (payload) => {
-          toast({
-            title: "CV Updated",
-            description: `${payload.new.file_name} has been updated.`,
-          });
-          queryClient.invalidateQueries({ queryKey: ['cvs'] });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'cv_uploads'
-        },
-        (payload) => {
-          toast({
-            title: "CV Deleted",
-            description: `A CV has been removed.`,
-            variant: "destructive",
-          });
-          queryClient.invalidateQueries({ queryKey: ['cvs'] });
-        }
-      )
-      .subscribe();
+    let reconnectionTimeout: number;
+    
+    const setupRealtimeSubscription = () => {
+      const channel = supabase
+        .channel('cv-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'cv_uploads'
+          },
+          (payload) => {
+            toast({
+              title: "New CV Uploaded",
+              description: `${payload.new.file_name} has been uploaded.`,
+            });
+            queryClient.invalidateQueries({ queryKey: ['cvs'] });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'cv_uploads'
+          },
+          (payload) => {
+            toast({
+              title: "CV Updated",
+              description: `${payload.new.file_name} has been updated.`,
+            });
+            queryClient.invalidateQueries({ queryKey: ['cvs'] });
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'cv_uploads'
+          },
+          (payload) => {
+            toast({
+              variant: "destructive",
+              title: "CV Deleted",
+              description: "A CV has been removed.",
+            });
+            queryClient.invalidateQueries({ queryKey: ['cvs'] });
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to realtime changes');
+            setReconnectionAttempts(0); // Reset attempts on successful connection
+          } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+            console.log('Realtime subscription closed or errored:', status);
+            handleReconnection();
+          }
+        });
+
+      return channel;
+    };
+
+    const handleReconnection = () => {
+      if (reconnectionAttempts < MAX_RECONNECTION_ATTEMPTS) {
+        console.log(`Attempting to reconnect... Attempt ${reconnectionAttempts + 1}`);
+        reconnectionTimeout = window.setTimeout(() => {
+          setReconnectionAttempts(prev => prev + 1);
+          setupRealtimeSubscription();
+        }, RECONNECTION_DELAY);
+      } else {
+        console.error('Max reconnection attempts reached');
+        toast({
+          variant: "destructive",
+          title: "Connection Error",
+          description: "Failed to establish realtime connection. Please refresh the page.",
+        });
+      }
+    };
+
+    const channel = setupRealtimeSubscription();
 
     return () => {
+      clearTimeout(reconnectionTimeout);
       supabase.removeChannel(channel);
     };
-  }, [queryClient, toast]);
+  }, [queryClient, toast, reconnectionAttempts]);
 
   const { data: cvs, isLoading } = useQuery({
     queryKey: ["cvs"],
