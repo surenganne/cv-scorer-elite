@@ -91,20 +91,20 @@ const UploadCVs = () => {
   const uploadProcessedFiles = async () => {
     try {
       // Mark all files as uploading
-      const uploadingSet = new Set(processedFiles.map(file => file.file.name));
-      setUploadingFiles(uploadingSet);
+      const newUploadingFiles = new Set(processedFiles.map(file => file.file.name));
+      setUploadingFiles(newUploadingFiles);
 
-      // Upload all files in parallel
-      const uploaded = await uploadFiles(processedFiles);
+      // Upload all files
+      await uploadFiles(processedFiles);
 
       // Mark all files as uploaded
-      const uploadedSet = new Set(uploaded.map(file => file.file.name));
-      setUploadedFiles(uploadedSet);
+      const newUploadedFiles = new Set(processedFiles.map(file => file.file.name));
+      setUploadedFiles(newUploadedFiles);
       setUploadingFiles(new Set());
 
       toast({
         title: "Upload Complete",
-        description: `Successfully uploaded ${uploaded.length} files to database.`,
+        description: `Successfully uploaded ${processedFiles.length} files to database.`,
       });
     } catch (error) {
       console.error("Error uploading files:", error);

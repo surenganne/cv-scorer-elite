@@ -2,6 +2,7 @@ import { FileWithPreview } from "@/types/file";
 import { useToast } from "./use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { extractFilesFromZip } from "@/utils/zipUtils";
+import { triggerBatchJob } from "@/utils/batchJobApi";
 
 export const useFileProcessor = () => {
   const { toast } = useToast();
@@ -69,5 +70,68 @@ export const useFileProcessor = () => {
     }
   };
 
-  return { processFile };
+  const uploadFiles = async (files: FileWithPreview[]) => {
+    try {
+      const uploadPromises = files.map(async (file) => {
+        // Create a unique filename
+        const timestamp = Date.now();
+        const randomString = Math.random().toString(36).substring(7);
+        const extension = file.file.name.split('.').pop() || '';
+        const fileName = `${timestamp}-${randomString}.${extension}`;
+
+        // Upload to storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('cvs')
+          .upload(fileName, file.file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = await supabase.storage
+          .from('cvs')
+          .getPublicUrl(fileName);
+
+        // Insert record into database
+        const { error: dbError } = await supabase
+          .from('cv_uploads')
+          .insert([
+            {
+              file_name: file.file.name,
+              file_path: fileName,
+              content_type: file.file.type,
+              file_size: file.file.size,
+            },
+          ]);
+
+        if (dbError) throw dbError;
+
+        return {
+          fileName,
+          publicUrl: urlData.publicUrl,
+        };
+      });
+
+      const results = await Promise.all(uploadPromises);
+
+      // Trigger batch job after successful upload
+      await triggerBatchJob();
+
+      toast({
+        title: "Upload Complete",
+        description: "Files uploaded and batch processing initiated.",
+      });
+
+      return results;
+    } catch (error) {
+      console.error('Upload failed:', error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload files. Please try again.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
+  return { processFile, uploadFiles };
 };
