@@ -25,12 +25,11 @@ export const useRankedResumes = (jobId: string) => {
       console.log("Starting fetch for job ID:", jobId);
       
       try {
-        // First, let's verify if we have data for this job ID
         const { data: checkData, error: checkError } = await supabase
-          .from('edb-cv-ranking')
+          .from('edb_cv_ranking')
           .select('*')
           .eq('job_id', jobId)
-          .maybeSingle();
+          .single();
 
         console.log("Check query response:", { data: checkData, error: checkError });
 
