@@ -61,6 +61,8 @@ export const EmailCandidates = ({
 
     setIsSending(true);
     try {
+      // If we have matches data, use it to create detailed candidate data
+      // Otherwise, just use the file names
       const selectedCandidatesData = matches
         ? matches
             .filter((match) => selectedCandidates.includes(match.id))
@@ -68,17 +70,26 @@ export const EmailCandidates = ({
               name: match.file_name,
               score: match.score,
               file_name: match.file_name,
-              file_path: match.file_path,
+              file_path: match.file_path || match.file_name, // Ensure file_path is always set
               evidence: match.evidence,
             }))
         : selectedCandidates.map(candidate => ({
-            file_name: candidate
+            name: candidate,
+            file_name: candidate,
+            file_path: candidate, // Use the candidate string as file_path
+            score: 0,
+            evidence: {
+              skills: [],
+              experience: "",
+              education: "",
+              certifications: [],
+            }
           }));
 
       console.log('Sending email with data:', {
         to: emails,
         selectedCandidates: selectedCandidatesData,
-        jobTitle,
+        jobTitle: jobTitle || 'Position',
       });
 
       const { data, error } = await supabase.functions.invoke(
@@ -87,7 +98,7 @@ export const EmailCandidates = ({
           body: {
             to: emails,
             selectedCandidates: selectedCandidatesData,
-            jobTitle,
+            jobTitle: jobTitle || 'Position',
           },
         }
       );

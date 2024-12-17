@@ -48,6 +48,9 @@ const handler = async (req: Request): Promise<Response> => {
       jobTitle 
     });
 
+    // Log the candidates data for debugging
+    console.log("Candidates data:", JSON.stringify(selectedCandidates, null, 2));
+
     const attachments = await processAttachments(selectedCandidates);
     const html = generateEmailHTML(jobTitle, selectedCandidates);
 
