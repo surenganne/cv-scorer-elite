@@ -22,6 +22,7 @@ const ManageCVs = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortCriteria, setSortCriteria] = useState("date");
+  const [topN, setTopN] = useState("10"); // Add this line
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { handleViewCV, handleDownloadCV } = useCVOperations();
@@ -130,11 +131,15 @@ const ManageCVs = () => {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1);
   };
 
   const handleSort = (criteria: string) => {
     setSortCriteria(criteria);
+  };
+
+  const handleTopNChange = (value: string) => { // Add this function
+    setTopN(value);
   };
 
   return (
@@ -146,6 +151,8 @@ const ManageCVs = () => {
           <CVFilters 
             onSearch={handleSearch}
             onSort={handleSort}
+            onTopNChange={handleTopNChange} // Add this prop
+            topN={topN} // Add this prop
           />
           {isLoading ? (
             <div className="text-center py-12 bg-white rounded-lg border shadow-sm">
