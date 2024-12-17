@@ -36,7 +36,7 @@ export type Database = {
         }
         Relationships: []
       }
-      edb_cv_ranking: {
+      "edb-cv-ranking": {
         Row: {
           id: number
           job_id: string

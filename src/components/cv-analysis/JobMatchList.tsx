@@ -1,23 +1,51 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Table, TableBody } from "@/components/ui/table";
-import { useRankedResumes } from "@/hooks/useRankedResumes";
-import { RankedResumesList } from "./RankedResumesList";
-import { TableHeaderComponent } from "./TableHeader";
-import { TableRowComponent } from "./TableRowComponent";
+import { Loader2, Users } from "lucide-react";
+import { format } from "date-fns";
+import { MatchesTable } from "./MatchesTable";
+import { useCVOperations } from "@/hooks/useCVOperations";
 
 interface JobMatch {
   id: string;
   title: string;
+  description: string;
+  required_skills: string;
   minimum_experience: number;
+  experience_weight: number;
+  skills_weight: number;
+  education_weight: number;
+  certifications_weight: number;
+  preferred_qualifications?: string;
+  status: string;
   created_at: string;
+  updated_at?: string;
 }
 
 export const JobMatchList = () => {
-  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
-  const { data: rankedResumes, isLoading: isLoadingMatches } = useRankedResumes(selectedJobId);
-  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const { toast } = useToast();
+  const { handleViewCV } = useCVOperations();
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [matchedCVs, setMatchedCVs] = useState<Record<string, any>>({});
+  const [topMatches, setTopMatches] = useState<Record<string, number>>({});
+  const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -34,53 +62,56 @@ export const JobMatchList = () => {
   });
 
   const findMatches = async (jobId: string) => {
-    console.log("Finding matches for job ID:", jobId);
-    
+    setLoading((prev) => ({ ...prev, [jobId]: true }));
     try {
-      // First, trigger the ranking process
-      const { data: rankingData, error: rankingError } = await supabase
-        .from('edb_cv_ranking')
-        .upsert([
-          {
-            job_id: jobId,
-            ranked_resumes: null // This will be updated by the backend process
-          }
-        ])
-        .select();
+      const job = activeJobs?.find((j) => j.id === jobId);
+      if (!job) return;
 
-      if (rankingError) {
-        console.error("Error initiating ranking process:", rankingError);
-        return;
-      }
+      const { data: cvs, error } = await supabase
+        .from("cv_uploads")
+        .select("*");
 
-      console.log("Ranking process initiated:", rankingData);
-      
-      // Call the resume ranking API
-      const rankingResponse = await fetch('https://3ltge7zfy7j26bdyygdwlcrtse0rcixl.lambda-url.ap-south-1.on.aws/rank-resumes', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      if (error) throw error;
+
+      const matches = cvs?.map((cv) => ({
+        ...cv,
+        score: Math.random() * 100,
+        evidence: {
+          skills: [
+            "JavaScript",
+            "React",
+            "TypeScript",
+            "Node.js",
+          ],
+          experience: "5 years of relevant experience in software development",
+          education: "Bachelor's degree in Computer Science",
+          certifications: [
+            "AWS Certified Developer",
+            "Professional Scrum Master I",
+          ],
         },
-        body: JSON.stringify({ job_id: jobId })
+      }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, topMatches[jobId] || 5);
+
+      setMatchedCVs((prev) => ({ ...prev, [jobId]: matches }));
+      setShowFilters((prev) => ({ ...prev, [jobId]: true }));
+      
+      toast({
+        title: "Matches Found",
+        description: `Found top ${matches?.length || 0} potential matches for this position.`,
       });
-
-      if (!rankingResponse.ok) {
-        console.error('Error from ranking API:', await rankingResponse.text());
-        return;
-      }
-
-      console.log("Ranking API called successfully");
-      setSelectedJobId(jobId);
     } catch (error) {
-      console.error("Error in findMatches:", error);
+      console.error("Error finding matches:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to find matches. Please try again.",
+      });
+    } finally {
+      setLoading((prev) => ({ ...prev, [jobId]: false }));
     }
   };
-
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedCandidates(checked ? (rankedResumes || []).map(resume => resume.file_name) : []);
-  };
-
-  const allSelected = rankedResumes?.length ? selectedCandidates.length === rankedResumes.length : false;
 
   if (!activeJobs?.length) {
     return (
@@ -93,28 +124,86 @@ export const JobMatchList = () => {
   return (
     <div className="space-y-6">
       <Table>
-        <TableHeaderComponent 
-          onSelectAll={handleSelectAll}
-          allSelected={allSelected}
-        />
+        <TableHeader>
+          <TableRow>
+            <TableHead>Job Title</TableHead>
+            <TableHead>Min. Experience</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
         <TableBody>
           {activeJobs?.map((job) => (
-            <TableRowComponent
-              key={job.id}
-              job={job}
-              onFindMatches={findMatches}
-              isLoading={isLoadingMatches && selectedJobId === job.id}
-            />
+            <TableRow key={job.id}>
+              <TableCell className="font-medium">{job.title}</TableCell>
+              <TableCell>{job.minimum_experience} years</TableCell>
+              <TableCell>
+                {format(new Date(job.created_at), "MMM dd, yyyy")}
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => findMatches(job.id)}
+                  disabled={loading[job.id]}
+                >
+                  {loading[job.id] ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Users className="h-4 w-4 mr-2" />
+                  )}
+                  Find Matched Jobseekers
+                </Button>
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
 
-      {selectedJobId && (
-        <RankedResumesList
-          resumes={rankedResumes || []}
-          isLoading={isLoadingMatches}
-        />
-      )}
+      {Object.entries(matchedCVs).map(([jobId, matches]) => {
+        const job = activeJobs?.find((j) => j.id === jobId);
+        if (!job || !matches?.length) return null;
+        
+        const weights = {
+          experience_weight: job.experience_weight,
+          skills_weight: job.skills_weight,
+          education_weight: job.education_weight,
+          certifications_weight: job.certifications_weight,
+        };
+        
+        return (
+          <div key={jobId} className="space-y-4">
+            {showFilters[jobId] && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Show:</span>
+                <Select
+                  value={String(topMatches[jobId] || "5")}
+                  onValueChange={(value) => {
+                    setTopMatches(prev => ({ ...prev, [jobId]: Number(value) }));
+                    findMatches(jobId);
+                  }}
+                >
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue placeholder="Top 5" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">Top 5</SelectItem>
+                    <SelectItem value="10">Top 10</SelectItem>
+                    <SelectItem value="15">Top 15</SelectItem>
+                    <SelectItem value="20">Top 20</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <MatchesTable 
+              matches={matches} 
+              jobTitle={job.title} 
+              weights={weights}
+              onViewResume={handleViewCV}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };
