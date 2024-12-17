@@ -11,6 +11,12 @@ interface RankedResume {
     experience_weight: string;
     certifications_weight: string;
   };
+  matching_details?: {
+    matching_skills: string[];
+    matching_education: string[];
+    matching_experience: string[];
+    matching_certifications: string[];
+  };
 }
 
 export const useRankedResumes = (jobId: string) => {
@@ -23,7 +29,6 @@ export const useRankedResumes = (jobId: string) => {
       }
 
       console.log("Starting fetch for job ID:", jobId);
-      console.log("Query parameters:", { jobId });
       
       try {
         const { data: checkData, error: checkError } = await supabase
@@ -39,27 +44,13 @@ export const useRankedResumes = (jobId: string) => {
           throw checkError;
         }
 
-        if (!checkData) {
+        if (!checkData?.ranked_resumes) {
           console.log("No data found for job ID:", jobId);
           return [];
         }
 
-        // If we have data, parse the ranked_resumes
-        if (checkData.ranked_resumes) {
-          try {
-            const parsedResumes = typeof checkData.ranked_resumes === 'string' 
-              ? JSON.parse(checkData.ranked_resumes) 
-              : checkData.ranked_resumes;
-
-            console.log("Successfully parsed resumes:", parsedResumes);
-            return parsedResumes as RankedResume[];
-          } catch (parseError) {
-            console.error("Error parsing ranked resumes:", parseError);
-            return [];
-          }
-        }
-
-        return [];
+        // Return the ranked_resumes array directly since it's already in the correct format
+        return checkData.ranked_resumes as RankedResume[];
       } catch (error) {
         console.error("Error in useRankedResumes:", error);
         throw error;

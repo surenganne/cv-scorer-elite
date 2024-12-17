@@ -18,6 +18,12 @@ interface RankedResume {
     experience_weight: string;
     certifications_weight: string;
   };
+  matching_details?: {
+    matching_skills: string[];
+    matching_education: string[];
+    matching_experience: string[];
+    matching_certifications: string[];
+  };
 }
 
 interface RankedResumesListProps {
