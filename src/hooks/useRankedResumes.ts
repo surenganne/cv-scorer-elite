@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-interface RankedResume {
+export interface RankedResume {
   id: string;
   file_name: string;
   file_path?: string;
@@ -10,6 +10,7 @@ interface RankedResume {
   experience_summary?: string;
   education_summary?: string;
   certifications?: string[];
+  upload_date?: string;
 }
 
 export const useRankedResumes = (jobId: string) => {
@@ -24,8 +25,23 @@ export const useRankedResumes = (jobId: string) => {
 
       if (error) throw error;
       
-      // Ensure we return an array of ranked resumes or an empty array
-      const rankedResumes = data?.ranked_resumes as RankedResume[] || [];
+      // Safely type cast the ranked_resumes JSON data
+      const jsonData = data?.ranked_resumes;
+      if (!jsonData || !Array.isArray(jsonData)) {
+        return [];
+      }
+
+      // Type cast and validate each resume object
+      const rankedResumes = jsonData.filter((item): item is RankedResume => {
+        return (
+          typeof item === 'object' &&
+          item !== null &&
+          'id' in item &&
+          'file_name' in item &&
+          'score' in item
+        );
+      });
+
       return rankedResumes;
     },
     enabled: !!jobId,
