@@ -31,6 +31,8 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
         minimum_experience: Number(jobData.minimum_experience),
       };
 
+      let savedJobId = id;
+
       if (id) {
         const { error } = await supabase
           .from("job_descriptions")
@@ -45,23 +47,28 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
           .single();
         
         if (jobError) throw jobError;
+        savedJobId = jobResponse.id;
+      }
 
-        // Call the resume ranking function with the new job ID
-        const { error: rankingError } = await supabase.functions.invoke('rank-resumes', {
-          body: {
-            ...dataToSave,
-            job_id: jobResponse.id
-          }
+      // Call the resume ranking API directly
+      const rankingResponse = await fetch('https://3ltge7zfy7j26bdyygdwlcrtse0rcixl.lambda-url.ap-south-1.on.aws/rank-resumes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...dataToSave,
+          job_id: savedJobId
+        })
+      });
+
+      if (!rankingResponse.ok) {
+        console.error('Error ranking resumes:', await rankingResponse.text());
+        toast({
+          variant: "destructive",
+          title: "Warning",
+          description: "Job description saved but resume ranking failed. Please try ranking manually.",
         });
-
-        if (rankingError) {
-          console.error('Error ranking resumes:', rankingError);
-          toast({
-            variant: "destructive",
-            title: "Warning",
-            description: "Job description saved but resume ranking failed. Please try ranking manually.",
-          });
-        }
       }
 
       toast({
