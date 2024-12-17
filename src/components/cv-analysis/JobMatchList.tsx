@@ -11,9 +11,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Users } from "lucide-react";
+import { Loader2, Users, LayoutGrid, Table2 } from "lucide-react";
 import { format } from "date-fns";
 import { RankedResumesList } from "./RankedResumesList";
+import { RankedResumesTable } from "./RankedResumesTable";
 import { RankedResume } from "@/types/ranked-resume";
 
 interface JobMatch {
@@ -37,6 +38,7 @@ export const JobMatchList = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [matchedResumes, setMatchedResumes] = useState<Record<string, RankedResume[]>>({});
   const [showFilters, setShowFilters] = useState<Record<string, boolean>>({});
+  const [viewMode, setViewMode] = useState<Record<string, "grid" | "table">>({});
 
   const { data: activeJobs } = useQuery({
     queryKey: ["activeJobs"],
@@ -170,10 +172,32 @@ export const JobMatchList = () => {
         return (
           <div key={jobId} className="space-y-4">
             <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Matched Candidates for {job.title}
-              </h3>
-              <RankedResumesList resumes={resumes} />
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Matched Candidates for {job.title}
+                </h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setViewMode(prev => ({
+                      ...prev,
+                      [jobId]: prev[jobId] === "grid" ? "table" : "grid"
+                    }))}
+                  >
+                    {viewMode[jobId] === "table" ? (
+                      <><LayoutGrid className="h-4 w-4 mr-2" /> Grid View</>
+                    ) : (
+                      <><Table2 className="h-4 w-4 mr-2" /> Table View</>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              {viewMode[jobId] === "table" ? (
+                <RankedResumesTable resumes={resumes} />
+              ) : (
+                <RankedResumesList resumes={resumes} />
+              )}
             </div>
           </div>
         );
