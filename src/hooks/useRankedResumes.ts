@@ -39,7 +39,7 @@ export const useRankedResumes = (jobId: string) => {
           .from('edb_cv_ranking')
           .select('ranked_resumes')
           .eq('job_id', jobId)
-          .single();
+          .maybeSingle();
 
         console.log("Check query response:", { data: checkData, error: checkError });
 
