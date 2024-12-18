@@ -11,21 +11,26 @@ serve(async (req) => {
   }
 
   try {
-    const { jobId } = await req.json()
-    console.log('Checking status for job:', jobId)
+    const { job_id } = await req.json()
+    console.log('Checking status for job:', job_id)
     
+    // Call your actual job status checking endpoint
     const response = await fetch(
-      'https://q6iagsh8w1.execute-api.ap-south-2.amazonaws.com/dev/checkJobStatus',
+      `${Deno.env.get('JOB_STATUS_API_URL')}/checkJobStatus`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          job_id: jobId
+          job_id: job_id
         }),
       }
     )
+
+    if (!response.ok) {
+      throw new Error(`API responded with status: ${response.status}`)
+    }
 
     const data = await response.json()
     console.log('Job status response:', data)
@@ -36,7 +41,10 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error checking job status:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      status: 'FAILED'
+    }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     })
