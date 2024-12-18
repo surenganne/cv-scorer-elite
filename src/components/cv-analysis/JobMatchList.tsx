@@ -15,7 +15,6 @@ import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RankedResumesTable } from "./RankedResumesTable";
 import { RankedResume } from "@/types/ranked-resume";
-import { transformRankedResumes } from "@/utils/rankingUtils";
 
 interface JobMatch {
   id: string;
@@ -81,6 +80,7 @@ export const JobMatchList = () => {
     setLoading((prev) => ({ ...prev, [cleanJobId]: true }));
     
     try {
+      // First get the ranking data
       const { data: rankingData, error: rankingError } = await supabase
         .from("edb_cv_ranking")
         .select("ranked_resumes")
@@ -93,26 +93,40 @@ export const JobMatchList = () => {
       const rankedResumes = response?.ranked_resumes?.ranking || [];
       
       if (rankedResumes.length > 0) {
-        const filePaths = rankedResumes.map(resume => resume.file_name);
+        // Get all unique file names from ranked resumes
+        const fileNames = rankedResumes.map(resume => resume.file_name);
         
+        // Fetch corresponding file paths from cv_uploads
         const { data: cvData, error: cvError } = await supabase
           .from("cv_uploads")
           .select("file_name, file_path")
-          .in("file_path", filePaths);
+          .in("file_name", fileNames);
 
         if (cvError) throw cvError;
 
-        const fileNameMap = cvData?.reduce((acc, cv) => {
-          acc[cv.file_path] = cv.file_name;
+        // Create a map of file names to their actual paths and names
+        const fileMap = cvData?.reduce((acc, cv) => {
+          acc[cv.file_name] = {
+            file_path: cv.file_path,
+            actual_file_name: cv.file_name
+          };
           return acc;
-        }, {} as Record<string, string>) || {};
+        }, {} as Record<string, { file_path: string, actual_file_name: string }>);
 
-        const enrichedResumes = rankedResumes.map(resume => ({
-          ...resume,
-          actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
-          file_name: resume.file_name,
-          overall_match_with_jd: resume.overall_match_with_jd.replace('%', '')
-        }));
+        // Enrich ranked resumes with actual file paths and names
+        const enrichedResumes = rankedResumes.map(resume => {
+          const fileInfo = fileMap[resume.file_name] || {
+            file_path: resume.file_name,
+            actual_file_name: resume.file_name
+          };
+          
+          return {
+            ...resume,
+            file_path: fileInfo.file_path,
+            actual_file_name: fileInfo.actual_file_name,
+            overall_match_with_jd: resume.overall_match_with_jd.replace('%', '')
+          };
+        });
 
         setMatchedResumes((prev) => ({
           ...prev,
