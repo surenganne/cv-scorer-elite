@@ -25,6 +25,11 @@ serve(async (req) => {
       throw new Error('JOB_STATUS_API_KEY environment variable is not set')
     }
 
+    // Get current timestamp for AWS authentication
+    const date = new Date()
+    const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '')
+    const dateStamp = date.toISOString().split('T')[0].replace(/-/g, '')
+
     const response = await fetch(
       `${baseUrl}/checkJobStatus`,
       {
@@ -32,8 +37,9 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': apiKey, // Changed format: removed Bearer prefix
-          'x-api-key': apiKey
+          'X-Api-Key': apiKey,
+          'X-Amz-Date': amzDate,
+          'Date': date.toUTCString(),
         },
         body: JSON.stringify({
           job_id: job_id
