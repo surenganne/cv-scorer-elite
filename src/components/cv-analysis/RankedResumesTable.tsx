@@ -81,6 +81,17 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
 
+  const getDisplayName = (resume: RankedResume) => {
+    // If actual_file_name exists, use it
+    if (resume.actual_file_name) {
+      return resume.actual_file_name;
+    }
+    
+    // If no actual_file_name, extract filename from file_path
+    const pathParts = resume.file_name.split('/');
+    return pathParts[pathParts.length - 1];
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -135,7 +146,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelectResume(resume.file_name)}
-                        aria-label={`Select ${resume.actual_file_name || resume.file_name}`}
+                        aria-label={`Select ${getDisplayName(resume)}`}
                       />
                     </TableCell>
                     <TableCell>
@@ -145,7 +156,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-gray-700">
-                      {resume.actual_file_name || resume.file_name}
+                      {getDisplayName(resume)}
                     </TableCell>
                     <TableCell>
                       <Badge 
