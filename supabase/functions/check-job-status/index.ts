@@ -15,8 +15,14 @@ serve(async (req) => {
     console.log('Checking status for job:', job_id)
     
     const baseUrl = Deno.env.get('JOB_STATUS_API_URL')
+    const apiKey = Deno.env.get('JOB_STATUS_API_KEY')
+    
     if (!baseUrl) {
       throw new Error('JOB_STATUS_API_URL environment variable is not set')
+    }
+
+    if (!apiKey) {
+      throw new Error('JOB_STATUS_API_KEY environment variable is not set')
     }
 
     const response = await fetch(
@@ -26,6 +32,8 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+          'x-api-key': apiKey
         },
         body: JSON.stringify({
           job_id: job_id
