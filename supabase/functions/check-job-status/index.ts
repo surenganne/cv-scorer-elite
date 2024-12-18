@@ -27,8 +27,7 @@ serve(async (req) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // Add any required authentication headers here
-          'Authorization': `Bearer ${Deno.env.get('JOB_STATUS_API_KEY')}`, // You'll need to set this secret
+          'Accept': 'application/json',
         },
         body: JSON.stringify({
           job_id: job_id
@@ -44,7 +43,15 @@ serve(async (req) => {
       const errorText = await response.text()
       console.error('API Error Response:', errorText)
       
-      throw new Error(`API responded with status: ${response.status}`)
+      return new Response(JSON.stringify({ 
+        error: `API responded with status: ${response.status}`,
+        details: errorText,
+        status: 'FAILED',
+        timestamp: new Date().toISOString(),
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: response.status,
+      })
     }
 
     const data = await response.json()
