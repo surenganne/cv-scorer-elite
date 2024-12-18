@@ -56,10 +56,13 @@ export const JobMatchList = () => {
   const findMatches = async (jobId: string) => {
     setLoading((prev) => ({ ...prev, [jobId]: true }));
     try {
+      // Remove the 'eq.' prefix if it exists in the jobId
+      const cleanJobId = jobId.replace(/^eq\./, '');
+      
       const { data: rankingData, error: rankingError } = await supabase
         .from("edb_cv_ranking")
         .select("ranked_resumes")
-        .eq("job_id", jobId)
+        .eq("job_id", cleanJobId)
         .single();
 
       if (rankingError) throw rankingError;
@@ -89,9 +92,9 @@ export const JobMatchList = () => {
 
         setMatchedResumes((prev) => ({
           ...prev,
-          [jobId]: enrichedResumes,
+          [cleanJobId]: enrichedResumes,
         }));
-        setTopN((prev) => ({ ...prev, [jobId]: 10 }));
+        setTopN((prev) => ({ ...prev, [cleanJobId]: 10 }));
 
         toast({
           title: "Matches Found",
