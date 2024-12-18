@@ -166,7 +166,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
                         variant="outline" 
                         size="sm" 
                         className="gap-2 hover:bg-purple-50/50 hover:border-purple-200 transition-colors"
-                        onClick={() => handleViewCV(resume.file_name)}
+                        onClick={() => handleViewCV(resume.actual_file_name || resume.file_name)}
                       >
                         <FileText className="h-4 w-4 text-purple-500" />
                         View Resume

@@ -4,15 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 export const useCVOperations = () => {
   const { toast } = useToast();
 
-  const handleViewCV = async (filePath: string) => {
+  const handleViewCV = async (fileName: string) => {
     try {
-      if (!filePath) {
-        throw new Error("Invalid file path");
+      if (!fileName) {
+        throw new Error("Invalid file name");
       }
 
-      console.log("Attempting to get signed URL for:", filePath);
+      // First get the file path from cv_uploads table
+      const { data: cvData, error: cvError } = await supabase
+        .from("cv_uploads")
+        .select("file_path")
+        .ilike("file_name", fileName)
+        .single();
 
-      // First check if the file exists
+      if (cvError || !cvData) {
+        console.error("Error fetching CV data:", cvError);
+        throw new Error("Could not find the CV file");
+      }
+
+      const filePath = cvData.file_path;
+      console.log("Found file path:", filePath);
+
+      // Check if the file exists in storage
       const { data: fileExists, error: existsError } = await supabase.storage
         .from("cvs")
         .list("", {
