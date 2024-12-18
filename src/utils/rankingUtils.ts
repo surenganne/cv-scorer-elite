@@ -21,7 +21,7 @@ interface RankedResumeJson {
 }
 
 // Type guard to ensure the data matches our expected structure
-const isValidRankedResume = (item: any): item is RankedResumeJson => {
+const isValidRankedResume = (item: any): boolean => {
   if (!item || typeof item !== "object") return false;
   
   return (
@@ -41,20 +41,20 @@ const isValidRankedResume = (item: any): item is RankedResumeJson => {
 
 export const transformRankedResumes = (data: Json | null): RankedResume[] => {
   if (!data || !Array.isArray(data)) {
+    console.warn("Invalid or empty ranking data received");
     return [];
   }
 
   return data
-    .filter((item): item is any => isValidRankedResume(item))
+    .filter(item => isValidRankedResume(item))
     .map(resume => {
-      // Create a new object with the correct type structure
-      const transformedResume: RankedResume = {
-        rank: resume.rank,
-        weights: resume.weights,
-        file_name: resume.file_name,
-        matching_details: resume.matching_details,
-        overall_match_with_jd: resume.overall_match_with_jd
+      const validResume = resume as RankedResumeJson;
+      return {
+        rank: validResume.rank,
+        weights: validResume.weights,
+        file_name: validResume.file_name,
+        matching_details: validResume.matching_details,
+        overall_match_with_jd: validResume.overall_match_with_jd
       };
-      return transformedResume;
     });
 };
