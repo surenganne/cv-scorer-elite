@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FileText, Trophy, CheckSquare, Square } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Trophy } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -45,9 +45,15 @@ interface RankedResumesTableProps {
   resumes: RankedResume[];
   topN: number;
   onTopNChange: (value: number) => void;
+  jobWeights?: {
+    experience_weight: number;
+    skills_weight: number;
+    education_weight: number;
+    certifications_weight: number;
+  };
 }
 
-export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResumesTableProps) => {
+export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: RankedResumesTableProps) => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [selectedResumes, setSelectedResumes] = useState<string[]>([]);
   const { handleViewCV } = useCVOperations();
@@ -185,7 +191,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                     <TableRow>
                       <TableCell colSpan={6} className="bg-gradient-to-r from-purple-50/30 to-blue-50/30 p-0">
                         <div className="p-6">
-                          <RankedResumeCard resume={resume} />
+                          <RankedResumeCard resume={resume} jobWeights={jobWeights} />
                         </div>
                       </TableCell>
                     </TableRow>

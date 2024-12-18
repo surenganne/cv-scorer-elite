@@ -6,12 +6,18 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface RankedResumeCardProps {
   resume: RankedResume;
+  jobWeights?: {
+    experience_weight: number;
+    skills_weight: number;
+    education_weight: number;
+    certifications_weight: number;
+  };
 }
 
-export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
+export const RankedResumeCard = ({ resume, jobWeights }: RankedResumeCardProps) => {
   const COLORS = ['#3b82f6', '#8b5cf6', '#22c55e', '#f59e0b'];
 
-  const jobWeights = [
+  const resumeWeights = [
     { name: 'Skills', value: parseInt(resume.weights.skills_weight), icon: <Code className="h-3.5 w-3.5 text-blue-500" /> },
     { name: 'Experience', value: parseInt(resume.weights.experience_weight), icon: <Briefcase className="h-3.5 w-3.5 text-purple-500" /> },
     { name: 'Education', value: parseInt(resume.weights.education_weight), icon: <GraduationCap className="h-3.5 w-3.5 text-green-500" /> },
@@ -24,14 +30,30 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_200px] gap-4 items-center">
             <div className="space-y-2">
-              {jobWeights.map((weight, index) => (
+              {resumeWeights.map((weight, index) => (
                 <div key={weight.name} className="flex items-center justify-between text-sm">
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1.5">
                       {weight.icon}
                       <span className="font-medium">{weight.name}</span>
                     </div>
-                    <span className="text-xs text-gray-400 ml-5">Weight: {weight.value}%</span>
+                    <div className="ml-5 space-y-1">
+                      <div className="text-xs text-gray-500 flex items-center justify-between">
+                        <span>Resume Weight:</span>
+                        <span className="font-medium text-gray-700">{weight.value}%</span>
+                      </div>
+                      {jobWeights && (
+                        <div className="text-xs text-gray-500 flex items-center justify-between">
+                          <span>Job Weight:</span>
+                          <span className="font-medium text-gray-700">
+                            {index === 0 ? jobWeights.skills_weight :
+                             index === 1 ? jobWeights.experience_weight :
+                             index === 2 ? jobWeights.education_weight :
+                             jobWeights.certifications_weight}%
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -40,7 +62,7 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={jobWeights}
+                    data={resumeWeights}
                     cx="50%"
                     cy="50%"
                     innerRadius={40}
@@ -48,7 +70,7 @@ export const RankedResumeCard = ({ resume }: RankedResumeCardProps) => {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {jobWeights.map((entry, index) => (
+                    {resumeWeights.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index]} />
                     ))}
                   </Pie>

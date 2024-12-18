@@ -77,7 +77,6 @@ export const JobMatchList = () => {
   });
 
   const findMatches = async (jobId: string) => {
-    // Clean the job ID at the start of the function
     const cleanJobId = jobId.replace(/^eq\./, '');
     setLoading((prev) => ({ ...prev, [cleanJobId]: true }));
     
@@ -207,6 +206,12 @@ export const JobMatchList = () => {
                 resumes={resumes}
                 topN={topN[jobId]}
                 onTopNChange={(value) => setTopN(prev => ({ ...prev, [jobId]: value }))}
+                jobWeights={{
+                  experience_weight: job.experience_weight,
+                  skills_weight: job.skills_weight,
+                  education_weight: job.education_weight,
+                  certifications_weight: job.certifications_weight,
+                }}
               />
             </div>
           </div>
