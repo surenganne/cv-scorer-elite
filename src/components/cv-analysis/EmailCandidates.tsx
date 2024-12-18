@@ -12,7 +12,7 @@ interface EmailCandidatesProps {
     id: string;
     file_name: string;
     file_path?: string;
-    score: number | string;  // Updated type to allow both number and string
+    score: number | string;
     evidence: {
       skills: string[];
       experience: string;
@@ -61,12 +61,17 @@ export const EmailCandidates = ({
 
     setIsSending(true);
     try {
+      console.log('Starting email preparation with matches:', matches);
+      
       // First, get the correct file paths from cv_uploads table
       const selectedCandidatesData = matches
         ? await Promise.all(
             matches
               .filter((match) => selectedCandidates.includes(match.id))
               .map(async (match) => {
+                console.log('Processing match:', match);
+                console.log('Original score:', match.score);
+                
                 // Get the correct file path from cv_uploads
                 const { data: cvData, error: cvError } = await supabase
                   .from("cv_uploads")
@@ -79,27 +84,40 @@ export const EmailCandidates = ({
                   throw new Error(`Could not find CV file for ${match.file_name}`);
                 }
 
-                // Ensure we have a valid numeric score
-                let score = typeof match.score === 'string' 
-                  ? parseFloat(match.score.replace('%', ''))
-                  : parseFloat(String(match.score));
-
-                // If score is still NaN after parsing, try to get it from evidence
-                if (isNaN(score) && match.evidence) {
-                  const evidenceScore = match.evidence.skills?.length * 10 +
-                    (match.evidence.experience ? 30 : 0) +
-                    (match.evidence.education ? 30 : 0) +
-                    match.evidence.certifications?.length * 10;
-                  score = Math.min(evidenceScore, 100);
+                // Parse score handling both string and number formats
+                let score: number;
+                if (typeof match.score === 'string') {
+                  // Remove '%' if present and convert to number
+                  score = parseFloat(match.score.replace('%', ''));
+                  console.log('Parsed string score:', score);
+                } else {
+                  score = match.score;
+                  console.log('Numeric score:', score);
                 }
 
-                return {
+                // If score is NaN or 0, try to calculate from evidence
+                if (isNaN(score) || score === 0) {
+                  console.log('Score is invalid, calculating from evidence:', match.evidence);
+                  const evidenceScore = (
+                    (match.evidence.skills?.length || 0) * 10 +
+                    (match.evidence.experience ? 30 : 0) +
+                    (match.evidence.education ? 30 : 0) +
+                    (match.evidence.certifications?.length || 0) * 10
+                  );
+                  score = Math.min(evidenceScore, 100);
+                  console.log('Calculated evidence-based score:', score);
+                }
+
+                const candidateData = {
                   name: match.file_name,
-                  score: isNaN(score) ? 0 : score,
+                  score: score,
                   file_name: match.file_name,
                   file_path: cvData.file_path,
                   evidence: match.evidence,
                 };
+
+                console.log('Final candidate data:', candidateData);
+                return candidateData;
               })
           )
         : await Promise.all(
@@ -130,7 +148,7 @@ export const EmailCandidates = ({
             })
           );
 
-      console.log('Sending email with data:', {
+      console.log('Final email data:', {
         to: emails,
         selectedCandidates: selectedCandidatesData,
         jobTitle: jobTitle || 'Position',
