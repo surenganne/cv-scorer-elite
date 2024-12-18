@@ -57,6 +57,14 @@ interface RankedResumesTableProps {
 // Helper function to generate a unique ID for each resume
 const getResumeId = (resume: RankedResume) => `${resume.rank}-${resume.file_name}`;
 
+// Helper function to parse and format the match score
+const parseMatchScore = (score: string): number => {
+  // Remove any '%' symbol and convert to number
+  const numericScore = parseFloat(score.replace('%', ''));
+  // Return 0 if the score is NaN or undefined
+  return isNaN(numericScore) ? 0 : numericScore;
+};
+
 export const RankedResumesTable = ({ 
   resumes, 
   topN, 
@@ -155,6 +163,7 @@ export const RankedResumesTable = ({
             {filteredResumes.map((resume) => {
               const isExpanded = expandedRows.includes(parseInt(resume.rank));
               const isSelected = selectedResumeIds.includes(getResumeId(resume));
+              const matchScore = parseMatchScore(resume.overall_match_with_jd);
               
               return (
                 <React.Fragment key={resume.rank}>
@@ -178,9 +187,15 @@ export const RankedResumesTable = ({
                     <TableCell>
                       <Badge 
                         variant="secondary" 
-                        className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
+                        className={`text-base ${
+                          matchScore >= 80 
+                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                            : matchScore >= 60 
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-rose-50 text-rose-700 border-rose-200'
+                        }`}
                       >
-                        {resume.overall_match_with_jd}% Match
+                        {matchScore}% Match
                       </Badge>
                     </TableCell>
                     <TableCell>
