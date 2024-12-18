@@ -61,34 +61,60 @@ export const EmailCandidates = ({
 
     setIsSending(true);
     try {
-      // If we have matches data, use it to create detailed candidate data
-      // Otherwise, just use the file names
+      // First, get the correct file paths from cv_uploads table
       const selectedCandidatesData = matches
-        ? matches
-            .filter((match) => selectedCandidates.includes(match.id))
-            .map((match) => ({
-              name: match.file_name,
-              score: match.score,
-              file_name: match.file_name,
-              // Ensure file_path includes 'cvs/' prefix
-              file_path: match.file_path ? 
-                (match.file_path.startsWith('cvs/') ? match.file_path : `cvs/${match.file_path}`) : 
-                `cvs/${match.file_name}`,
-              evidence: match.evidence,
-            }))
-        : selectedCandidates.map(candidate => ({
-            name: candidate,
-            file_name: candidate,
-            // Ensure file_path includes 'cvs/' prefix for direct file names
-            file_path: candidate.startsWith('cvs/') ? candidate : `cvs/${candidate}`,
-            score: 0,
-            evidence: {
-              skills: [],
-              experience: "",
-              education: "",
-              certifications: [],
-            }
-          }));
+        ? await Promise.all(
+            matches
+              .filter((match) => selectedCandidates.includes(match.id))
+              .map(async (match) => {
+                // Get the correct file path from cv_uploads
+                const { data: cvData, error: cvError } = await supabase
+                  .from("cv_uploads")
+                  .select("file_path")
+                  .ilike("file_name", match.file_name)
+                  .single();
+
+                if (cvError) {
+                  console.error("Error fetching CV data:", cvError);
+                  throw new Error(`Could not find CV file for ${match.file_name}`);
+                }
+
+                return {
+                  name: match.file_name,
+                  score: match.score,
+                  file_name: match.file_name,
+                  file_path: cvData.file_path,
+                  evidence: match.evidence,
+                };
+              })
+          )
+        : await Promise.all(
+            selectedCandidates.map(async (candidate) => {
+              const { data: cvData, error: cvError } = await supabase
+                .from("cv_uploads")
+                .select("file_path")
+                .ilike("file_name", candidate)
+                .single();
+
+              if (cvError) {
+                console.error("Error fetching CV data:", cvError);
+                throw new Error(`Could not find CV file for ${candidate}`);
+              }
+
+              return {
+                name: candidate,
+                file_name: candidate,
+                file_path: cvData.file_path,
+                score: 0,
+                evidence: {
+                  skills: [],
+                  experience: "",
+                  education: "",
+                  certifications: [],
+                }
+              };
+            })
+          );
 
       console.log('Sending email with data:', {
         to: emails,
