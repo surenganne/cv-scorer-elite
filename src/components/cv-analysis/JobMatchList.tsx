@@ -33,6 +33,29 @@ interface JobMatch {
   updated_at?: string;
 }
 
+interface RankingResponse {
+  ranked_resumes: {
+    message: string;
+    ranking: Array<{
+      rank: string;
+      weights: {
+        skills_weight: string;
+        education_weight: string;
+        experience_weight: string;
+        certifications_weight: string;
+      };
+      file_name: string;
+      matching_details: {
+        matching_skills: string[];
+        matching_education: string[];
+        matching_experience: string[];
+        matching_certifications: string[];
+      };
+      overall_match_with_jd: string;
+    }>;
+  };
+}
+
 export const JobMatchList = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
@@ -67,8 +90,8 @@ export const JobMatchList = () => {
 
       if (rankingError) throw rankingError;
 
-      // Extract the ranking array from the nested structure
-      const rankedResumes = rankingData?.ranked_resumes?.ranking || [];
+      const response = rankingData as RankingResponse;
+      const rankedResumes = response?.ranked_resumes?.ranking || [];
       
       if (rankedResumes.length > 0) {
         const filePaths = rankedResumes.map(resume => resume.file_name);
@@ -89,7 +112,6 @@ export const JobMatchList = () => {
           ...resume,
           actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
           file_name: resume.file_name,
-          // Remove the '%' symbol from the overall match and convert to string
           overall_match_with_jd: resume.overall_match_with_jd.replace('%', '')
         }));
 
