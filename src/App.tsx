@@ -1,34 +1,40 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Navbar } from "@/components/layout/Navbar";
-import { Index } from "@/pages/Index";
-import { ManageCVs } from "@/pages/ManageCVs";
-import { UploadCVs } from "@/pages/UploadCVs";
-import { CVAnalysis } from "@/pages/CVAnalysis";
-import { ConfigureScoring } from "@/pages/ConfigureScoring";
-import { ManageJDs } from "@/pages/ManageJDs";
-import { ViewResume } from "@/pages/ViewResume";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import Index from "./pages/Index";
+import ConfigureScoring from "./pages/ConfigureScoring";
+import UploadCVs from "./pages/UploadCVs";
+import CVAnalysis from "./pages/CVAnalysis";
+import ManageJDs from "./pages/ManageJDs";
+import ManageCVs from "./pages/ManageCVs";
 import "./App.css";
+
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
-    <Router>
-      <div className="min-h-screen bg-gray-50/40">
-        <Navbar />
-        <main>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/manage-cvs" element={<ManageCVs />} />
-            <Route path="/upload-cvs" element={<UploadCVs />} />
-            <Route path="/cv-analysis" element={<CVAnalysis />} />
-            <Route path="/configure-scoring" element={<ConfigureScoring />} />
-            <Route path="/manage-jds" element={<ManageJDs />} />
-            <Route path="/view-resume" element={<ViewResume />} />
-          </Routes>
-        </main>
-        <Toaster />
-      </div>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/configure-scoring" element={<ConfigureScoring />} />
+          <Route path="/configure-scoring/:id" element={<ConfigureScoring />} />
+          <Route path="/upload-cvs" element={<UploadCVs />} />
+          <Route path="/manage-cvs" element={<ManageCVs />} />
+          <Route path="/cv-analysis" element={<CVAnalysis />} />
+          <Route path="/manage-jds" element={<ManageJDs />} />
+        </Routes>
+      </Router>
+      <Toaster />
+    </QueryClientProvider>
   );
 }
 
