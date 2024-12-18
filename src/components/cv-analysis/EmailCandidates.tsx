@@ -79,9 +79,12 @@ export const EmailCandidates = ({
                   throw new Error(`Could not find CV file for ${match.file_name}`);
                 }
 
+                // Parse the score from the match object
+                const score = parseFloat(match.score.toString());
+
                 return {
                   name: match.file_name,
-                  score: match.score,
+                  score: isNaN(score) ? 0 : score,
                   file_name: match.file_name,
                   file_path: cvData.file_path,
                   evidence: match.evidence,
