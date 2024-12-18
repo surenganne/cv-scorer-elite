@@ -5,32 +5,25 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
+interface Evidence {
+  skills: string[];
+  experience: string;
+  education: string;
+  certifications: string[];
+}
+
+interface Candidate {
+  id: string;
+  file_name: string;
+  file_path?: string;
+  score: number | string;
+  evidence: Evidence;
+}
+
 interface EmailCandidatesProps {
-  selectedCandidates: Array<{
-    id: string;
-    file_name: string;
-    file_path?: string;
-    score: number;
-    evidence: {
-      skills: string[];
-      experience: string;
-      education: string;
-      certifications: string[];
-    };
-  }>;
+  selectedCandidates: Candidate[];
   onClose?: () => void;
-  matches?: Array<{
-    id: string;
-    file_name: string;
-    file_path?: string;
-    score: number | string;
-    evidence: {
-      skills: string[];
-      experience: string;
-      education: string;
-      certifications: string[];
-    };
-  }>;
+  matches?: Candidate[];
   jobTitle?: string;
   onEmailsSent?: () => void;
 }
@@ -97,11 +90,13 @@ export const EmailCandidates = ({
           }
 
           // Parse score handling both string and number formats
-          let score = candidate.score;
-          if (typeof score === 'string') {
+          let score: number;
+          if (typeof candidate.score === 'string') {
             // Remove '%' if present and convert to number
-            score = parseFloat(score.replace('%', ''));
+            score = parseFloat(candidate.score.replace('%', ''));
             console.log('Parsed string score:', score);
+          } else {
+            score = candidate.score;
           }
 
           // If score is NaN or 0, try to calculate from evidence
