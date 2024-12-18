@@ -87,6 +87,16 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
 
+  // Transform selected resumes into the required format
+  const selectedResumesData = selectedResumes.map(fileName => {
+    const resume = filteredResumes.find(r => r.file_name === fileName);
+    return resume ? {
+      name: resume.actual_file_name || resume.file_name,
+      file_name: resume.file_name,
+      file_path: resume.file_path || `cvs/${resume.file_name}`
+    } : null;
+  }).filter((resume): resume is { name: string; file_name: string; file_path: string; } => resume !== null);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -205,7 +215,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
 
       {showEmailDialog && (
         <EmailCandidates
-          selectedCandidates={selectedResumes}
+          selectedCandidates={selectedResumesData}
           onClose={() => setShowEmailDialog(false)}
         />
       )}
