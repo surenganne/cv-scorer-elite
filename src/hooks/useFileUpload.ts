@@ -70,23 +70,17 @@ export const useFileUpload = () => {
     }
   };
 
-  const pollJobStatus = async (jobId: string, retries = 0): Promise<boolean> => {
+  const pollJobStatus = async (jobId: string): Promise<boolean> => {
     try {
-      if (retries > 10) { // Maximum 10 retries
-        throw new Error('Max retries reached while checking job status');
-      }
-
       const result = await checkJobStatus(jobId);
-      
       if (result.status === 'SUCCEEDED') {
         return true;
       } else if (result.status === 'FAILED') {
-        throw new Error(result.error || 'Batch job failed');
+        throw new Error('Batch job failed');
       }
-      
       // Wait for 5 seconds before checking again
       await new Promise(resolve => setTimeout(resolve, 5000));
-      return pollJobStatus(jobId, retries + 1);
+      return pollJobStatus(jobId);
     } catch (error) {
       console.error('Error polling job status:', error);
       throw error;
@@ -106,22 +100,13 @@ export const useFileUpload = () => {
         description: "Processing files in batch job...",
       });
 
-      try {
-        // Poll for job status with retries
-        await pollJobStatus(batchJobResult.jobId);
+      // Poll for job status
+      await pollJobStatus(batchJobResult.jobId);
 
-        toast({
-          title: "Processing Complete",
-          description: "Files have been processed successfully.",
-        });
-      } catch (error) {
-        console.error('Job processing error:', error);
-        toast({
-          title: "Processing Warning",
-          description: "Files were uploaded but processing may not be complete. Please check the results later.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Processing Complete",
+        description: "Files have been processed successfully.",
+      });
 
       return uploadedFiles;
     } catch (error) {

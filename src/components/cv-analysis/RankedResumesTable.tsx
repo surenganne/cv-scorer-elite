@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FileText, Trophy } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Trophy, CheckSquare, Square } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,7 +21,6 @@ import { RankedResumeCard } from "./RankedResumeCard";
 import { useCVOperations } from "@/hooks/useCVOperations";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmailCandidates } from "./EmailCandidates";
-import { MatchScoreBadge } from "./MatchScoreBadge";
 
 interface RankedResume {
   rank: string;
@@ -82,14 +81,6 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
 
-  const getDisplayName = (resume: RankedResume) => {
-    if (resume.actual_file_name) {
-      return resume.actual_file_name;
-    }
-    const pathParts = resume.file_name.split('/');
-    return pathParts[pathParts.length - 1];
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
@@ -144,7 +135,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => toggleSelectResume(resume.file_name)}
-                        aria-label={`Select ${getDisplayName(resume)}`}
+                        aria-label={`Select ${resume.actual_file_name || resume.file_name}`}
                       />
                     </TableCell>
                     <TableCell>
@@ -154,10 +145,15 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       </div>
                     </TableCell>
                     <TableCell className="font-medium text-gray-700">
-                      {getDisplayName(resume)}
+                      {resume.actual_file_name || resume.file_name}
                     </TableCell>
                     <TableCell>
-                      <MatchScoreBadge score={resume.overall_match_with_jd} />
+                      <Badge 
+                        variant="secondary" 
+                        className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
+                      >
+                        {resume.overall_match_with_jd}% Match
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <Button 
