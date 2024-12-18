@@ -79,8 +79,19 @@ export const EmailCandidates = ({
                   throw new Error(`Could not find CV file for ${match.file_name}`);
                 }
 
-                // Parse the score from the match object
-                const score = parseFloat(match.score.toString());
+                // Ensure we have a valid numeric score
+                let score = typeof match.score === 'string' 
+                  ? parseFloat(match.score.replace('%', ''))
+                  : parseFloat(String(match.score));
+
+                // If score is still NaN after parsing, try to get it from evidence
+                if (isNaN(score) && match.evidence) {
+                  const evidenceScore = match.evidence.skills?.length * 10 +
+                    (match.evidence.experience ? 30 : 0) +
+                    (match.evidence.education ? 30 : 0) +
+                    match.evidence.certifications?.length * 10;
+                  score = Math.min(evidenceScore, 100);
+                }
 
                 return {
                   name: match.file_name,
