@@ -74,15 +74,32 @@ export const SaveJobButton = ({ id, jobData, isLoading: externalLoading, onSucce
       // Wait for the ranking data
       const rankingData = await rankingResponse.json();
 
-      // Save to edb_cv_ranking table
-      const { error: rankingError } = await supabase
+      // Check if a ranking already exists for this job
+      const { data: existingRanking } = await supabase
         .from('edb_cv_ranking')
-        .insert([{
-          job_id: savedJobId,
-          ranked_resumes: rankingData
-        }]);
+        .select('id')
+        .eq('job_id', savedJobId)
+        .single();
 
-      if (rankingError) throw rankingError;
+      if (existingRanking) {
+        // Update existing ranking
+        const { error: updateError } = await supabase
+          .from('edb_cv_ranking')
+          .update({ ranked_resumes: rankingData })
+          .eq('job_id', savedJobId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Insert new ranking
+        const { error: insertError } = await supabase
+          .from('edb_cv_ranking')
+          .insert([{
+            job_id: savedJobId,
+            ranked_resumes: rankingData
+          }]);
+
+        if (insertError) throw insertError;
+      }
 
       toast({
         title: "Success",
