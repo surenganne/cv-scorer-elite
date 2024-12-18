@@ -6,7 +6,18 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailCandidatesProps {
-  selectedCandidates: string[];
+  selectedCandidates: Array<{
+    id: string;
+    file_name: string;
+    file_path?: string;
+    score: number;
+    evidence: {
+      skills: string[];
+      experience: string;
+      education: string;
+      certifications: string[];
+    };
+  }>;
   onClose?: () => void;
   matches?: Array<{
     id: string;
@@ -64,89 +75,57 @@ export const EmailCandidates = ({
       console.log('Starting email preparation with matches:', matches);
       
       // First, get the correct file paths from cv_uploads table
-      const selectedCandidatesData = matches
-        ? await Promise.all(
-            matches
-              .filter((match) => selectedCandidates.includes(match.id))
-              .map(async (match) => {
-                console.log('Processing match:', match);
-                console.log('Original score:', match.score);
-                
-                // Get the correct file path from cv_uploads
-                const { data: cvData, error: cvError } = await supabase
-                  .from("cv_uploads")
-                  .select("file_path")
-                  .ilike("file_name", match.file_name)
-                  .single();
+      const selectedCandidatesData = await Promise.all(
+        selectedCandidates.map(async (candidate) => {
+          console.log('Processing candidate:', candidate);
+          console.log('Original score:', candidate.score);
+          
+          // Get the correct file path from cv_uploads if not already present
+          let filePath = candidate.file_path;
+          if (!filePath) {
+            const { data: cvData, error: cvError } = await supabase
+              .from("cv_uploads")
+              .select("file_path")
+              .ilike("file_name", candidate.file_name)
+              .single();
 
-                if (cvError) {
-                  console.error("Error fetching CV data:", cvError);
-                  throw new Error(`Could not find CV file for ${match.file_name}`);
-                }
+            if (cvError) {
+              console.error("Error fetching CV data:", cvError);
+              throw new Error(`Could not find CV file for ${candidate.file_name}`);
+            }
+            filePath = cvData.file_path;
+          }
 
-                // Parse score handling both string and number formats
-                let score: number;
-                if (typeof match.score === 'string') {
-                  // Remove '%' if present and convert to number
-                  score = parseFloat(match.score.replace('%', ''));
-                  console.log('Parsed string score:', score);
-                } else {
-                  score = match.score;
-                  console.log('Numeric score:', score);
-                }
+          // Parse score handling both string and number formats
+          let score = candidate.score;
+          if (typeof score === 'string') {
+            // Remove '%' if present and convert to number
+            score = parseFloat(score.replace('%', ''));
+            console.log('Parsed string score:', score);
+          }
 
-                // If score is NaN or 0, try to calculate from evidence
-                if (isNaN(score) || score === 0) {
-                  console.log('Score is invalid, calculating from evidence:', match.evidence);
-                  const evidenceScore = (
-                    (match.evidence.skills?.length || 0) * 10 +
-                    (match.evidence.experience ? 30 : 0) +
-                    (match.evidence.education ? 30 : 0) +
-                    (match.evidence.certifications?.length || 0) * 10
-                  );
-                  score = Math.min(evidenceScore, 100);
-                  console.log('Calculated evidence-based score:', score);
-                }
+          // If score is NaN or 0, try to calculate from evidence
+          if (isNaN(score) || score === 0) {
+            console.log('Score is invalid, calculating from evidence:', candidate.evidence);
+            const evidenceScore = (
+              (candidate.evidence.skills?.length || 0) * 10 +
+              (candidate.evidence.experience ? 30 : 0) +
+              (candidate.evidence.education ? 30 : 0) +
+              (candidate.evidence.certifications?.length || 0) * 10
+            );
+            score = Math.min(evidenceScore, 100);
+            console.log('Calculated evidence-based score:', score);
+          }
 
-                const candidateData = {
-                  name: match.file_name,
-                  score: score,
-                  file_name: match.file_name,
-                  file_path: cvData.file_path,
-                  evidence: match.evidence,
-                };
-
-                console.log('Final candidate data:', candidateData);
-                return candidateData;
-              })
-          )
-        : await Promise.all(
-            selectedCandidates.map(async (candidate) => {
-              const { data: cvData, error: cvError } = await supabase
-                .from("cv_uploads")
-                .select("file_path")
-                .ilike("file_name", candidate)
-                .single();
-
-              if (cvError) {
-                console.error("Error fetching CV data:", cvError);
-                throw new Error(`Could not find CV file for ${candidate}`);
-              }
-
-              return {
-                name: candidate,
-                file_name: candidate,
-                file_path: cvData.file_path,
-                score: 0,
-                evidence: {
-                  skills: [],
-                  experience: "",
-                  education: "",
-                  certifications: [],
-                }
-              };
-            })
-          );
+          return {
+            name: candidate.file_name,
+            score,
+            file_name: candidate.file_name,
+            file_path: filePath,
+            evidence: candidate.evidence,
+          };
+        })
+      );
 
       console.log('Final email data:', {
         to: emails,
