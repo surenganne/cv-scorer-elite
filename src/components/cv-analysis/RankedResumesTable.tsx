@@ -26,6 +26,7 @@ interface RankedResume {
   rank: string;
   file_name: string;
   actual_file_name?: string;
+  file_path?: string;
   overall_match_with_jd: string;
   weights: {
     skills_weight: string;
@@ -53,44 +54,52 @@ interface RankedResumesTableProps {
   };
 }
 
-export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: RankedResumesTableProps) => {
+export const RankedResumesTable = ({ 
+  resumes, 
+  topN, 
+  onTopNChange, 
+  jobWeights 
+}: RankedResumesTableProps) => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [selectedResumes, setSelectedResumes] = useState<string[]>([]);
   const { handleViewCV } = useCVOperations();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   const toggleRow = (rank: number) => {
-    setExpandedRows((prev) =>
+    setExpandedRows(prev =>
       prev.includes(rank)
-        ? prev.filter((r) => r !== rank)
+        ? prev.filter(r => r !== rank)
         : [...prev, rank]
     );
   };
 
   const toggleSelectResume = (fileName: string) => {
-    setSelectedResumes(prev => 
-      prev.includes(fileName)
+    setSelectedResumes(prev => {
+      const isSelected = prev.includes(fileName);
+      return isSelected 
         ? prev.filter(f => f !== fileName)
-        : [...prev, fileName]
-    );
+        : [...prev, fileName];
+    });
   };
 
-  const toggleSelectAll = () => {
-    if (selectedResumes.length === filteredResumes.length) {
-      setSelectedResumes([]);
-    } else {
-      setSelectedResumes(filteredResumes.map(resume => resume.file_name));
-    }
+  const toggleSelectAll = (checked: boolean) => {
+    setSelectedResumes(checked ? filteredResumes.map(resume => resume.file_name) : []);
   };
 
   const filteredResumes = resumes
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
 
+  const allSelected = filteredResumes.length > 0 && 
+    filteredResumes.every(resume => selectedResumes.includes(resume.file_name));
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <Select value={topN.toString()} onValueChange={(value) => onTopNChange(parseInt(value))}>
+        <Select 
+          value={topN.toString()} 
+          onValueChange={(value) => onTopNChange(parseInt(value))}
+        >
           <SelectTrigger className="w-[180px] bg-white shadow-sm hover:bg-gray-50/50 transition-colors">
             <SelectValue placeholder="Show top N resumes" />
           </SelectTrigger>
@@ -118,7 +127,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
             <TableRow className="bg-gray-50/50 hover:bg-gray-50/70 transition-colors">
               <TableHead className="w-[50px]">
                 <Checkbox
-                  checked={selectedResumes.length === filteredResumes.length}
+                  checked={allSelected}
                   onCheckedChange={toggleSelectAll}
                   aria-label="Select all candidates"
                 />
@@ -134,6 +143,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
             {filteredResumes.map((resume) => {
               const isExpanded = expandedRows.includes(parseInt(resume.rank));
               const isSelected = selectedResumes.includes(resume.file_name);
+              
               return (
                 <React.Fragment key={resume.rank}>
                   <TableRow className="hover:bg-gray-50/50 transition-colors">
