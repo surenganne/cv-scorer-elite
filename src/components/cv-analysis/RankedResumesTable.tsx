@@ -54,6 +54,9 @@ interface RankedResumesTableProps {
   };
 }
 
+// Helper function to generate a unique ID for each resume
+const getResumeId = (resume: RankedResume) => `${resume.rank}-${resume.file_name}`;
+
 export const RankedResumesTable = ({ 
   resumes, 
   topN, 
@@ -61,7 +64,7 @@ export const RankedResumesTable = ({
   jobWeights 
 }: RankedResumesTableProps) => {
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
-  const [selectedResumes, setSelectedResumes] = useState<string[]>([]);
+  const [selectedResumeIds, setSelectedResumeIds] = useState<string[]>([]);
   const { handleViewCV } = useCVOperations();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
@@ -73,17 +76,20 @@ export const RankedResumesTable = ({
     );
   };
 
-  const toggleSelectResume = (fileName: string) => {
-    setSelectedResumes(prev => {
-      const isSelected = prev.includes(fileName);
+  const toggleSelectResume = (resume: RankedResume) => {
+    const resumeId = getResumeId(resume);
+    setSelectedResumeIds(prev => {
+      const isSelected = prev.includes(resumeId);
       return isSelected 
-        ? prev.filter(f => f !== fileName)
-        : [...prev, fileName];
+        ? prev.filter(id => id !== resumeId)
+        : [...prev, resumeId];
     });
   };
 
   const toggleSelectAll = (checked: boolean) => {
-    setSelectedResumes(checked ? filteredResumes.map(resume => resume.file_name) : []);
+    setSelectedResumeIds(
+      checked ? filteredResumes.map(resume => getResumeId(resume)) : []
+    );
   };
 
   const filteredResumes = resumes
@@ -91,7 +97,13 @@ export const RankedResumesTable = ({
     .slice(0, topN);
 
   const allSelected = filteredResumes.length > 0 && 
-    filteredResumes.every(resume => selectedResumes.includes(resume.file_name));
+    filteredResumes.every(resume => selectedResumeIds.includes(getResumeId(resume)));
+
+  // Convert selected IDs back to file names for the email dialog
+  const selectedFileNames = selectedResumeIds.map(id => {
+    const resume = filteredResumes.find(r => getResumeId(r) === id);
+    return resume?.file_name || '';
+  }).filter(Boolean);
 
   return (
     <div className="space-y-4">
@@ -110,13 +122,13 @@ export const RankedResumesTable = ({
             <SelectItem value="20">Top 20 Resumes</SelectItem>
           </SelectContent>
         </Select>
-        {selectedResumes.length > 0 && (
+        {selectedResumeIds.length > 0 && (
           <Button 
             variant="outline"
             onClick={() => setShowEmailDialog(true)}
             className="gap-2"
           >
-            Email Selected Candidates ({selectedResumes.length})
+            Email Selected Candidates ({selectedResumeIds.length})
           </Button>
         )}
       </div>
@@ -142,7 +154,7 @@ export const RankedResumesTable = ({
           <TableBody>
             {filteredResumes.map((resume) => {
               const isExpanded = expandedRows.includes(parseInt(resume.rank));
-              const isSelected = selectedResumes.includes(resume.file_name);
+              const isSelected = selectedResumeIds.includes(getResumeId(resume));
               
               return (
                 <React.Fragment key={resume.rank}>
@@ -150,7 +162,7 @@ export const RankedResumesTable = ({
                     <TableCell>
                       <Checkbox
                         checked={isSelected}
-                        onCheckedChange={() => toggleSelectResume(resume.file_name)}
+                        onCheckedChange={() => toggleSelectResume(resume)}
                         aria-label={`Select ${resume.actual_file_name || resume.file_name}`}
                       />
                     </TableCell>
@@ -215,7 +227,7 @@ export const RankedResumesTable = ({
 
       {showEmailDialog && (
         <EmailCandidates
-          selectedCandidates={selectedResumes}
+          selectedCandidates={selectedFileNames}
           onClose={() => setShowEmailDialog(false)}
         />
       )}
