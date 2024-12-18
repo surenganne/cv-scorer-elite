@@ -63,9 +63,12 @@ export const JobMatchList = () => {
 
       if (rankingError) throw rankingError;
 
-      if (rankingData?.ranked_resumes) {
-        const rankedResumes = rankingData.ranked_resumes as unknown as RankedResume[];
+      // Ensure ranked_resumes is an array before proceeding
+      const rankedResumes = Array.isArray(rankingData?.ranked_resumes) 
+        ? rankingData.ranked_resumes as RankedResume[]
+        : [];
         
+      if (rankedResumes.length > 0) {
         // Get all file paths from ranked resumes
         const filePaths = rankedResumes.map(resume => resume.file_name);
         
@@ -86,8 +89,8 @@ export const JobMatchList = () => {
         // Enrich ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
-          actual_file_name: fileNameMap[resume.file_name] || resume.file_name, // Fallback to file_name if mapping not found
-          file_name: resume.file_name // Keep original file_name (path) for reference
+          actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
+          file_name: resume.file_name
         }));
 
         setMatchedResumes((prev) => ({
@@ -99,6 +102,11 @@ export const JobMatchList = () => {
         toast({
           title: "Matches Found",
           description: `Found ${enrichedResumes.length} potential matches for this position.`,
+        });
+      } else {
+        toast({
+          title: "No Matches Found",
+          description: "No ranked resumes available for this position.",
         });
       }
     } catch (error) {
