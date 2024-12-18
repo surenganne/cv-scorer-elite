@@ -15,6 +15,7 @@ import { Loader2, Users } from "lucide-react";
 import { format } from "date-fns";
 import { RankedResumesTable } from "./RankedResumesTable";
 import { RankedResume } from "@/types/ranked-resume";
+import { transformRankedResumes } from "@/utils/rankingUtils";
 
 interface JobMatch {
   id: string;
@@ -63,33 +64,8 @@ export const JobMatchList = () => {
 
       if (rankingError) throw rankingError;
 
-      // Validate and transform the ranked_resumes data
-      const rawRankedResumes = rankingData?.ranked_resumes;
-      if (!Array.isArray(rawRankedResumes)) {
-        toast({
-          title: "No Matches Found",
-          description: "No ranked resumes available for this position.",
-        });
-        return;
-      }
-
-      // Type guard to ensure the data matches RankedResume structure
-      const isValidRankedResume = (item: any): item is RankedResume => {
-        return (
-          typeof item === "object" &&
-          item !== null &&
-          typeof item.rank === "string" &&
-          typeof item.file_name === "string" &&
-          typeof item.overall_match_with_jd === "string" &&
-          typeof item.weights === "object" &&
-          item.weights !== null &&
-          typeof item.matching_details === "object" &&
-          item.matching_details !== null
-        );
-      };
-
-      // Filter and transform the data
-      const rankedResumes = rawRankedResumes.filter(isValidRankedResume);
+      // Transform the ranked_resumes data using our utility function
+      const rankedResumes = transformRankedResumes(rankingData?.ranked_resumes);
         
       if (rankedResumes.length > 0) {
         // Get all file paths from ranked resumes
