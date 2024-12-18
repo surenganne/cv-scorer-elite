@@ -20,7 +20,8 @@ interface RankedResumeJson {
   overall_match_with_jd: string;
 }
 
-export const isValidRankedResume = (item: unknown): item is RankedResumeJson => {
+// Type guard to ensure the data matches our expected structure
+const isValidRankedResume = (item: unknown): item is RankedResumeJson => {
   if (!item || typeof item !== "object") return false;
   
   const resume = item as any;
@@ -45,7 +46,7 @@ export const transformRankedResumes = (data: Json | null): RankedResume[] => {
   }
 
   return data
-    .filter(isValidRankedResume)
+    .filter((item): item is RankedResumeJson => isValidRankedResume(item))
     .map(resume => {
       // Create a new object with the correct type structure
       const transformedResume: RankedResume = {
