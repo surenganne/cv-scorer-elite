@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -19,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RankedResumeCard } from "./RankedResumeCard";
+import { useCVOperations } from "@/hooks/useCVOperations";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmailCandidates } from "./EmailCandidates";
 
@@ -54,9 +54,9 @@ interface RankedResumesTableProps {
 }
 
 export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: RankedResumesTableProps) => {
-  const navigate = useNavigate();
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [selectedResumes, setSelectedResumes] = useState<string[]>([]);
+  const { handleViewCV } = useCVOperations();
   const [showEmailDialog, setShowEmailDialog] = useState(false);
 
   const toggleRow = (rank: number) => {
@@ -86,10 +86,6 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
   const filteredResumes = resumes
     .sort((a, b) => parseInt(a.rank) - parseInt(b.rank))
     .slice(0, topN);
-
-  const handleViewResume = (filePath: string) => {
-    navigate(`/view-resume/${encodeURIComponent(filePath)}`);
-  };
 
   return (
     <div className="space-y-4">
@@ -170,7 +166,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange, jobWeights }: 
                         variant="outline" 
                         size="sm" 
                         className="gap-2 hover:bg-purple-50/50 hover:border-purple-200 transition-colors"
-                        onClick={() => handleViewResume(resume.file_name)}
+                        onClick={() => handleViewCV(resume.file_name)}
                       >
                         <FileText className="h-4 w-4 text-purple-500" />
                         View Resume
