@@ -7,6 +7,7 @@ import UploadCVs from "./pages/UploadCVs";
 import CVAnalysis from "./pages/CVAnalysis";
 import ManageJDs from "./pages/ManageJDs";
 import ManageCVs from "./pages/ManageCVs";
+import ViewResume from "./pages/ViewResume";
 import "./App.css";
 
 // Create a client
@@ -31,6 +32,7 @@ function App() {
           <Route path="/manage-cvs" element={<ManageCVs />} />
           <Route path="/cv-analysis" element={<CVAnalysis />} />
           <Route path="/manage-jds" element={<ManageJDs />} />
+          <Route path="/view-resume/:fileName" element={<ViewResume />} />
         </Routes>
       </Router>
       <Toaster />
