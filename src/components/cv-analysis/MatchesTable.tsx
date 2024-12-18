@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Table, TableBody } from "@/components/ui/table";
 import { EmailCandidates } from "./EmailCandidates";
 import { TableHeaderComponent } from "./TableHeader";
@@ -33,7 +32,7 @@ interface MatchesTableProps {
 
 export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: MatchesTableProps) => {
   const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
-  const [selectedCandidates, setSelectedCandidates] = useState<string[]>([]);
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<string[]>([]);
 
   const handleViewResume = async (filePath: string) => {
     if (onViewResume) {
@@ -42,18 +41,22 @@ export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: Match
   };
 
   const handleSelectAll = (checked: boolean) => {
-    setSelectedCandidates(checked ? matches.map(match => match.id) : []);
+    setSelectedCandidateIds(checked ? matches.map(match => match.id) : []);
   };
 
   const handleCheckboxChange = (candidateId: string) => {
-    setSelectedCandidates((prev) =>
+    setSelectedCandidateIds((prev) =>
       prev.includes(candidateId)
         ? prev.filter((id) => id !== candidateId)
         : [...prev, candidateId]
     );
   };
 
-  const allSelected = matches.length > 0 && selectedCandidates.length === matches.length;
+  const selectedCandidates = matches.filter(match => 
+    selectedCandidateIds.includes(match.id)
+  );
+
+  const allSelected = matches.length > 0 && selectedCandidateIds.length === matches.length;
 
   return (
     <div className="mt-4 space-y-4 animate-fade-in">
@@ -69,7 +72,7 @@ export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: Match
           selectedCandidates={selectedCandidates}
           matches={matches}
           jobTitle={jobTitle}
-          onEmailsSent={() => setSelectedCandidates([])}
+          onEmailsSent={() => setSelectedCandidateIds([])}
         />
 
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
@@ -83,7 +86,7 @@ export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: Match
                 <TableRowComponent
                   key={match.id}
                   match={match}
-                  isSelected={selectedCandidates.includes(match.id)}
+                  isSelected={selectedCandidateIds.includes(match.id)}
                   onSelect={handleCheckboxChange}
                   expandedMatch={expandedMatch}
                   onToggleExpand={(id) => setExpandedMatch(expandedMatch === id ? null : id)}
