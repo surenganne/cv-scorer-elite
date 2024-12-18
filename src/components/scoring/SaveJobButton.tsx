@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface SaveJobButtonProps {
   id?: string;
@@ -21,10 +22,12 @@ interface SaveJobButtonProps {
   onSuccess: () => void;
 }
 
-export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButtonProps) => {
+export const SaveJobButton = ({ id, jobData, isLoading: externalLoading, onSuccess }: SaveJobButtonProps) => {
   const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleSave = async () => {
+    setIsSaving(true);
     try {
       const dataToSave = {
         ...jobData,
@@ -50,7 +53,7 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
         savedJobId = jobResponse.id;
       }
 
-      // Call the resume ranking API directly
+      // Call the resume ranking API and wait for it to complete
       const rankingResponse = await fetch('https://3ltge7zfy7j26bdyygdwlcrtse0rcixl.lambda-url.ap-south-1.on.aws/rank-resumes', {
         method: 'POST',
         headers: {
@@ -83,20 +86,24 @@ export const SaveJobButton = ({ id, jobData, isLoading, onSuccess }: SaveJobButt
         title: "Error",
         description: `Failed to ${id ? "update" : "save"} job description.`,
       });
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  const isDisabled = externalLoading || isSaving;
 
   return (
     <Button 
       onClick={handleSave}
       size="lg"
       className="px-8"
-      disabled={isLoading}
+      disabled={isDisabled}
     >
-      {isLoading ? (
+      {isDisabled ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          Saving...
+          {id ? "Updating..." : "Saving..."}
         </>
       ) : (
         id ? "Update Job Description" : "Save Job Description"
