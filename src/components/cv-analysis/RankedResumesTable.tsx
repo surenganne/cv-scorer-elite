@@ -107,11 +107,21 @@ export const RankedResumesTable = ({
   const allSelected = filteredResumes.length > 0 && 
     filteredResumes.every(resume => selectedResumeIds.includes(getResumeId(resume)));
 
-  // Convert selected IDs back to file names for the email dialog
-  const selectedFileNames = selectedResumeIds.map(id => {
-    const resume = filteredResumes.find(r => getResumeId(r) === id);
-    return resume?.file_name || '';
-  }).filter(Boolean);
+  // Convert selected resumes to the format expected by EmailCandidates
+  const selectedResumesForEmail = filteredResumes
+    .filter(resume => selectedResumeIds.includes(getResumeId(resume)))
+    .map(resume => ({
+      id: getResumeId(resume),
+      file_name: resume.actual_file_name || resume.file_name,
+      file_path: resume.file_path,
+      score: parseMatchScore(resume.overall_match_with_jd),
+      evidence: {
+        skills: resume.matching_details.matching_skills,
+        experience: resume.matching_details.matching_experience.join(', '),
+        education: resume.matching_details.matching_education.join(', '),
+        certifications: resume.matching_details.matching_certifications,
+      }
+    }));
 
   return (
     <div className="space-y-4">
@@ -242,7 +252,8 @@ export const RankedResumesTable = ({
 
       {showEmailDialog && (
         <EmailCandidates
-          selectedCandidates={selectedFileNames}
+          selectedCandidates={selectedResumesForEmail}
+          matches={selectedResumesForEmail}
           onClose={() => setShowEmailDialog(false)}
         />
       )}
