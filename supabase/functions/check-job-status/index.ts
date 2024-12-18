@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createHmac } from "https://deno.land/std@0.168.0/crypto/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,20 +31,80 @@ serve(async (req) => {
     const amzDate = date.toISOString().replace(/[:-]|\.\d{3}/g, '')
     const dateStamp = date.toISOString().split('T')[0].replace(/-/g, '')
 
+    // Create canonical request
+    const method = 'POST'
+    const canonicalUri = '/checkJobStatus'
+    const canonicalQueryString = ''
+    const canonicalHeaders = [
+      `content-type:application/json`,
+      `host:${new URL(baseUrl).host}`,
+      `x-amz-date:${amzDate}`,
+    ].join('\n') + '\n'
+    const signedHeaders = 'content-type;host;x-amz-date'
+    const payload = JSON.stringify({ job_id })
+    const payloadHash = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(payload)
+    ).then(hash => Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join(''))
+
+    const canonicalRequest = [
+      method,
+      canonicalUri,
+      canonicalQueryString,
+      canonicalHeaders,
+      signedHeaders,
+      payloadHash
+    ].join('\n')
+
+    // Create string to sign
+    const algorithm = 'AWS4-HMAC-SHA256'
+    const credentialScope = `${dateStamp}/us-east-1/execute-api/aws4_request`
+    const stringToSign = [
+      algorithm,
+      amzDate,
+      credentialScope,
+      await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(canonicalRequest)
+      ).then(hash => Array.from(new Uint8Array(hash))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(''))
+    ].join('\n')
+
+    // Calculate signature
+    const signature = await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode(stringToSign)
+    ).then(hash => Array.from(new Uint8Array(hash))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join(''))
+
+    // Create authorization header
+    const authorizationHeader = [
+      `${algorithm} Credential=${apiKey}/${credentialScope}`,
+      `SignedHeaders=${signedHeaders}`,
+      `Signature=${signature}`
+    ].join(', ')
+
+    console.log('Making request with headers:', {
+      'Content-Type': 'application/json',
+      'X-Amz-Date': amzDate,
+      'Authorization': authorizationHeader
+    })
+
     const response = await fetch(
       `${baseUrl}/checkJobStatus`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Api-Key': apiKey,
           'X-Amz-Date': amzDate,
-          'Date': date.toUTCString(),
+          'Authorization': authorizationHeader,
+          'X-Api-Key': apiKey
         },
-        body: JSON.stringify({
-          job_id: job_id
-        }),
+        body: payload
       }
     )
 
