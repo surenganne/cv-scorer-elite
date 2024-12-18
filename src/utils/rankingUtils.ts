@@ -46,13 +46,15 @@ export const transformRankedResumes = (data: Json | null): RankedResume[] => {
 
   return data
     .filter(isValidRankedResume)
-    .map(resume => ({
-      ...resume,
-      // Ensure all properties match the RankedResume type
-      rank: resume.rank,
-      weights: resume.weights,
-      file_name: resume.file_name,
-      matching_details: resume.matching_details,
-      overall_match_with_jd: resume.overall_match_with_jd
-    }));
+    .map(resume => {
+      // Create a new object with the correct type structure
+      const transformedResume: RankedResume = {
+        rank: resume.rank,
+        weights: resume.weights,
+        file_name: resume.file_name,
+        matching_details: resume.matching_details,
+        overall_match_with_jd: resume.overall_match_with_jd
+      };
+      return transformedResume;
+    });
 };
