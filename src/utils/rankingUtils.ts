@@ -21,21 +21,22 @@ interface RankedResumeJson {
 }
 
 // Type guard to ensure the data matches our expected structure
-const isValidRankedResume = (item: any): boolean => {
+const isValidRankedResume = (item: unknown): item is RankedResumeJson => {
   if (!item || typeof item !== "object") return false;
   
+  const resume = item as any;
   return (
-    typeof item.rank === "string" &&
-    typeof item.file_name === "string" &&
-    typeof item.overall_match_with_jd === "string" &&
-    typeof item.weights === "object" &&
-    item.weights !== null &&
-    typeof item.matching_details === "object" &&
-    item.matching_details !== null &&
-    Array.isArray(item.matching_details.matching_skills) &&
-    Array.isArray(item.matching_details.matching_education) &&
-    Array.isArray(item.matching_details.matching_experience) &&
-    Array.isArray(item.matching_details.matching_certifications)
+    typeof resume.rank === "string" &&
+    typeof resume.file_name === "string" &&
+    typeof resume.overall_match_with_jd === "string" &&
+    typeof resume.weights === "object" &&
+    resume.weights !== null &&
+    typeof resume.matching_details === "object" &&
+    resume.matching_details !== null &&
+    Array.isArray(resume.matching_details.matching_skills) &&
+    Array.isArray(resume.matching_details.matching_education) &&
+    Array.isArray(resume.matching_details.matching_experience) &&
+    Array.isArray(resume.matching_details.matching_certifications)
   );
 };
 
@@ -46,15 +47,12 @@ export const transformRankedResumes = (data: Json | null): RankedResume[] => {
   }
 
   return data
-    .filter(item => isValidRankedResume(item))
-    .map(resume => {
-      const validResume = resume as RankedResumeJson;
-      return {
-        rank: validResume.rank,
-        weights: validResume.weights,
-        file_name: validResume.file_name,
-        matching_details: validResume.matching_details,
-        overall_match_with_jd: validResume.overall_match_with_jd
-      };
-    });
+    .filter((item): item is RankedResumeJson => isValidRankedResume(item))
+    .map(resume => ({
+      rank: resume.rank,
+      weights: resume.weights,
+      file_name: resume.file_name,
+      matching_details: resume.matching_details,
+      overall_match_with_jd: resume.overall_match_with_jd
+    }));
 };
