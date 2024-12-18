@@ -54,11 +54,11 @@ export const JobMatchList = () => {
   });
 
   const findMatches = async (jobId: string) => {
-    setLoading((prev) => ({ ...prev, [jobId]: true }));
+    // Clean the job ID at the start of the function
+    const cleanJobId = jobId.replace(/^eq\./, '');
+    setLoading((prev) => ({ ...prev, [cleanJobId]: true }));
+    
     try {
-      // Remove the 'eq.' prefix if it exists in the jobId
-      const cleanJobId = jobId.replace(/^eq\./, '');
-      
       const { data: rankingData, error: rankingError } = await supabase
         .from("edb_cv_ranking")
         .select("ranked_resumes")
@@ -114,7 +114,7 @@ export const JobMatchList = () => {
         description: "Failed to find matches. Please try again.",
       });
     } finally {
-      setLoading((prev) => ({ ...prev, [jobId]: false }));
+      setLoading((prev) => ({ ...prev, [cleanJobId]: false }));
     }
   };
 
