@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronRight, FileText, Trophy, CheckSquare, Square } from "lucide-react";
+import { ChevronDown, ChevronRight, FileText, Trophy } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import { RankedResumeCard } from "./RankedResumeCard";
 import { useCVOperations } from "@/hooks/useCVOperations";
 import { Checkbox } from "@/components/ui/checkbox";
 import { EmailCandidates } from "./EmailCandidates";
+import { MatchScoreBadge } from "./MatchScoreBadge";
 
 interface RankedResume {
   rank: string;
@@ -82,12 +83,9 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
     .slice(0, topN);
 
   const getDisplayName = (resume: RankedResume) => {
-    // If actual_file_name exists, use it
     if (resume.actual_file_name) {
       return resume.actual_file_name;
     }
-    
-    // If no actual_file_name, extract filename from file_path
     const pathParts = resume.file_name.split('/');
     return pathParts[pathParts.length - 1];
   };
@@ -159,12 +157,7 @@ export const RankedResumesTable = ({ resumes, topN, onTopNChange }: RankedResume
                       {getDisplayName(resume)}
                     </TableCell>
                     <TableCell>
-                      <Badge 
-                        variant="secondary" 
-                        className="text-base bg-gradient-to-r from-purple-50 to-blue-50 text-gray-700 border border-purple-100"
-                      >
-                        {resume.overall_match_with_jd}% Match
-                      </Badge>
+                      <MatchScoreBadge score={resume.overall_match_with_jd} />
                     </TableCell>
                     <TableCell>
                       <Button 
