@@ -6,7 +6,6 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -20,7 +19,6 @@ serve(async (req) => {
       throw new Error('JOB_STATUS_API_URL environment variable is not set')
     }
 
-    // Call the external API with proper error handling
     const response = await fetch(
       `${baseUrl}/checkJobStatus`,
       {
@@ -35,7 +33,6 @@ serve(async (req) => {
       }
     )
 
-    // Log the response status and headers for debugging
     console.log('API Response Status:', response.status)
     console.log('API Response Headers:', Object.fromEntries(response.headers.entries()))
 
@@ -44,7 +41,7 @@ serve(async (req) => {
       console.error('API Error Response:', errorText)
       
       return new Response(JSON.stringify({ 
-        error: `API responded with status: ${response.status}`,
+        error: 'Failed to fetch job status',
         details: errorText,
         status: 'FAILED',
         timestamp: new Date().toISOString(),
@@ -57,14 +54,20 @@ serve(async (req) => {
     const data = await response.json()
     console.log('Job status response:', data)
 
-    return new Response(JSON.stringify(data), {
+    // Transform the response to match the expected format
+    const transformedResponse = {
+      message: "Job status fetched successfully",
+      job_id: data.job_id,
+      status: data.status
+    }
+
+    return new Response(JSON.stringify(transformedResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
   } catch (error) {
     console.error('Error checking job status:', error)
     
-    // Return a more detailed error response
     return new Response(JSON.stringify({ 
       error: error.message,
       status: 'FAILED',
