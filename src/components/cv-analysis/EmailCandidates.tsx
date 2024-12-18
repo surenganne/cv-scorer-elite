@@ -12,7 +12,7 @@ interface EmailCandidatesProps {
     id: string;
     file_name: string;
     file_path?: string;
-    score: number;
+    score: number | string;  // Updated type to allow both number and string
     evidence: {
       skills: string[];
       experience: string;
