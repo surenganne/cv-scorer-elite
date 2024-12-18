@@ -6,6 +6,7 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -14,13 +15,20 @@ serve(async (req) => {
     const { job_id } = await req.json()
     console.log('Checking status for job:', job_id)
     
-    // Call your actual job status checking endpoint
+    const baseUrl = Deno.env.get('JOB_STATUS_API_URL')
+    if (!baseUrl) {
+      throw new Error('JOB_STATUS_API_URL environment variable is not set')
+    }
+
+    // Call the external API with proper error handling
     const response = await fetch(
-      `${Deno.env.get('JOB_STATUS_API_URL')}/checkJobStatus`,
+      `${baseUrl}/checkJobStatus`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // Add any required authentication headers here
+          'Authorization': `Bearer ${Deno.env.get('JOB_STATUS_API_KEY')}`, // You'll need to set this secret
         },
         body: JSON.stringify({
           job_id: job_id
@@ -28,7 +36,14 @@ serve(async (req) => {
       }
     )
 
+    // Log the response status and headers for debugging
+    console.log('API Response Status:', response.status)
+    console.log('API Response Headers:', Object.fromEntries(response.headers.entries()))
+
     if (!response.ok) {
+      const errorText = await response.text()
+      console.error('API Error Response:', errorText)
+      
       throw new Error(`API responded with status: ${response.status}`)
     }
 
@@ -41,9 +56,12 @@ serve(async (req) => {
     })
   } catch (error) {
     console.error('Error checking job status:', error)
+    
+    // Return a more detailed error response
     return new Response(JSON.stringify({ 
       error: error.message,
-      status: 'FAILED'
+      status: 'FAILED',
+      timestamp: new Date().toISOString(),
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
