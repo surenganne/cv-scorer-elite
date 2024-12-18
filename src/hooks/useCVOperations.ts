@@ -4,26 +4,34 @@ import { supabase } from "@/integrations/supabase/client";
 export const useCVOperations = () => {
   const { toast } = useToast();
 
-  const handleViewCV = async (fileName: string) => {
+  const handleViewCV = async (filePath: string) => {
     try {
-      if (!fileName) {
-        throw new Error("Invalid file name");
+      if (!filePath) {
+        throw new Error("Invalid file path");
       }
 
-      // Get the file path from cv_uploads table
-      const { data: fileData, error: fetchError } = await supabase
-        .from("cv_uploads")
-        .select("file_path")
-        .ilike("file_path", `%${fileName}`)
-        .single();
+      console.log("Attempting to get signed URL for:", filePath);
 
-      if (fetchError || !fileData) {
-        throw new Error("File not found in database");
+      // First check if the file exists
+      const { data: fileExists, error: existsError } = await supabase.storage
+        .from("cvs")
+        .list("", {
+          search: filePath
+        });
+
+      if (existsError) {
+        console.error("Error checking file existence:", existsError);
+        throw existsError;
       }
 
+      if (!fileExists || fileExists.length === 0) {
+        throw new Error("File not found in storage");
+      }
+
+      // Create signed URL with longer expiration for viewing
       const { data, error } = await supabase.storage
         .from("cvs")
-        .createSignedUrl(fileData.file_path, 3600); // 1 hour expiration
+        .createSignedUrl(filePath, 3600); // 1 hour expiration
 
       if (error) {
         console.error("Storage error:", error);
@@ -35,7 +43,7 @@ export const useCVOperations = () => {
       }
 
       // For Office documents, we can use Microsoft's Office Online viewer
-      const extension = fileData.file_path.split('.').pop()?.toLowerCase();
+      const extension = filePath.split('.').pop()?.toLowerCase();
       if (extension === 'doc' || extension === 'docx') {
         const encodedUrl = encodeURIComponent(data.signedUrl);
         window.open(`https://view.officeapps.live.com/op/view.aspx?src=${encodedUrl}`, "_blank", "noopener,noreferrer");
@@ -53,5 +61,63 @@ export const useCVOperations = () => {
     }
   };
 
-  return { handleViewCV };
+  const handleDownloadCV = async (filePath: string, fileName: string) => {
+    try {
+      if (!filePath) {
+        throw new Error("Invalid file path");
+      }
+
+      console.log("Attempting to download:", filePath);
+
+      // First check if the file exists
+      const { data: fileExists, error: existsError } = await supabase.storage
+        .from("cvs")
+        .list("", {
+          search: filePath
+        });
+
+      if (existsError) {
+        console.error("Error checking file existence:", existsError);
+        throw existsError;
+      }
+
+      if (!fileExists || fileExists.length === 0) {
+        throw new Error("File not found in storage");
+      }
+
+      const { data, error } = await supabase.storage
+        .from("cvs")
+        .download(filePath);
+
+      if (error) {
+        console.error("Download error:", error);
+        throw error;
+      }
+
+      // Create a download link
+      const blob = new Blob([data], { type: 'application/octet-stream' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Success",
+        description: "File downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error downloading CV:", error);
+      toast({
+        title: "Error",
+        description: error.message || "Could not download the CV. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return { handleViewCV, handleDownloadCV };
 };
