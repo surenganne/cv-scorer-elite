@@ -11,16 +11,21 @@ export interface Candidate {
   };
 }
 
+const parseMatchScore = (score: number): number => {
+  return isNaN(score) ? 0 : Math.round(score);
+};
+
 const generateCandidateTableRows = (candidates: Candidate[]) => {
   return candidates
     .map((candidate, index) => {
+      const score = parseMatchScore(candidate.score);
       const getScoreColor = (score: number) => {
         if (score >= 80) return { bg: '#D1FAE5', text: '#059669' };
         if (score >= 60) return { bg: '#FEF3C7', text: '#D97706' };
         return { bg: '#FEE2E2', text: '#DC2626' };
       };
 
-      const scoreColors = getScoreColor(candidate.score);
+      const scoreColors = getScoreColor(score);
       const rank = index + 1;
 
       return `
@@ -36,7 +41,7 @@ const generateCandidateTableRows = (candidates: Candidate[]) => {
           </td>
           <td style="padding: 16px; text-align: right;">
             <span style="display: inline-block; background-color: ${scoreColors.bg}; color: ${scoreColors.text}; padding: 4px 12px; border-radius: 9999px; font-size: 14px;">
-              ${Math.round(candidate.score)}% Match
+              ${score}% Match
             </span>
           </td>
         </tr>
