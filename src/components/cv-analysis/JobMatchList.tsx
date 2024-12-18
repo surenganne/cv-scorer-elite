@@ -104,7 +104,7 @@ export const JobMatchList = () => {
 
         if (cvError) throw cvError;
 
-        // Create a map of file names to their actual paths and names
+        // Create a map of file names to their actual paths
         const fileMap = cvData?.reduce((acc, cv) => {
           acc[cv.file_name] = {
             file_path: cv.file_path,
@@ -116,7 +116,7 @@ export const JobMatchList = () => {
         // Enrich ranked resumes with actual file paths and names
         const enrichedResumes = rankedResumes.map(resume => {
           const fileInfo = fileMap[resume.file_name] || {
-            file_path: resume.file_name,
+            file_path: `cvs/${resume.file_name}`,
             actual_file_name: resume.file_name
           };
           
