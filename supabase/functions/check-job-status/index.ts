@@ -32,7 +32,7 @@ serve(async (req) => {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
+          'Authorization': apiKey, // Changed format: removed Bearer prefix
           'x-api-key': apiKey
         },
         body: JSON.stringify({
