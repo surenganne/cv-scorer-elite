@@ -64,14 +64,11 @@ export const JobMatchList = () => {
 
       if (rankingError) throw rankingError;
 
-      // Transform the ranked_resumes data using our utility function
       const rankedResumes = transformRankedResumes(rankingData?.ranked_resumes);
         
       if (rankedResumes.length > 0) {
-        // Get all file paths from ranked resumes
         const filePaths = rankedResumes.map(resume => resume.file_name);
         
-        // Fetch actual file names from cv_uploads table
         const { data: cvData, error: cvError } = await supabase
           .from("cv_uploads")
           .select("file_name, file_path")
@@ -79,13 +76,11 @@ export const JobMatchList = () => {
 
         if (cvError) throw cvError;
 
-        // Create a mapping of file_path to actual file_name
         const fileNameMap = cvData?.reduce((acc, cv) => {
           acc[cv.file_path] = cv.file_name;
           return acc;
         }, {} as Record<string, string>) || {};
 
-        // Enrich ranked resumes with actual file names
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
           actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
