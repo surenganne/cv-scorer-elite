@@ -1,7 +1,6 @@
 import { RankedResume } from "@/types/ranked-resume";
 import { Json } from "@/integrations/supabase/types";
 
-// Interface to match the structure we receive from the API
 interface RankedResumeJson {
   rank: string;
   weights: {
@@ -20,7 +19,11 @@ interface RankedResumeJson {
   overall_match_with_jd: string;
 }
 
-// Type guard to ensure the data matches our expected structure
+interface RankingResponse {
+  message: string;
+  ranking: RankedResumeJson[];
+}
+
 const isValidRankedResume = (item: unknown): item is RankedResumeJson => {
   if (!item || typeof item !== "object") return false;
   
@@ -62,12 +65,20 @@ const isValidRankedResume = (item: unknown): item is RankedResumeJson => {
 };
 
 export const transformRankedResumes = (data: Json | null): RankedResume[] => {
-  if (!data || !Array.isArray(data)) {
+  if (!data || typeof data !== 'object') {
     console.warn("Invalid or empty ranking data received");
     return [];
   }
 
-  return data
+  // Handle the nested structure
+  const rankingData = (data as { ranking?: RankedResumeJson[] }).ranking;
+  
+  if (!Array.isArray(rankingData)) {
+    console.warn("No ranking array found in the data");
+    return [];
+  }
+
+  return rankingData
     .map(item => {
       if (!isValidRankedResume(item)) {
         console.warn("Invalid resume data structure:", item);
@@ -78,7 +89,7 @@ export const transformRankedResumes = (data: Json | null): RankedResume[] => {
         weights: item.weights,
         file_name: item.file_name,
         matching_details: item.matching_details,
-        overall_match_with_jd: item.overall_match_with_jd
+        overall_match_with_jd: item.overall_match_with_jd.replace('%', '') // Remove '%' if present
       };
     })
     .filter((item): item is RankedResume => item !== null);

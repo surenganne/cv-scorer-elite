@@ -67,8 +67,9 @@ export const JobMatchList = () => {
 
       if (rankingError) throw rankingError;
 
-      const rankedResumes = transformRankedResumes(rankingData?.ranked_resumes);
-        
+      // Extract the ranking array from the nested structure
+      const rankedResumes = rankingData?.ranked_resumes?.ranking || [];
+      
       if (rankedResumes.length > 0) {
         const filePaths = rankedResumes.map(resume => resume.file_name);
         
@@ -87,7 +88,9 @@ export const JobMatchList = () => {
         const enrichedResumes = rankedResumes.map(resume => ({
           ...resume,
           actual_file_name: fileNameMap[resume.file_name] || resume.file_name,
-          file_name: resume.file_name
+          file_name: resume.file_name,
+          // Remove the '%' symbol from the overall match and convert to string
+          overall_match_with_jd: resume.overall_match_with_jd.replace('%', '')
         }));
 
         setMatchedResumes((prev) => ({
