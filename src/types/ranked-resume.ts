@@ -7,7 +7,7 @@ export interface RankedResume {
     certifications_weight: string;
   };
   file_name: string;
-  file_path?: string; // Made optional to handle cases where it might not be immediately available
+  file_path?: string;
   actual_file_name?: string;
   matching_details: {
     matching_skills: string[];
