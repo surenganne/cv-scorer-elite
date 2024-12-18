@@ -55,16 +55,6 @@ export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: Match
 
   const allSelected = matches.length > 0 && selectedCandidates.length === matches.length;
 
-  // Transform selected candidates into the required format
-  const selectedCandidatesData = selectedCandidates.map(id => {
-    const match = matches.find(m => m.id === id);
-    return match ? {
-      name: match.file_name,
-      file_name: match.file_name,
-      file_path: match.file_path || `cvs/${match.file_name}`
-    } : null;
-  }).filter((candidate): candidate is { name: string; file_name: string; file_path: string; } => candidate !== null);
-
   return (
     <div className="mt-4 space-y-4 animate-fade-in">
       <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg border border-gray-100">
@@ -76,8 +66,10 @@ export const MatchesTable = ({ matches, jobTitle, weights, onViewResume }: Match
         </h3>
         
         <EmailCandidates
-          selectedCandidates={selectedCandidatesData}
-          onClose={() => setSelectedCandidates([])}
+          selectedCandidates={selectedCandidates}
+          matches={matches}
+          jobTitle={jobTitle}
+          onEmailsSent={() => setSelectedCandidates([])}
         />
 
         <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">

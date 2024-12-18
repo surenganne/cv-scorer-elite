@@ -1,96 +1,180 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EmailCandidatesProps {
-  selectedCandidates: Array<{
-    name: string;
+  selectedCandidates: string[];
+  onClose?: () => void;
+  matches?: Array<{
+    id: string;
     file_name: string;
-    file_path: string;
+    file_path?: string;
+    score: number;
+    evidence: {
+      skills: string[];
+      experience: string;
+      education: string;
+      certifications: string[];
+    };
   }>;
-  onClose: () => void;
+  jobTitle?: string;
+  onEmailsSent?: () => void;
 }
 
-export const EmailCandidates = ({ selectedCandidates, onClose }: EmailCandidatesProps) => {
-  const [emailContent, setEmailContent] = useState("");
-  const [loading, setLoading] = useState(false);
+export const EmailCandidates = ({ 
+  selectedCandidates, 
+  matches, 
+  jobTitle,
+  onEmailsSent,
+  onClose 
+}: EmailCandidatesProps) => {
+  const [emailAddresses, setEmailAddresses] = useState("");
+  const [isSending, setIsSending] = useState(false);
   const { toast } = useToast();
 
   const handleSendEmails = async () => {
-    setLoading(true);
-    try {
-      const emailRequests = selectedCandidates.map((candidate) => ({
-        name: candidate.name,
-        file_name: candidate.file_name,
-        file_path: candidate.file_path,
-      }));
+    if (!emailAddresses.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter at least one email address",
+        variant: "destructive",
+      });
+      return;
+    }
 
-      const response = await fetch("/api/send-interview-emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          candidates: emailRequests,
-          emailContent: `${emailContent}\n\nCandidate Information:\n${selectedCandidates.map(candidate => 
-            `Name: ${candidate.name}\nFile Path: ${candidate.file_path}`
-          ).join('\n\n')}`,
-        }),
+    const emails = emailAddresses
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email);
+
+    if (!selectedCandidates.length) {
+      toast({
+        title: "Error",
+        description: "Please select at least one candidate",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      // First, get the correct file paths from cv_uploads table
+      const selectedCandidatesData = matches
+        ? await Promise.all(
+            matches
+              .filter((match) => selectedCandidates.includes(match.id))
+              .map(async (match) => {
+                // Get the correct file path from cv_uploads
+                const { data: cvData, error: cvError } = await supabase
+                  .from("cv_uploads")
+                  .select("file_path")
+                  .ilike("file_name", match.file_name)
+                  .single();
+
+                if (cvError) {
+                  console.error("Error fetching CV data:", cvError);
+                  throw new Error(`Could not find CV file for ${match.file_name}`);
+                }
+
+                return {
+                  name: match.file_name,
+                  score: match.score,
+                  file_name: match.file_name,
+                  file_path: cvData.file_path,
+                  evidence: match.evidence,
+                };
+              })
+          )
+        : await Promise.all(
+            selectedCandidates.map(async (candidate) => {
+              const { data: cvData, error: cvError } = await supabase
+                .from("cv_uploads")
+                .select("file_path")
+                .ilike("file_name", candidate)
+                .single();
+
+              if (cvError) {
+                console.error("Error fetching CV data:", cvError);
+                throw new Error(`Could not find CV file for ${candidate}`);
+              }
+
+              return {
+                name: candidate,
+                file_name: candidate,
+                file_path: cvData.file_path,
+                score: 0,
+                evidence: {
+                  skills: [],
+                  experience: "",
+                  education: "",
+                  certifications: [],
+                }
+              };
+            })
+          );
+
+      console.log('Sending email with data:', {
+        to: emails,
+        selectedCandidates: selectedCandidatesData,
+        jobTitle: jobTitle || 'Position',
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send emails");
-      }
+      const { data, error } = await supabase.functions.invoke(
+        "send-interview-emails",
+        {
+          body: {
+            to: emails,
+            selectedCandidates: selectedCandidatesData,
+            jobTitle: jobTitle || 'Position',
+          },
+        }
+      );
+
+      if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Interview emails have been sent successfully.",
+        description: "Emails sent successfully",
       });
-      onClose();
+
+      if (onEmailsSent) onEmailsSent();
+      if (onClose) onClose();
+      setEmailAddresses("");
     } catch (error) {
       console.error("Error sending emails:", error);
       toast({
-        variant: "destructive",
         title: "Error",
-        description: "Failed to send interview emails. Please try again.",
+        description: "Failed to send emails. Please try again.",
+        variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsSending(false);
     }
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Send Interview Emails</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="email-content">Email Content</Label>
-            <Textarea
-              id="email-content"
-              value={emailContent}
-              onChange={(e) => setEmailContent(e.target.value)}
-              placeholder="Enter the email content..."
-              className="h-40"
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button onClick={handleSendEmails} disabled={loading || !emailContent.trim()}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Send Emails ({selectedCandidates.length})
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <div className="flex items-center gap-4 mb-4">
+      <Input
+        placeholder="Enter interviewer emails (comma-separated)"
+        value={emailAddresses}
+        onChange={(e) => setEmailAddresses(e.target.value)}
+        className="flex-1"
+      />
+      <Button
+        onClick={handleSendEmails}
+        disabled={isSending || !selectedCandidates.length || !emailAddresses.trim()}
+      >
+        <Mail className="h-4 w-4 mr-2" />
+        {isSending ? "Sending..." : "Send to Interviewers"}
+      </Button>
+      {onClose && (
+        <Button variant="outline" onClick={onClose}>
+          Cancel
+        </Button>
+      )}
+    </div>
   );
 };
