@@ -15,7 +15,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
               <img 
-                src="https://edb.gov.ae/campaign/images/logo-blue.svg" 
+                src="/logo-blue.svg" 
                 alt="EDB Logo" 
                 className="h-14 w-auto mr-2"
               />
